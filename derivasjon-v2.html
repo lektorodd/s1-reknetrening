@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ferdighetstrening Derivasjon</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: JetBrains Mono & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- MathJax -->
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .chart-wrapper { position: relative; height: 250px; width: 100%; }
+        
+        .filter-checkbox:checked + div {
+            background-color: #dbeafe; 
+            border-color: #2563eb; 
+            color: #1e40af; 
+        }
+        
+        /* Custom select - FIX: appearance: none removes default arrow */
+        select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-800 h-screen flex flex-col overflow-hidden">
+
+    <!-- TOP NAVIGATION -->
+    <header class="bg-white border-b border-stone-200 shadow-sm z-20 flex-none">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex justify-between items-center">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="navigateTo('dashboard')">
+                <div class="bg-blue-600 text-white p-2 rounded-lg">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <h1 class="text-xl font-bold tracking-tight text-stone-900">Ferdighetstrening <span class="text-blue-600">Derivasjon</span></h1>
+            </div>
+            <div class="flex space-x-2 bg-stone-100 p-1 rounded-lg">
+                <button onclick="setLanguage('no')" id="btn-no" class="lang-btn px-3 py-1 text-sm font-medium rounded-md transition-all">🇳🇴</button>
+                <button onclick="setLanguage('en')" id="btn-en" class="lang-btn px-3 py-1 text-sm font-medium rounded-md transition-all">🇬🇧</button>
+                <button onclick="setLanguage('es')" id="btn-es" class="lang-btn px-3 py-1 text-sm font-medium rounded-md transition-all">🇪🇸</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden">
+        <!-- SIDEBAR NAVIGATION -->
+        <nav class="hidden md:flex flex-col w-64 bg-white border-r border-stone-200 pt-6">
+            <div class="flex-1 px-4 space-y-2">
+                <button onclick="navigateTo('dashboard')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors" id="nav-dashboard">
+                    <i class="fa-solid fa-house w-5 text-center"></i>
+                    <span data-key="nav_dashboard">Oversikt</span>
+                </button>
+                <button onclick="navigateTo('theory')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors" id="nav-theory">
+                    <i class="fa-solid fa-book-open w-5 text-center"></i>
+                    <span data-key="nav_theory">Teoribank</span>
+                </button>
+                <button onclick="navigateTo('practice')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors" id="nav-practice">
+                    <i class="fa-solid fa-dumbbell w-5 text-center"></i>
+                    <span data-key="nav_practice">Treningsarena</span>
+                </button>
+                <button onclick="navigateTo('stats')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors" id="nav-stats">
+                    <i class="fa-solid fa-chart-simple w-5 text-center"></i>
+                    <span data-key="nav_stats">Min Statistikk</span>
+                </button>
+                <button onclick="navigateTo('help')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors" id="nav-help">
+                    <i class="fa-solid fa-circle-question w-5 text-center"></i>
+                    <span data-key="nav_help">Hjelp</span>
+                </button>
+            </div>
+
+            <!-- FOOTER -->
+            <div class="p-4 mt-auto border-t border-stone-100">
+                <p class="font-mono text-xs text-stone-500 leading-tight">Torodd F. Ottestad</p>
+                <a href="https://lektorodd.no" target="_blank" class="font-mono text-xs text-blue-600 hover:text-blue-800 hover:underline leading-tight">lektorodd</a>
+            </div>
+        </nav>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="flex-1 overflow-y-auto bg-stone-50 p-4 sm:p-8 relative" id="main-container">
+            
+            <!-- VIEW: DASHBOARD -->
+            <div id="view-dashboard" class="view-section fade-in">
+                <div class="max-w-5xl mx-auto">
+                    <h2 class="text-2xl font-bold text-stone-900 mb-2" data-key="dash_welcome">Velkommen!</h2>
+                    <p class="text-stone-500 mb-8" data-key="dash_subtitle">Hva vil du trene på i dag?</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <!-- Card: Smart Mix -->
+                        <div onclick="startMixMode()" class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-8 text-white shadow-lg cursor-pointer hover:shadow-xl hover:scale-[1.02] transition-all group relative overflow-hidden">
+                            <div class="absolute top-0 right-0 p-8 opacity-20 transform translate-x-4 -translate-y-4">
+                                <i class="fa-solid fa-shuffle text-9xl"></i>
+                            </div>
+                            <div class="relative z-10 h-full flex flex-col">
+                                <div class="bg-white/20 w-12 h-12 rounded-lg flex items-center justify-center mb-6 group-hover:bg-white/30 transition-colors">
+                                    <i class="fa-solid fa-brain text-2xl"></i>
+                                </div>
+                                <h3 class="text-2xl font-bold mb-2" data-key="mode_mix_title">Smart Miks</h3>
+                                <p class="text-indigo-100 mb-8 flex-grow" data-key="mode_mix_desc">Algoritmen finner dine svake sider og gir deg en blanding.</p>
+                                <div class="flex items-center font-bold bg-white/10 self-start px-4 py-2 rounded-lg backdrop-blur-sm group-hover:bg-white/20 transition-colors">
+                                    <span data-key="btn_start_mix">Start Trening</span> <i class="fa-solid fa-arrow-right ml-2"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card: Focus Mode -->
+                        <div onclick="startFocusMode()" class="bg-white rounded-2xl p-8 text-stone-800 shadow-lg border border-stone-200 cursor-pointer hover:shadow-xl hover:border-blue-300 hover:scale-[1.02] transition-all group relative overflow-hidden">
+                            <div class="absolute top-0 right-0 p-8 opacity-5 transform translate-x-4 -translate-y-4">
+                                <i class="fa-solid fa-crosshairs text-9xl text-blue-900"></i>
+                            </div>
+                            <div class="relative z-10 h-full flex flex-col">
+                                <div class="bg-blue-50 w-12 h-12 rounded-lg flex items-center justify-center mb-6 text-blue-600 group-hover:bg-blue-100 transition-colors">
+                                    <i class="fa-solid fa-list-check text-2xl"></i>
+                                </div>
+                                <h3 class="text-2xl font-bold mb-2" data-key="dash_focus_header">Fokustrening</h3>
+                                <p class="text-stone-500 mb-8 flex-grow" data-key="dash_focus_desc">Velg selv regel, nivå og type. Perfekt for mengdetrening.</p>
+                                <div class="flex items-center font-bold text-blue-600 self-start px-4 py-2 rounded-lg bg-blue-50 group-hover:bg-blue-100 transition-colors">
+                                    <span data-key="btn_start_focus">Gå til Fokus</span> <i class="fa-solid fa-arrow-right ml-2"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: THEORY -->
+            <div id="view-theory" class="view-section hidden fade-in">
+                <div class="max-w-3xl mx-auto">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-bold text-stone-900" data-key="nav_theory">Teoribank</h2>
+                        <select id="theory-topic-select" onchange="renderTheory()" class="bg-white border border-stone-300 text-stone-700 text-sm rounded-lg block p-2">
+                            <option value="chain" data-key="topic_chain">Kjerneregelen</option>
+                            <option value="product" data-key="topic_product">Produktregelen</option>
+                            <option value="quotient" data-key="topic_quotient">Brøkregelen</option>
+                        </select>
+                    </div>
+                    <div id="theory-content" class="bg-white rounded-xl border border-stone-200 shadow-sm p-8"></div>
+                </div>
+            </div>
+
+            <!-- VIEW: PRACTICE -->
+            <div id="view-practice" class="view-section hidden fade-in">
+                <div class="max-w-3xl mx-auto">
+                    <div class="flex justify-between items-end mb-4">
+                        <h2 class="text-2xl font-bold text-stone-900" id="practice-title">Treningsarena</h2>
+                        <div class="flex bg-white border border-stone-200 rounded-lg p-1 shadow-sm">
+                            <button onclick="setMode('focus')" id="mode-focus-btn" class="px-3 py-1 text-xs font-bold rounded transition-all">Fokus</button>
+                            <button onclick="setMode('mix')" id="mode-mix-btn" class="px-3 py-1 text-xs font-bold rounded transition-all">Smart Miks</button>
+                        </div>
+                    </div>
+
+                    <!-- FOCUS FILTER PANEL -->
+                    <div id="focus-filter-panel" class="hidden bg-white p-6 rounded-xl border border-stone-200 shadow-sm mb-8 fade-in">
+                        <div class="mb-6">
+                            <label class="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2" data-key="filter_rule">Regel</label>
+                            <select id="focus-rule-select" onchange="changeFocusRule(this.value)" class="w-full p-2.5 bg-white border border-stone-300 text-stone-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block shadow-sm">
+                                <option value="chain" data-key="topic_chain">Kjerneregelen</option>
+                                <option value="product" data-key="topic_product">Produktregelen</option>
+                                <option value="quotient" data-key="topic_quotient">Brøkregelen</option>
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div>
+                                <h4 class="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3" data-key="filter_levels">Vanskelighetsgrad</h4>
+                                <div class="flex gap-2 flex-wrap">
+                                    <label class="cursor-pointer"><input type="checkbox" class="filter-checkbox sr-only" value="1" onchange="toggleFilter('level', 1)" checked><div class="px-3 py-1.5 rounded-md border border-stone-200 text-sm font-medium text-stone-600 hover:bg-stone-50 transition-colors">Nivå 1</div></label>
+                                    <label class="cursor-pointer"><input type="checkbox" class="filter-checkbox sr-only" value="2" onchange="toggleFilter('level', 2)" checked><div class="px-3 py-1.5 rounded-md border border-stone-200 text-sm font-medium text-stone-600 hover:bg-stone-50 transition-colors">Nivå 2</div></label>
+                                    <label class="cursor-pointer"><input type="checkbox" class="filter-checkbox sr-only" value="3" onchange="toggleFilter('level', 3)" checked><div class="px-3 py-1.5 rounded-md border border-stone-200 text-sm font-medium text-stone-600 hover:bg-stone-50 transition-colors">Nivå 3</div></label>
+                                    <label class="cursor-pointer"><input type="checkbox" class="filter-checkbox sr-only" value="4" onchange="toggleFilter('level', 4)" checked><div class="px-3 py-1.5 rounded-md border border-stone-200 text-sm font-medium text-stone-600 hover:bg-stone-50 transition-colors">Nivå 4</div></label>
+                                    <label class="cursor-pointer"><input type="checkbox" class="filter-checkbox sr-only" value="5" onchange="toggleFilter('level', 5)" checked><div class="px-3 py-1.5 rounded-md border border-stone-200 text-sm font-medium text-stone-600 hover:bg-stone-50 transition-colors">Nivå 5</div></label>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3" data-key="filter_types">Matematisk Område</h4>
+                                <div class="flex gap-2 flex-wrap">
+                                    <label class="cursor-pointer"><input type="checkbox" class="filter-checkbox sr-only" value="poly" onchange="toggleFilter('type', 'poly')" checked><div class="px-3 py-1.5 rounded-md border border-stone-200 text-sm font-medium text-stone-600 hover:bg-stone-50 transition-colors">Polynomer</div></label>
+                                    <label class="cursor-pointer"><input type="checkbox" class="filter-checkbox sr-only" value="root" onchange="toggleFilter('type', 'root')" checked><div class="px-3 py-1.5 rounded-md border border-stone-200 text-sm font-medium text-stone-600 hover:bg-stone-50 transition-colors">Røtter</div></label>
+                                    <label class="cursor-pointer"><input type="checkbox" class="filter-checkbox sr-only" value="exp" onchange="toggleFilter('type', 'exp')" checked><div class="px-3 py-1.5 rounded-md border border-stone-200 text-sm font-medium text-stone-600 hover:bg-stone-50 transition-colors">Eksponential</div></label>
+                                    <label class="cursor-pointer"><input type="checkbox" class="filter-checkbox sr-only" value="log" onchange="toggleFilter('type', 'log')" checked><div class="px-3 py-1.5 rounded-md border border-stone-200 text-sm font-medium text-stone-600 hover:bg-stone-50 transition-colors">Logaritmer</div></label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center border-t border-stone-100 pt-4">
+                            <div class="text-xs text-stone-400">
+                                <span id="filter-count">0</span> oppgaver tilgjengelig
+                            </div>
+                            <button onclick="applyFiltersAndDraw()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-bold text-sm shadow-sm transition-colors">
+                                <i class="fa-solid fa-rotate mr-2"></i> <span data-key="btn_draw_focus">Trekk 5 oppgaver</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="problems-container" class="space-y-6 pb-12"></div>
+                </div>
+            </div>
+
+            <!-- VIEW: STATS -->
+            <div id="view-stats" class="view-section hidden fade-in">
+                <div class="max-w-5xl mx-auto">
+                    <h2 class="text-2xl font-bold text-stone-900 mb-6" data-key="nav_stats">Min Statistikk</h2>
+                    
+                    <!-- Top Metrics -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                        <div class="bg-white p-4 rounded-xl border border-stone-200 shadow-sm flex flex-col items-center justify-center">
+                            <span class="text-stone-500 text-xs uppercase font-bold tracking-wider mb-1" data-key="stat_total_attempted">Utført</span>
+                            <span class="text-3xl font-bold text-stone-800" id="stat-total-display">0</span>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl border border-stone-200 shadow-sm flex flex-col items-center justify-center">
+                            <span class="text-stone-500 text-xs uppercase font-bold tracking-wider mb-1" data-key="stat_mastery_rate">Mestring</span>
+                            <span class="text-3xl font-bold text-emerald-600" id="stat-mastery-display">0%</span>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl border border-stone-200 shadow-sm flex flex-col items-center justify-center">
+                            <span class="text-stone-500 text-xs uppercase font-bold tracking-wider mb-1" data-key="stat_hint_usage">Hint</span>
+                            <span class="text-3xl font-bold text-amber-500" id="stat-hint-display">0%</span>
+                        </div>
+                    </div>
+
+                    <!-- Charts Grid -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                        <!-- Topic Chart -->
+                        <div class="bg-white p-6 rounded-xl border border-stone-200 shadow-sm">
+                            <h3 class="font-semibold text-stone-800 mb-4" data-key="stat_chart_topic">Ferdighet per Emne</h3>
+                            <div class="chart-wrapper"><canvas id="topicChart"></canvas></div>
+                        </div>
+                        <!-- Level Chart (NEW) -->
+                        <div class="bg-white p-6 rounded-xl border border-stone-200 shadow-sm">
+                            <h3 class="font-semibold text-stone-800 mb-4" data-key="stat_chart_level">Ferdighet per Nivå</h3>
+                            <div class="chart-wrapper"><canvas id="levelChart"></canvas></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Overall Doughnut -->
+                    <div class="bg-white p-6 rounded-xl border border-stone-200 shadow-sm max-w-md mx-auto">
+                        <h3 class="font-semibold text-stone-800 mb-4 text-center" data-key="stat_chart_total">Total Oversikt</h3>
+                        <div class="chart-wrapper"><canvas id="masteryChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: HELP -->
+            <div id="view-help" class="view-section hidden fade-in">
+                <div class="max-w-3xl mx-auto bg-white rounded-xl border border-stone-200 shadow-sm p-8">
+                    <h2 class="text-2xl font-bold text-stone-900 mb-6" data-key="help_title">Hjelp & Informasjon</h2>
+                    
+                    <div class="space-y-8">
+                        <div>
+                            <h3 class="font-bold text-lg text-blue-600 mb-2 flex items-center gap-2"><i class="fa-solid fa-crosshairs"></i> <span data-key="help_focus_title">Fokustrening</span></h3>
+                            <p class="text-stone-600 text-sm leading-relaxed" data-key="help_focus_desc">Her kan du skreddersy din egen økt. Velg hvilken regel du vil øve på (rullegardin), hvilke vanskelighetsgrader (1-5) og hvilke typer funksjoner. Trykk "Hent oppgaver" for å generere 5 unike oppgaver som passer dine valg.</p>
+                        </div>
+                        
+                        <div>
+                            <h3 class="font-bold text-lg text-purple-600 mb-2 flex items-center gap-2"><i class="fa-solid fa-shuffle"></i> <span data-key="help_mix_title">Smart Miks</span></h3>
+                            <p class="text-stone-600 text-sm leading-relaxed" data-key="help_mix_desc">Dette er "den smarte læreren". Algoritmen ser på hva du har gjort før. Hvis du markerer oppgaver som "Trenger øving", vil Smart Miks gi deg flere av disse oppgavene senere. Den prioriterer også emner du har gjort lite av.</p>
+                        </div>
+
+                        <div>
+                            <h3 class="font-bold text-lg text-emerald-600 mb-2 flex items-center gap-2"><i class="fa-solid fa-chart-simple"></i> <span data-key="help_stats_title">Statistikk & Progresjon</span></h3>
+                            <p class="text-stone-600 text-sm leading-relaxed" data-key="help_stats_desc">"Mestret" betyr at du føler deg trygg på oppgaven. "Trenger øving" betyr at du vil se den igjen senere. Statistikken viser deg hvor du er sterk (nivå/emne) og hvor du bør legge inn en ekstra innsats.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- JS LOGIC -->
+    <script>
+        const state = {
+            currentView: 'dashboard',
+            language: 'no',
+            activeTopic: 'chain',
+            mode: 'focus', 
+            progress: JSON.parse(localStorage.getItem('mathTrainerProgress')) || {},
+            hints: JSON.parse(localStorage.getItem('mathTrainerHints')) || [],
+            activeProblems: [],
+            filters: {
+                levels: [1, 2, 3, 4, 5],
+                types: ['poly', 'root', 'exp', 'log']
+            }
+        };
+
+        const i18n = {
+            no: {
+                nav_dashboard: "Oversikt",
+                nav_theory: "Teoribank",
+                nav_practice: "Treningsarena",
+                nav_stats: "Min Statistikk",
+                nav_help: "Hjelp",
+                dash_welcome: "Velkommen!",
+                dash_subtitle: "Hva vil du trene på i dag?",
+                dash_focus_header: "Fokustrening",
+                dash_focus_desc: "Velg selv regel, nivå og type. Perfekt for mengdetrening.",
+                mode_mix_title: "Smart Miks",
+                mode_mix_desc: "Algoritmen finner dine svake sider.",
+                topic_chain: "Kjerneregelen",
+                topic_product: "Produktregelen",
+                topic_quotient: "Brøkregelen",
+                btn_start_focus: "Gå til Fokus",
+                btn_start_mix: "Start Trening",
+                btn_solution: "Vis Fasit",
+                btn_hide: "Skjul Fasit",
+                btn_mastered: "Fikk det til",
+                btn_practice: "Trenger øving",
+                chart_mastered: "Mestret",
+                chart_practice: "Må øves",
+                chart_pending: "Ikke startet",
+                theory_formula: "Formel",
+                theory_explanation: "Forklaring",
+                practice_subtitle_mix: "Smart Miks - Tilpasset deg",
+                btn_hint: "Hint",
+                btn_hide_hint: "Skjul Hint",
+                label_mix: "???",
+                hint_title: "Hjelp på veien",
+                label_recommended: "Anbefalt",
+                btn_new_mix: "Prøv 5 nye oppgaver",
+                mix_end_text: "Ferdig med denne runden?",
+                stat_total_attempted: "Utført",
+                stat_mastery_rate: "Mestring",
+                stat_hint_usage: "Hint Brukt",
+                stat_chart_total: "Total Oversikt",
+                stat_chart_topic: "Ferdighet per Emne",
+                stat_chart_level: "Ferdighet per Nivå",
+                filter_rule: "Regel",
+                filter_levels: "Nivå",
+                filter_types: "Matematisk Område",
+                btn_draw_focus: "Trekk 5 oppgaver",
+                focus_end_text: "Vil du ha flere av samme type?",
+                btn_new_focus: "Trekk 5 nye (samme filtre)"
+            },
+            en: {
+                nav_dashboard: "Dashboard",
+                nav_theory: "Theory Bank",
+                nav_practice: "Practice Arena",
+                nav_stats: "My Stats",
+                nav_help: "Help",
+                dash_welcome: "Welcome!",
+                dash_subtitle: "What to practice today?",
+                dash_focus_header: "Focus Training",
+                dash_focus_desc: "Choose rule, level and type yourself.",
+                mode_mix_title: "Smart Mix",
+                mode_mix_desc: "The algorithm finds your weak spots.",
+                topic_chain: "Chain Rule",
+                topic_product: "Product Rule",
+                topic_quotient: "Quotient Rule",
+                btn_start_focus: "Go to Focus",
+                btn_start_mix: "Start Training",
+                btn_solution: "Show Answer",
+                btn_hide: "Hide Answer",
+                btn_mastered: "Got it!",
+                btn_practice: "Need Practice",
+                chart_mastered: "Mastered",
+                chart_practice: "Needs Work",
+                chart_pending: "Not Started",
+                theory_formula: "Formula",
+                theory_explanation: "Explanation",
+                practice_subtitle_mix: "Smart Mix - Adaptive",
+                btn_hint: "Hint",
+                btn_hide_hint: "Hide Hint",
+                label_mix: "???",
+                hint_title: "Quick Tip",
+                label_recommended: "Recommended",
+                btn_new_mix: "Try 5 New Tasks",
+                mix_end_text: "Done with this set?",
+                stat_total_attempted: "Completed",
+                stat_mastery_rate: "Mastery",
+                stat_hint_usage: "Hint Usage",
+                stat_chart_total: "Progress",
+                stat_chart_topic: "Skill per Topic",
+                stat_chart_level: "Skill per Level",
+                filter_rule: "Rule",
+                filter_levels: "Levels",
+                filter_types: "Math Area",
+                btn_draw_focus: "Draw 5 Problems",
+                focus_end_text: "Want more of the same?",
+                btn_new_focus: "Draw 5 New (Same Filters)"
+            },
+            es: {
+                nav_dashboard: "Tablero",
+                nav_theory: "Teoría",
+                nav_practice: "Arena de Práctica",
+                nav_stats: "Mis Estadísticas",
+                nav_help: "Ayuda",
+                dash_welcome: "¡Bienvenido!",
+                dash_subtitle: "¿Qué quieres practicar?",
+                dash_focus_header: "Entrenamiento Enfocado",
+                dash_focus_desc: "Elige regla, nivel y tipo tú mismo.",
+                mode_mix_title: "Mezcla Inteligente",
+                mode_mix_desc: "El algoritmo encuentra tus debilidades.",
+                topic_chain: "Regla de la Cadena",
+                topic_product: "Regla del Producto",
+                topic_quotient: "Regla del Cociente",
+                btn_start_focus: "Ir a Enfoque",
+                btn_start_mix: "Empezar",
+                btn_solution: "Ver Solución",
+                btn_hide: "Ocultar Solución",
+                btn_mastered: "¡Lo tengo!",
+                btn_practice: "Necesito Práctica",
+                chart_mastered: "Dominado",
+                chart_practice: "Necesita Práctica",
+                chart_pending: "Pendiente",
+                theory_formula: "Fórmula",
+                theory_explanation: "Explicación",
+                practice_subtitle_mix: "Mezcla Inteligente",
+                btn_hint: "Pista",
+                btn_hide_hint: "Ocultar Pista",
+                label_mix: "???",
+                hint_title: "Pista",
+                label_recommended: "Recomendado",
+                btn_new_mix: "Prueba 5 Nuevas",
+                mix_end_text: "¿Terminaste?",
+                stat_total_attempted: "Completado",
+                stat_mastery_rate: "Dominio",
+                stat_hint_usage: "Pistas",
+                stat_chart_total: "Progreso",
+                stat_chart_topic: "Habilidad por Tema",
+                stat_chart_level: "Habilidad por Nivel",
+                filter_rule: "Regla",
+                filter_levels: "Niveles",
+                filter_types: "Área Matemática",
+                btn_draw_focus: "Extraer 5 problemas",
+                focus_end_text: "¿Quieres más?",
+                btn_new_focus: "Extraer 5 nuevas"
+            }
+        };
+
+        const theoryData = {
+            chain: {
+                no: { title: "Kjerneregelen", intro: "Derivasjon av sammensatte funksjoner.", formula: "$$f(x) = g(u(x)) \\implies f'(x) = g'(u) \\cdot u'(x)$$", ruleText: "Derivert ytre · Derivert kjerne", example: "Eks: $(2x+1)^2$" },
+                en: { title: "Chain Rule", intro: "Differentiation of composite functions.", formula: "$$f(x) = g(u(x)) \\implies f'(x) = g'(u) \\cdot u'(x)$$", ruleText: "Outer deriv · Inner deriv", example: "Ex: $(2x+1)^2$" },
+                es: { title: "Regla de la Cadena", intro: "Derivación de funciones compuestas.", formula: "$$f(x) = g(u(x)) \\implies f'(x) = g'(u) \\cdot u'(x)$$", ruleText: "Deriv externa · Deriv interna", example: "Ej: $(2x+1)^2$" }
+            },
+            product: {
+                no: { title: "Produktregelen", intro: "Derivasjon av et produkt.", formula: "$$(u \\cdot v)' = u'v + uv'$$", ruleText: "u'v + uv'", example: "Eks: $x^2 e^x$" },
+                en: { title: "Product Rule", intro: "Differentiation of a product.", formula: "$$(u \\cdot v)' = u'v + uv'$$", ruleText: "u'v + uv'", example: "Ex: $x^2 e^x$" },
+                es: { title: "Regla del Producto", intro: "Derivada de un producto.", formula: "$$(u \\cdot v)' = u'v + uv'$$", ruleText: "u'v + uv'", example: "Ej: $x^2 e^x$" }
+            },
+            quotient: {
+                no: { title: "Brøkregelen", intro: "Derivasjon av brøk.", formula: "$$\\left(\\frac{u}{v}\\right)' = \\frac{u'v - uv'}{v^2}$$", ruleText: "(u'v - uv') / v²", example: "Eks: $x / (x+1)$" },
+                en: { title: "Quotient Rule", intro: "Differentiation of a fraction.", formula: "$$\\left(\\frac{u}{v}\\right)' = \\frac{u'v - uv'}{v^2}$$", ruleText: "(u'v - uv') / v²", example: "Ex: $x / (x+1)$" },
+                es: { title: "Regla del Cociente", intro: "Derivada de una fracción.", formula: "$$\\left(\\frac{u}{v}\\right)' = \\frac{u'v - uv'}{v^2}$$", ruleText: "(u'v - uv') / v²", example: "Ej: $x / (x+1)$" }
+            }
+        };
+
+        // --- PROBLEM GENERATOR ---
+        let problemBank = [];
+
+        function fmt(coeff, varName, isFirst = true) {
+            if (coeff === 0) return "";
+            let str = "";
+            if (!isFirst && coeff > 0) str += "+";
+            if (coeff === 1) str += varName;
+            else if (coeff === -1) str += "-" + varName;
+            else str += coeff + varName;
+            return str;
+        }
+        function fmtNum(num, isFirst = false) {
+            if (num === 0) return "";
+            if (num > 0 && !isFirst) return "+" + num;
+            return "" + num;
+        }
+        function fmtPow(n) {
+            return n === 1 ? "" : `^${n}`;
+        }
+
+        function generateProblemBank() {
+            let id = 1000;
+            const types = ['poly', 'root', 'exp', 'log'];
+            const rules = ['chain', 'product', 'quotient'];
+            const levels = [1, 2, 3, 4, 5];
+            
+            const bank = [];
+
+            const add = (topic, level, type, q, a, steps, hint) => {
+                bank.push({ id: id++, topic, level, type, q, a, steps, hint });
+            };
+
+            rules.forEach(rule => {
+                levels.forEach(lvl => {
+                    types.forEach(type => {
+                        for(let i=0; i<20; i++) {
+                            generateSingleProblem(rule, lvl, type, add);
+                        }
+                    });
+                });
+            });
+            
+            return bank;
+        }
+
+        function generateSingleProblem(rule, lvl, type, add) {
+            const r = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+            const maxC = lvl * 2;
+            const a = r(1, maxC) * (Math.random() > 0.8 && lvl > 1 ? -1 : 1);
+            const b = r(1, maxC);
+            const n = r(2, 2 + lvl);
+
+            const par = (val) => val < 0 ? `(${val})` : val;
+
+            // --- CHAIN RULE ---
+            if (rule === 'chain') {
+               let gu_tex = "", u_tex = "", gpu_tex = "", up_tex = "", subst_tex = "", final_tex = "", q = "", hint = "";
+               let u_val = `${fmt(a,'x')} ${fmtNum(b)}`; 
+               let up_val = `${a}`;
+
+               if (type === 'poly') {
+                    q = `f(x) = (${u_val})^${n}`;
+                    gu_tex = `u^${n}`;
+                    u_tex = u_val;
+                    gpu_tex = `${n}u${fmtPow(n-1)}`;
+                    up_tex = up_val;
+                    subst_tex = `${n}(${u_val})${fmtPow(n-1)} \\cdot ${par(a)}`;
+                    final_tex = `${n*a}(${u_val})${fmtPow(n-1)}`;
+                    hint = "Potensregel med kjerne.";
+                }
+                else if (type === 'root') {
+                    q = `f(x) = \\sqrt{${u_val}}`;
+                    gu_tex = `\\sqrt{u}`;
+                    u_tex = u_val;
+                    gpu_tex = `\\frac{1}{2\\sqrt{u}}`;
+                    up_tex = up_val;
+                    subst_tex = `\\frac{1}{2\\sqrt{${u_val}}} \\cdot ${par(a)}`;
+                    final_tex = `\\frac{${a}}{2\\sqrt{${u_val}}}`;
+                    hint = "Kvadratrot-regel.";
+                }
+                else if (type === 'exp') {
+                    q = `f(x) = e^{${u_val}}`;
+                    gu_tex = `e^u`;
+                    u_tex = u_val;
+                    gpu_tex = `e^u`;
+                    up_tex = up_val;
+                    subst_tex = `e^{${u_val}} \\cdot ${par(a)}`;
+                    final_tex = `${a}e^{${u_val}}`;
+                    hint = "e^u regel.";
+                }
+                else if (type === 'log') {
+                    q = `f(x) = \\ln(${u_val})`;
+                    gu_tex = `\\ln u`;
+                    u_tex = u_val;
+                    gpu_tex = `\\frac{1}{u}`;
+                    up_tex = up_val;
+                    subst_tex = `\\frac{1}{${u_val}} \\cdot ${par(a)}`;
+                    final_tex = `\\frac{${a}}{${u_val}}`;
+                    hint = "ln(u) regel.";
+                }
+
+                const steps = `$$
+\\begin{aligned}
+g(u) &= ${gu_tex} & u(x) &= ${u_tex} \\\\
+g'(u) &= ${gpu_tex} & u'(x) &= ${up_tex}
+\\end{aligned}
+$$
+$$
+\\begin{aligned}
+f'(x) &= g'(u) \\cdot u'(x) \\\\
+&= ${subst_tex} \\\\
+&= ${final_tex}
+\\end{aligned}
+$$`;
+                
+                add(rule, lvl, type, q, `$$ f'(x) = ${final_tex} $$`, steps, hint);
+            }
+
+            // --- PRODUCT RULE ---
+            else if (rule === 'product') {
+                let u_tex = "", v_tex = "", up_tex = "", vp_tex = "", raw_tex = "", simp_tex = "", q = "", hint = "";
+
+                if (type === 'poly') {
+                    const term2 = `${fmt(a,'x')} ${fmtNum(b)}`;
+                    q = `f(x) = x^${n}(${term2})`;
+                    u_tex = `x^${n}`;
+                    v_tex = term2;
+                    up_tex = `${n}x${fmtPow(n-1)}`;
+                    vp_tex = `${a}`;
+                    raw_tex = `${up_tex}(${term2}) + ${u_tex}(${a})`;
+                    simp_tex = `x${fmtPow(n-1)}(${a*(n+1)}x + ${n*b})`;
+                    hint = "Bruk produktregelen: u'v + uv'.";
+                }
+                else if (type === 'exp') {
+                    q = `f(x) = x^${n} e^{${a}x}`;
+                    u_tex = `x^${n}`;
+                    v_tex = `e^{${a}x}`;
+                    up_tex = `${n}x${fmtPow(n-1)}`;
+                    vp_tex = `${a}e^{${a}x}`;
+                    raw_tex = `${up_tex} \\cdot ${v_tex} + ${u_tex} \\cdot ${vp_tex}`;
+                    simp_tex = `x${fmtPow(n-1)}e^{${a}x}(${n} + ${a}x)`;
+                    hint = "Produktregel + Kjerneregel på e.";
+                }
+                else if (type === 'log') {
+                    q = `f(x) = x^${n} \\ln(x)`;
+                    u_tex = `x^${n}`;
+                    v_tex = `\\ln(x)`;
+                    up_tex = `${n}x${fmtPow(n-1)}`;
+                    vp_tex = `\\frac{1}{x}`;
+                    const step1 = `${up_tex} \\ln(x) + ${u_tex} \\cdot \\frac{1}{x}`;
+                    const step2 = `${up_tex} \\ln(x) + x${fmtPow(n-1)}`;
+                    raw_tex = `${step1} \\\\ &= ${step2}`; 
+                    simp_tex = `x${fmtPow(n-1)}(${n}\\ln x + 1)`;
+                    hint = "Husk at x^n * (1/x) blir x^(n-1).";
+                }
+                else {
+                    q = `f(x) = x \\sqrt{x ${fmtNum(b)}}`;
+                    u_tex = `x`;
+                    v_tex = `\\sqrt{x ${fmtNum(b)}}`;
+                    up_tex = `1`;
+                    vp_tex = `\\frac{1}{2\\sqrt{x ${fmtNum(b)}}}`;
+                    raw_tex = `1 \\cdot ${v_tex} + x \\cdot ${vp_tex}`;
+                    simp_tex = `\\frac{3x ${fmtNum(2*b)}}{2\\sqrt{x ${fmtNum(b)}}}`;
+                    hint = "Produktregel.";
+                }
+
+                const steps = `$$
+\\begin{aligned}
+u &= ${u_tex} & v &= ${v_tex} \\\\
+u' &= ${up_tex} & v' &= ${vp_tex}
+\\end{aligned}
+$$
+$$
+\\begin{aligned}
+f'(x) &= u'v + uv' \\\\
+&= ${raw_tex} \\\\
+&= ${simp_tex}
+\\end{aligned}
+$$`;
+
+                add(rule, lvl, type, q, `$$ f'(x) = ${simp_tex} $$`, steps, hint);
+            }
+            
+            // --- QUOTIENT RULE ---
+            else if (rule === 'quotient') {
+                 if (type === 'poly') {
+                    const denom = `${fmt(b,'x')} ${fmtNum(n)}`;
+                    q = `f(x) = \\frac{${a}}{${denom}}`;
+                    const rawNum = `0 \\cdot (${denom}) - ${a} \\cdot ${b}`;
+                    const ans = `f'(x) = \\frac{${-a*b}}{(${denom})^2}`;
+                    const steps = `$u=${a}, v=${denom}$. $u'=0, v'=${b}$. $$f'(x) = \\frac{u'v - uv'}{v^2} \\\\ = \\frac{${rawNum}}{(${denom})^2} \\\\ = \\frac{${-a*b}}{(${denom})^2}$$`;
+                    add(rule, lvl, type, q, `$$ ${ans} $$`, steps, "Brøkregel.");
+                }
+                else if (type === 'exp') {
+                    q = `f(x) = \\frac{e^{${a}x}}{x}`;
+                    const rawNum = `${a}e^{${a}x} \\cdot x - e^{${a}x} \\cdot 1`;
+                    const ans = `f'(x) = \\frac{e^{${a}x}(${a}x - 1)}{x^2}`;
+                    const steps = `$u=e^{${a}x}, v=x$. $u'=${a}e^{${a}x}, v'=1$. $$f'(x) = \\frac{${rawNum}}{x^2} \\\\ = \\frac{e^{${a}x}(${a}x - 1)}{x^2}$$`;
+                    add(rule, lvl, type, q, `$$ ${ans} $$`, steps, "Brøkregel.");
+                }
+                else if (type === 'log') {
+                    q = `f(x) = \\frac{\\ln x}{x^${n}}`;
+                    const rawNum = `(\\frac{1}{x}) \\cdot x^${n} - \\ln x \\cdot ${n}x${fmtPow(n-1)}`;
+                    const ans = `f'(x) = \\frac{1 - ${n}\\ln x}{x^${n+1}}`;
+                    const steps = `$u=\\ln x, v=x^${n}$. $u'=1/x, v'=${n}x${fmtPow(n-1)}$. $$f'(x) = \\frac{${rawNum}}{(x^${n})^2} \\\\ = \\frac{x${fmtPow(n-1)}(1 - ${n}\\ln x)}{x^${2*n}} \\\\ = \\frac{1 - ${n}\\ln x}{x^${n+1}}$$`;
+                    add(rule, lvl, type, q, `$$ ${ans} $$`, steps, "Brøkregel.");
+                }
+                 else {
+                     const denom = `x ${fmtNum(a)}`;
+                     q = `f(x) = \\frac{\\sqrt{x}}{${denom}}`;
+                     const ans = `...`; 
+                     const steps = `$u=\\sqrt{x}, v=${denom}$. $$f'(x) = \\frac{\\frac{1}{2\\sqrt{x}}(${denom}) - \\sqrt{x}(1)}{(${denom})^2}$$`;
+                     add(rule, lvl, type, q, `$$ ${ans} $$`, steps, "Brøkregel.");
+                }
+            }
+        }
+
+        function init() {
+            const savedLang = localStorage.getItem('mathTrainerLang');
+            if (savedLang) state.language = savedLang;
+            
+            // GENERATE PROBLEMS
+            problemBank = generateProblemBank();
+
+            updateLanguageUI();
+            navigateTo('dashboard');
+            renderChart();
+        }
+
+        function navigateTo(viewId) {
+            state.currentView = viewId;
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`view-${viewId}`).classList.remove('hidden');
+            
+            if (viewId === 'practice') {
+                if(state.activeProblems.length === 0) {
+                    state.mode = 'focus';
+                    renderModeUI();
+                }
+                renderProblems();
+            }
+            if (viewId === 'stats') updateChartData();
+            if (window.MathJax) MathJax.typeset();
+        }
+
+        function startFocusMode() {
+            state.mode = 'focus';
+            if(!state.activeTopic) state.activeTopic = 'chain';
+            state.activeProblems = []; 
+            navigateTo('practice');
+            renderModeUI();
+            updateFilterCount();
+        }
+
+        function startMixMode() {
+            state.mode = 'mix';
+            updateProblemSet();
+            navigateTo('practice');
+        }
+
+        function setMode(mode) {
+            state.mode = mode;
+            state.activeProblems = []; 
+            if (mode === 'mix') updateProblemSet();
+            renderModeUI();
+            renderProblems();
+            if(mode === 'focus') {
+                const sel = document.getElementById('focus-rule-select');
+                if(sel) sel.value = state.activeTopic;
+                updateFilterCount();
+            }
+        }
+
+        function changeFocusRule(topic) {
+            state.activeTopic = topic;
+            state.activeProblems = [];
+            renderProblems(); 
+            updateFilterCount(); 
+        }
+
+        function toggleFilter(category, value) {
+            const list = state.filters[category + 's']; 
+            const index = list.indexOf(value);
+            if (index === -1) list.push(value);
+            else list.splice(index, 1);
+            updateFilterCount();
+        }
+
+        function updateFilterCount() {
+            const matches = problemBank.filter(p => 
+                p.topic === state.activeTopic &&
+                state.filters.levels.includes(p.level) &&
+                state.filters.types.includes(p.type)
+            );
+            document.getElementById('filter-count').textContent = matches.length;
+        }
+
+        function applyFiltersAndDraw() {
+            let candidates = problemBank.filter(p => 
+                p.topic === state.activeTopic &&
+                state.filters.levels.includes(p.level) &&
+                state.filters.types.includes(p.type)
+            );
+            
+            if (candidates.length === 0) {
+                alert("Ingen oppgaver funnet med disse filtrene.");
+                return;
+            }
+
+            candidates.sort(() => 0.5 - Math.random());
+            state.activeProblems = candidates.slice(0, 5);
+            state.activeProblems.sort((a, b) => a.level - b.level);
+            
+            renderProblems();
+        }
+
+        function getProblemWeight(problem) {
+            const status = state.progress[problem.id];
+            let weight = 1;
+            if (status === 'practice') weight += 10;
+            if (status === 'mastered') weight = 0.1;
+            return weight;
+        }
+
+        function updateProblemSet() {
+            if (state.mode === 'mix') {
+                let weighted = problemBank.map(p => ({ ...p, weight: getProblemWeight(p) }));
+                weighted.sort((a, b) => (b.weight * Math.random()) - (a.weight * Math.random()));
+                let selected = weighted.slice(0, 5);
+                selected.sort((a, b) => a.level - b.level);
+                state.activeProblems = selected;
+            }
+        }
+
+        function renderModeUI() {
+            const focusBtn = document.getElementById('mode-focus-btn');
+            const mixBtn = document.getElementById('mode-mix-btn');
+            const focusPanel = document.getElementById('focus-filter-panel');
+            const titleEl = document.getElementById('practice-title');
+            const ruleSel = document.getElementById('focus-rule-select');
+            
+            if(state.mode === 'focus') {
+                focusBtn.className = "px-3 py-1 text-xs font-bold rounded transition-all bg-blue-600 text-white shadow-sm";
+                mixBtn.className = "px-3 py-1 text-xs font-bold rounded transition-all text-stone-500 hover:bg-stone-100";
+                focusPanel.classList.remove('hidden');
+                if(ruleSel) ruleSel.value = state.activeTopic;
+                titleEl.textContent = i18n[state.language].dash_focus_header;
+            } else {
+                mixBtn.className = "px-3 py-1 text-xs font-bold rounded transition-all bg-purple-600 text-white shadow-sm";
+                focusBtn.className = "px-3 py-1 text-xs font-bold rounded transition-all text-stone-500 hover:bg-stone-100";
+                focusPanel.classList.add('hidden');
+                titleEl.textContent = i18n[state.language].mode_mix_title;
+            }
+        }
+
+        function renderProblems() {
+            const container = document.getElementById('problems-container');
+            const texts = i18n[state.language];
+            container.innerHTML = '';
+            
+            const list = state.activeProblems;
+
+            if(list.length === 0) {
+                if(state.mode === 'focus') {
+                    container.innerHTML = `<div class="text-center text-stone-400 py-12"><i class="fa-solid fa-filter mb-2 text-2xl"></i><p>${texts.btn_draw_focus}...</p></div>`;
+                }
+                return;
+            }
+
+            list.forEach(prob => {
+                const status = state.progress[prob.id];
+                let borderClass = "border-stone-200";
+                let icon = "";
+                
+                if(status === 'mastered') { borderClass = "border-emerald-500 border-l-4"; icon = '<i class="fa-solid fa-check text-emerald-500"></i>'; }
+                else if(status === 'practice') { borderClass = "border-amber-500 border-l-4"; }
+
+                let typeBadge = "";
+                if(prob.type === 'poly') typeBadge = "Polynom";
+                if(prob.type === 'root') typeBadge = "Rot";
+                if(prob.type === 'exp') typeBadge = "Eksponential";
+                if(prob.type === 'log') typeBadge = "Logaritme";
+                
+                let labelsHTML = '';
+                if (state.mode === 'mix') {
+                     labelsHTML = `<span class="bg-purple-100 text-purple-600 px-2 py-1 rounded">${texts.label_mix}</span>`;
+                } else {
+                    labelsHTML = `
+                        <span class="bg-stone-100 text-stone-500 px-2 py-1 rounded">Nivå ${prob.level}</span>
+                        <span class="bg-blue-50 text-blue-600 px-2 py-1 rounded">${typeBadge}</span>
+                    `;
+                }
+
+                const div = document.createElement('div');
+                div.className = `bg-white rounded-lg border shadow-sm p-6 ${borderClass}`;
+                div.innerHTML = `
+                    <div class="flex justify-between mb-4">
+                        <div class="flex gap-2 text-[10px] font-bold uppercase tracking-wide">
+                            ${labelsHTML}
+                        </div>
+                        ${icon}
+                    </div>
+                    <div class="text-xl font-serif text-center mb-6">$$${prob.q}$$</div>
+                    <div class="flex justify-center gap-3">
+                        <button onclick="toggleHint(${prob.id})" id="btn-hint-${prob.id}" class="text-stone-500 text-sm hover:text-amber-600 border border-stone-200 px-3 py-1.5 rounded bg-white"><i class="fa-regular fa-lightbulb mr-1"></i> ${texts.btn_hint}</button>
+                        <button onclick="toggleSolution(${prob.id})" id="btn-sol-${prob.id}" class="text-white text-sm font-bold bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded shadow-sm"><i class="fa-regular fa-eye mr-1"></i> ${texts.btn_solution}</button>
+                    </div>
+                    <div id="hint-${prob.id}" class="hidden mt-4 bg-amber-50 text-amber-800 p-3 rounded text-sm border border-amber-100 flex gap-2">
+                        <i class="fa-solid fa-info-circle mt-0.5"></i> <div><span class="font-bold block text-xs uppercase mb-1">${texts.hint_title}</span>${prob.hint}</div>
+                    </div>
+                    <div id="sol-${prob.id}" class="hidden mt-6 pt-6 border-t border-stone-100 bg-stone-50/30 -mx-6 px-6">
+                        <div class="text-center text-lg font-serif text-stone-800 mb-2">${prob.a}</div>
+                        <div class="text-sm text-stone-500 text-center mb-4">${prob.steps}</div>
+                        <div class="flex justify-center gap-2 pb-2">
+                            <button onclick="rateProblem(${prob.id}, 'practice')" class="px-3 py-1 text-xs font-bold text-amber-700 bg-amber-100 hover:bg-amber-200 rounded">${texts.btn_practice}</button>
+                            <button onclick="rateProblem(${prob.id}, 'mastered')" class="px-3 py-1 text-xs font-bold text-emerald-700 bg-emerald-100 hover:bg-emerald-200 rounded">${texts.btn_mastered}</button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+
+            const footer = document.createElement('div');
+            footer.className = "mt-12 text-center border-t border-stone-200 pt-8";
+            const btnText = state.mode === 'mix' ? texts.btn_new_mix : texts.btn_new_focus;
+            const descText = state.mode === 'mix' ? texts.mix_end_text : texts.focus_end_text;
+            const action = state.mode === 'mix' ? 'startMixMode()' : 'applyFiltersAndDraw()';
+            
+            footer.innerHTML = `
+                <p class="text-stone-500 mb-4 text-sm">${descText}</p>
+                <button onclick="${action}" class="bg-stone-800 text-white px-6 py-3 rounded-lg font-bold shadow-md hover:bg-black transition-transform hover:scale-105">
+                    <i class="fa-solid fa-rotate mr-2"></i> ${btnText}
+                </button>
+            `;
+            container.appendChild(footer);
+
+            if(window.MathJax) MathJax.typeset();
+        }
+
+        function toggleHint(id) {
+            const el = document.getElementById(`hint-${id}`);
+            if(el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+                if(!state.hints.includes(id)) {
+                    state.hints.push(id);
+                    localStorage.setItem('mathTrainerHints', JSON.stringify(state.hints));
+                }
+            } else {
+                el.classList.add('hidden');
+            }
+        }
+
+        function toggleSolution(id) {
+            const el = document.getElementById(`sol-${id}`);
+            el.classList.toggle('hidden');
+            if(!el.classList.contains('hidden') && window.MathJax) MathJax.typeset();
+        }
+
+        function rateProblem(id, status) {
+            state.progress[id] = status;
+            localStorage.setItem('mathTrainerProgress', JSON.stringify(state.progress));
+            renderProblems();
+        }
+
+        function setLanguage(lang) {
+            state.language = lang;
+            localStorage.setItem('mathTrainerLang', lang);
+            updateLanguageUI();
+            navigateTo(state.currentView);
+        }
+
+        function updateLanguageUI() {
+            document.querySelectorAll('[data-key]').forEach(el => {
+                const key = el.getAttribute('data-key');
+                if (i18n[state.language][key]) {
+                    el.textContent = i18n[state.language][key];
+                }
+            });
+            
+            const selTopic = document.getElementById('theory-topic-select');
+            if(selTopic) {
+                Array.from(selTopic.options).forEach(opt => {
+                    const key = opt.getAttribute('data-key');
+                    if(i18n[state.language][key]) opt.textContent = i18n[state.language][key];
+                });
+            }
+            
+            const selRule = document.getElementById('focus-rule-select');
+            if(selRule) {
+                Array.from(selRule.options).forEach(opt => {
+                    const key = opt.getAttribute('data-key');
+                    if(i18n[state.language][key]) opt.textContent = i18n[state.language][key];
+                });
+            }
+
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                if(btn.id === `btn-${state.language}`) {
+                    btn.className = "lang-btn px-3 py-1 text-sm font-medium rounded-md transition-all bg-white shadow-sm ring-1 ring-black/10";
+                } else {
+                    btn.className = "lang-btn px-3 py-1 text-sm font-medium rounded-md transition-all text-stone-400 hover:bg-stone-200";
+                }
+            });
+        }
+
+        let chart1, chart2, chart3;
+        function renderChart() {
+            const ctx1 = document.getElementById('masteryChart').getContext('2d');
+            chart1 = new Chart(ctx1, { type: 'doughnut', data: { datasets: [{ data: [1], backgroundColor: ['#eee'] }] } });
+            const ctx2 = document.getElementById('topicChart').getContext('2d');
+            chart2 = new Chart(ctx2, { type: 'bar', data: { datasets: [{ data: [] }] } });
+            const ctx3 = document.getElementById('levelChart').getContext('2d');
+            chart3 = new Chart(ctx3, { type: 'bar', data: { datasets: [{ data: [] }] } });
+        }
+        function updateChartData() {
+            let mastered = 0;
+            let practice = 0;
+            const total = problemBank.length;
+            const attemptedIds = [];
+            
+            Object.entries(state.progress).forEach(([id, val]) => {
+                if(val === 'mastered') mastered++;
+                if(val === 'practice') practice++;
+                if(val === 'mastered' || val === 'practice') attemptedIds.push(parseInt(id));
+            });
+            
+            const pending = Math.max(0, total - mastered - practice);
+            const texts = i18n[state.language];
+            
+            chart1.data.labels = [texts.chart_mastered, texts.chart_practice, texts.chart_pending];
+            chart1.data.datasets[0].data = [mastered, practice, pending];
+            chart1.data.datasets[0].backgroundColor = ['#10b981', '#f59e0b', '#e7e5e4'];
+            chart1.update();
+
+            const topics = ['chain', 'product', 'quotient'];
+            const topicMastery = [0, 0, 0];
+            const topicPractice = [0, 0, 0];
+
+            const levelMastery = [0, 0, 0, 0, 0];
+            const levelPractice = [0, 0, 0, 0, 0];
+
+            problemBank.forEach(p => {
+                const status = state.progress[p.id];
+                const idx = topics.indexOf(p.topic);
+                if(idx !== -1 && (status === 'mastered' || status === 'practice')) {
+                    if(status === 'mastered') topicMastery[idx]++;
+                    if(status === 'practice') topicPractice[idx]++;
+                }
+                if(p.level >= 1 && p.level <= 5 && (status === 'mastered' || status === 'practice')) {
+                    if(status === 'mastered') levelMastery[p.level-1]++;
+                    if(status === 'practice') levelPractice[p.level-1]++;
+                }
+            });
+
+            chart2.data.labels = [texts.topic_chain, texts.topic_product, texts.topic_quotient];
+            chart2.data.datasets[0].label = texts.chart_mastered;
+            chart2.data.datasets[0].backgroundColor = '#10b981';
+            chart2.data.datasets[0].data = topicMastery;
+            if(chart2.data.datasets.length < 2) {
+                 chart2.data.datasets.push({ label: texts.chart_practice, backgroundColor: '#f59e0b', data: topicPractice });
+            } else {
+                 chart2.data.datasets[1].label = texts.chart_practice;
+                 chart2.data.datasets[1].data = topicPractice;
+            }
+            chart2.update();
+
+            chart3.data.labels = ['Lvl 1', 'Lvl 2', 'Lvl 3', 'Lvl 4', 'Lvl 5'];
+            chart3.data.datasets[0].label = texts.chart_mastered;
+            chart3.data.datasets[0].backgroundColor = '#10b981';
+            chart3.data.datasets[0].data = levelMastery;
+            if(chart3.data.datasets.length < 2) {
+                 chart3.data.datasets.push({ label: texts.chart_practice, backgroundColor: '#f59e0b', data: levelPractice });
+            } else {
+                 chart3.data.datasets[1].label = texts.chart_practice;
+                 chart3.data.datasets[1].data = levelPractice;
+            }
+            chart3.update();
+
+            const totalAttempted = mastered + practice;
+            const relevantHints = state.hints.filter(hid => attemptedIds.includes(parseInt(hid))).length;
+            const hintRate = totalAttempted > 0 ? Math.round((relevantHints / totalAttempted) * 100) : 0;
+            const masteryRate = totalAttempted > 0 ? Math.round((mastered / totalAttempted) * 100) : 0;
+
+            document.getElementById('stat-total-display').textContent = totalAttempted;
+            document.getElementById('stat-mastery-display').textContent = masteryRate + '%';
+            document.getElementById('stat-hint-display').textContent = hintRate + '%';
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>

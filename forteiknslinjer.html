@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forteiknsskjemagenerator</title>
+    
+    <!-- MathJax for LaTeX Rendering -->
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['\\(', '\\)']],
+                displayMath: [['\\[', '\\]']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+    
+    <!-- Font import -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- General Design (Light Theme) --- */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa; /* Lys grå bakgrunn */
+            color: #2c3e50; /* Mørk tekst */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem 1rem;
+            font-size: 16px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            background: #ffffff; /* Kvit container */
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid #dee2e6;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            position: relative; /* For positioning links */
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 2rem;
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        /* --- Input Sections --- */
+        .input-section {
+            margin-bottom: 1.5rem;
+            border: 1px solid #dee2e6; /* Tydlegare ramme */
+            padding: 1.5rem;
+            border-radius: 8px;
+            background-color: #fdfdfd; /* Subtil bakgrunnsfarge for djupn */
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02); /* Subtil skugge */
+        }
+
+        .input-section h2 {
+            margin-top: 0;
+            font-size: 1.2rem;
+            color: #2c3e50;
+            border-bottom: 1px solid #e9ecef;
+            padding-bottom: 0.8rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            display: flex; /* For alignment of tooltip icon */
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .axis-inputs {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            gap: 1rem;
+        }
+
+        .input-field {
+            flex-grow: 1;
+            padding: 0.75rem;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            background-color: #ffffff;
+            color: #2c3e50;
+            font-family: 'JetBrains Mono', monospace;
+            height: 54px;
+            box-sizing: border-box;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        }
+        
+        .factor-controls {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 0.5rem;
+            align-items: flex-start;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            white-space: nowrap;
+            font-size: 0.9em;
+            height: 22px;
+            padding-left: 1px;
+        }
+        
+        .denominator-check {
+            width: 1.2em;
+            height: 1.2em;
+            margin: 0;
+        }
+
+        .remove-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: none;
+            border: none;
+            color: #e74c3c;
+            cursor: pointer;
+            transition: color 0.2s;
+            padding: 0;
+            font-size: 0.9em;
+            height: 22px;
+        }
+        
+        .remove-btn:hover {
+            color: #c0392b;
+        }
+
+        .remove-btn .cross {
+            font-size: 1.6em;
+            font-weight: bold;
+            line-height: 1;
+        }
+
+        .add-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background-image: linear-gradient(90deg, #3498db, #9E52FF);
+            color: white;
+            border: none;
+            padding: 0.7rem 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.2);
+            transition: all 0.2s ease-in-out;
+        }
+
+        .add-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 123, 255, 0.3);
+        }
+
+        .add-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.2);
+        }
+
+        .main-controls {
+            display: flex;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .generate-btn {
+            background-image: linear-gradient(90deg, #3498db, #9E52FF);
+            color: white;
+            font-size: 1.2rem;
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.2);
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 123, 255, 0.3);
+        }
+        .generate-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.2);
+        }
+
+        /* --- Output --- */
+        #output {
+            margin-top: 2.5rem;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            min-height: 100px;
+            overflow: hidden;
+        }
+        #chart-container {
+            padding: 1.5rem;
+            background-color: #ffffff;
+        }
+        
+        /* --- Tooltip --- */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+        }
+
+        .tooltip .tooltip-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #bdc3c7;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        
+        .tooltip:hover .tooltip-icon {
+            background-color: #3498db;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 220px;
+            background-color: #2c3e50;
+            color: #fff;
+            text-align: left;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -110px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.9em;
+            font-weight: 400;
+        }
+        
+        .tooltip .tooltip-text ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .tooltip .tooltip-text li {
+            margin-bottom: 5px;
+        }
+        .tooltip .tooltip-text code {
+            background-color: #4b4b4b;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* --- New Styles --- */
+        .issue-link {
+            position: absolute;
+            top: 1.5rem;
+            right: 2rem;
+            font-size: 0.85em;
+            color: #7f8c8d;
+            text-decoration: none;
+            transition: color 0.2s;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .issue-link:hover {
+            color: #3498db;
+        }
+
+        .app-footer {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            width: 100%;
+            max-width: 1100px;
+        }
+        .app-footer a {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #6c757d;
+            text-decoration: none;
+            transition: color 0.2s;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .app-footer a:hover {
+            color: #3498db;
+        }
+        .app-footer svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .language-switcher {
+            position: absolute;
+            top: 1.5rem;
+            left: 2rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+        .lang-btn {
+            cursor: pointer;
+            font-size: 1.5rem;
+            opacity: 0.5;
+            transition: opacity 0.2s;
+        }
+        .lang-btn.active {
+            opacity: 1;
+        }
+        .lang-btn:not(.active):hover {
+            opacity: 0.8;
+        }
+
+        .reorder-controls {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .reorder-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #bdc3c7;
+            font-size: 1.2em;
+            padding: 0 0.5rem;
+            transition: color 0.2s;
+        }
+        .reorder-btn:hover:not(:disabled) {
+            color: #3498db;
+        }
+        .reorder-btn:disabled {
+            color: #ecf0f1;
+            cursor: not-allowed;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="language-switcher">
+            <span class="lang-btn active" data-lang="nn">🇳🇴</span>
+            <span class="lang-btn" data-lang="en">🇬🇧</span>
+        </div>
+        <a href="https://github.com/lektorodd/forteiknslinjer/issues/new" target="_blank" rel="noopener noreferrer" class="issue-link" data-translate="reportError">Feil eller tips</a>
+        
+        <h1 data-translate="mainTitle">Forteiknsskjemagenerator 🪄</h1>
+
+        <div class="input-section">
+            <h2 data-translate="settingsTitle">Innstillingar</h2>
+            <div class="input-group">
+                <input type="text" id="expression-name" class="input-field" value="f(x)" data-translate-placeholder="exprNamePlaceholder">
+            </div>
+            <div class="axis-inputs">
+                <div class="input-group">
+                    <input type="number" id="axis-start" class="input-field" data-translate-placeholder="startPointPlaceholder">
+                </div>
+                <div class="input-group">
+                    <input type="number" id="axis-end" class="input-field" data-translate-placeholder="endPointPlaceholder">
+                </div>
+            </div>
+        </div>
+        
+        <div class="input-section">
+            <h2>
+                <span data-translate="factorsTitle">Faktorar</span>
+                <div class="tooltip">
+                    <span class="tooltip-icon">i</span>
+                    <div class="tooltip-text">
+                        <b data-translate="tooltipTitle">Døme på gyldige faktorar:</b>
+                        <ul>
+                            <li><code>2x - 1</code></li>
+                            <li><code>x - 2^2</code></li>
+                            <li><code>x + 1/2</code></li>
+                            <li><code>x - pi</code></li>
+                            <li><code>rot(3) - x</code></li>
+                            <li><code>-x</code></li>
+                            <li><code>4</code> (konstant)</li>
+                        </ul>
+                    </div>
+                </div>
+            </h2>
+            <div id="factors-container">
+                <div class="input-group">
+                    <div class="reorder-controls">
+                        <button class="reorder-btn up-btn" onclick="moveFactorUp(this)">▲</button>
+                        <button class="reorder-btn down-btn" onclick="moveFactorDown(this)">▼</button>
+                    </div>
+                    <input type="text" class="input-field factor" data-translate-placeholder="factorPlaceholder">
+                    <div class="factor-controls">
+                        <div class="checkbox-group">
+                            <input type="checkbox" class="denominator-check" id="check-1">
+                            <label for="check-1" data-translate="denominatorLabel">Nemnar</label>
+                        </div>
+                        <button class="remove-btn" onclick="removeFactor(this)">
+                            <span class="cross">×</span>
+                            <span data-translate="deleteLabel">Slett</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <button class="add-btn" onclick="addFactor()">Legg til faktor</button>
+        </div>
+
+        <div class="main-controls">
+            <button class="generate-btn" onclick="generateSignChart()">Lag forteiknsskjema</button>
+        </div>
+
+        <div id="output">
+            <div id="chart-container"></div>
+        </div>
+    </div>
+
+    <footer class="app-footer">
+        <a href="https://github.com/lektorodd/forteiknslinjer" target="_blank" rel="noopener noreferrer">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path></svg>
+            <span>lektorodd</span>
+        </a>
+    </footer>
+
+    <script>
+        let factorIdCounter = 1;
+
+        // --- CONSTANTS ---
+        const PI_APPROX = 3.1415;
+        const E_APPROX = 2.7182;
+        const specialSymbols = new Map([
+            [PI_APPROX, '\\pi'], [-PI_APPROX, '-\\pi'],
+            [E_APPROX, 'e'], [-E_APPROX, '-e']
+        ]);
+        
+        const translations = {
+            nn: {
+                mainTitle: "Forteiknsskjemagenerator 🪄",
+                settingsTitle: "Innstillingar",
+                exprNamePlaceholder: "Namn på uttrykket",
+                startPointPlaceholder: "Startpunkt (auto)",
+                endPointPlaceholder: "Sluttpunkt (auto)",
+                factorsTitle: "Faktorar",
+                factorPlaceholder: "f.eks. x - 2",
+                denominatorLabel: "Nemnar",
+                deleteLabel: "Slett",
+                addFactorBtn: "Legg til faktor",
+                generateBtn: "Lag forteiknsskjema",
+                reportError: "Feil eller tips",
+                tooltipTitle: "<b>Døme på gyldige faktorar:</b>",
+                errorMsg: "Legg til minst éin faktor for å teikne eit skjema."
+            },
+            en: {
+                mainTitle: "Sign Chart Generator 🪄",
+                settingsTitle: "Settings",
+                exprNamePlaceholder: "Expression name",
+                startPointPlaceholder: "Start point (auto)",
+                endPointPlaceholder: "End point (auto)",
+                factorsTitle: "Factors",
+                factorPlaceholder: "e.g. x - 2",
+                denominatorLabel: "Denominator",
+                deleteLabel: "Delete",
+                addFactorBtn: "Add Factor",
+                generateBtn: "Generate Sign Chart",
+                reportError: "Report issue or tip",
+                tooltipTitle: "<b>Examples of valid factors:</b>",
+                errorMsg: "Add at least one factor to draw a chart."
+            }
+        };
+
+        // --- EVENT LISTENERS ---
+        document.querySelector('.language-switcher').addEventListener('click', (e) => {
+            if (e.target.dataset.lang) {
+                setLanguage(e.target.dataset.lang);
+            }
+        });
+        
+        // --- LANGUAGE FUNCTION ---
+        function setLanguage(lang) {
+            document.querySelectorAll('[data-translate]').forEach(el => {
+                const key = el.dataset.translate;
+                if (translations[lang][key]) {
+                    el.innerHTML = translations[lang][key];
+                }
+            });
+            document.querySelectorAll('[data-translate-placeholder]').forEach(el => {
+                const key = el.dataset.translatePlaceholder;
+                if (translations[lang][key]) {
+                    el.placeholder = translations[lang][key];
+                }
+            });
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.lang === lang);
+            });
+            document.documentElement.lang = lang;
+        }
+
+        // --- LOGIC FOR DYNAMIC INPUT FIELDS ---
+        function addFactor() {
+            factorIdCounter++;
+            const container = document.getElementById('factors-container');
+            const div = document.createElement('div');
+            div.className = 'input-group';
+            div.innerHTML = `
+                <div class="reorder-controls">
+                    <button class="reorder-btn up-btn" onclick="moveFactorUp(this)">▲</button>
+                    <button class="reorder-btn down-btn" onclick="moveFactorDown(this)">▼</button>
+                </div>
+                <input type="text" class="input-field factor" data-translate-placeholder="factorPlaceholder">
+                <div class="factor-controls">
+                    <div class="checkbox-group">
+                        <input type="checkbox" class="denominator-check" id="check-${factorIdCounter}">
+                        <label for="check-${factorIdCounter}" data-translate="denominatorLabel">Nemnar</label>
+                    </div>
+                    <button class="remove-btn" onclick="removeFactor(this)">
+                        <span class="cross">×</span>
+                        <span data-translate="deleteLabel">Slett</span>
+                    </button>
+                </div>
+            `;
+            container.appendChild(div);
+            setLanguage(document.documentElement.lang); // Apply translation to new element
+            updateArrowStates();
+        }
+
+        function removeFactor(button) {
+            button.closest('.input-group').remove();
+            updateArrowStates();
+        }
+
+        function moveFactorUp(button) {
+            const group = button.closest('.input-group');
+            const prevGroup = group.previousElementSibling;
+            if (prevGroup) {
+                group.parentElement.insertBefore(group, prevGroup);
+                updateArrowStates();
+            }
+        }
+
+        function moveFactorDown(button) {
+            const group = button.closest('.input-group');
+            const nextGroup = group.nextElementSibling;
+            if (nextGroup) {
+                group.parentElement.insertBefore(nextGroup, group);
+                updateArrowStates();
+            }
+        }
+
+        function updateArrowStates() {
+            const allGroups = document.querySelectorAll('#factors-container .input-group');
+            allGroups.forEach((group, index) => {
+                const upBtn = group.querySelector('.up-btn');
+                const downBtn = group.querySelector('.down-btn');
+                if (upBtn) upBtn.disabled = (index === 0);
+                if (downBtn) downBtn.disabled = (index === allGroups.length - 1);
+            });
+        }
+
+
+        // --- MAIN FUNCTION TO GENERATE THE SIGN CHART ---
+        async function generateSignChart() {
+            const chartContainer = document.getElementById('chart-container');
+            chartContainer.innerHTML = '';
+
+            // 1. GATHER AND PARSE ALL FACTORS
+            const name = document.getElementById('expression-name').value || 'f(x)';
+            const numFactors = [];
+            const denFactors = [];
+            
+            document.querySelectorAll('#factors-container .input-group').forEach(group => {
+                const input = group.querySelector('.factor');
+                const checkbox = group.querySelector('.denominator-check');
+                const factorObject = parseSingleFactor(input.value);
+                if (factorObject) {
+                    if (checkbox.checked) {
+                        denFactors.push(factorObject);
+                    } else {
+                        numFactors.push(factorObject);
+                    }
+                }
+            });
+
+            const allFactors = [...numFactors, ...denFactors];
+            
+            if (allFactors.length === 0) {
+                const lang = document.documentElement.lang || 'nn';
+                chartContainer.innerHTML = `<p style="text-align:center; color: #7f8c8d;">${translations[lang].errorMsg}</p>`;
+                return;
+            }
+
+            const points = [...new Set(allFactors.filter(f => f.zero !== null).map(f => f.zero))].sort((a, b) => a - b);
+            const pointMap = new Map();
+            allFactors.filter(f => f.zero !== null).forEach(f => {
+                pointMap.set(f.zero, f.zeroSymbol);
+            });
+
+
+            // 2. SETUP SVG CANVAS
+            const PADDING = 120;
+            const CHART_WIDTH = 900;
+            const ROW_HEIGHT = 65;
+            const CHART_HEIGHT = (allFactors.length + 2.5) * ROW_HEIGHT;
+
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('width', '100%');
+            svg.setAttribute('viewBox', `0 0 ${CHART_WIDTH + 2 * PADDING} ${CHART_HEIGHT}`);
+            
+            let domainMin, domainMax;
+            const userStart = parseFloat(document.getElementById('axis-start').value);
+            const userEnd = parseFloat(document.getElementById('axis-end').value);
+            const hasUserStart = !isNaN(userStart);
+            const hasUserEnd = !isNaN(userEnd);
+
+            if (hasUserStart && hasUserEnd) {
+                domainMin = Math.min(userStart, userEnd);
+                domainMax = Math.max(userStart, userEnd);
+            } else {
+                let autoMin = points.length > 0 ? points[0] : 0;
+                let autoMax = points.length > 0 ? points[points.length - 1] : 1;
+                let range = autoMax - autoMin;
+                if (range === 0) {
+                    autoMin -= 1;
+                    autoMax += 1;
+                } else {
+                    const padding = range * 0.15;
+                    autoMin -= padding;
+                    autoMax += padding;
+                }
+                domainMin = hasUserStart ? userStart : autoMin;
+                domainMax = hasUserEnd ? userEnd : autoMax;
+            }
+            
+            const domainRange = domainMax - domainMin;
+            const scale = (x) => {
+                if (domainRange === 0) return PADDING + CHART_WIDTH / 2;
+                return PADDING + ((x - domainMin) / domainRange) * CHART_WIDTH;
+            };
+
+            // 3. DRAW X-AXIS AND GUIDELINES
+            let y = ROW_HEIGHT;
+            svg.innerHTML += `<line x1="${PADDING - 10}" y1="${y}" x2="${CHART_WIDTH + PADDING + 10}" y2="${y}" stroke="#2c3e50" stroke-width="2"/>`;
+            svg.innerHTML += `<path d="M ${CHART_WIDTH + PADDING + 10} ${y - 5} L ${CHART_WIDTH + PADDING + 20} ${y} L ${CHART_WIDTH + PADDING + 10} ${y + 5} Z" fill="#2c3e50"/>`;
+            addMathLabel(svg, 'x', CHART_WIDTH + PADDING + 35, y, { fontSize: '22px' });
+            
+            const finalLabels = [];
+            const MIN_PIXEL_DISTANCE = 40; 
+
+            points.forEach(p => finalLabels.push({ value: p, isCritical: true }));
+
+            const startTick = Math.ceil(domainMin);
+            const endTick = Math.floor(domainMax);
+            for (let i = startTick; i <= endTick; i++) {
+                const isTooClose = finalLabels.some(label => {
+                    return Math.abs(scale(i) - scale(label.value)) < MIN_PIXEL_DISTANCE;
+                });
+                if (!isTooClose) {
+                    finalLabels.push({ value: i, isCritical: false });
+                }
+            }
+
+            finalLabels.forEach(label => {
+                const p = label.value;
+                const xPos = scale(p);
+                let labelText = String(p);
+                
+                if (label.isCritical) {
+                    svg.innerHTML += `<line x1="${xPos}" y1="${y}" x2="${xPos}" y2="${CHART_HEIGHT}" stroke="#adb5bd" stroke-width="1" stroke-dasharray="4 4"/>`;
+                    if (pointMap.has(p)) {
+                        labelText = pointMap.get(p);
+                    }
+                    addMathLabel(svg, labelText, xPos, y - 30, { isBold: true, fontSize: '22px', color: '#2c3e50' });
+                } else {
+                    svg.innerHTML += `<line x1="${xPos}" y1="${y - 4}" x2="${xPos}" y2="${y + 4}" stroke="#2c3e50" stroke-width="1"/>`;
+                    addMathLabel(svg, labelText, xPos, y - 30, { isBold: false, fontSize: '20px', color: '#6c757d' });
+                }
+            });
+
+            // 4. DRAW FACTOR LINES
+            allFactors.forEach(factor => {
+                y += ROW_HEIGHT;
+                addMathLabel(svg, factor.latex, PADDING / 2, y, { align: 'center', fontSize: '24px' });
+                drawSignLine(svg, y, factor.eval, PADDING, CHART_WIDTH, points, scale);
+                if (factor.zero !== null) {
+                    svg.innerHTML += `<circle cx="${scale(factor.zero)}" cy="${y}" r="6" fill="#f8f9fa" stroke="#3498db" stroke-width="3"/>`;
+                }
+            });
+
+            // 5. DRAW CONCLUSION LINE
+            y += ROW_HEIGHT;
+            svg.innerHTML += `<line x1="${PADDING - 10}" y1="${y - ROW_HEIGHT/2}" x2="${CHART_WIDTH + PADDING + 10}" y2="${y - ROW_HEIGHT/2}" stroke="#e9ecef" stroke-width="2"/>`;
+            addMathLabel(svg, name, PADDING / 2, y, { isBold: true, align: 'center', fontSize: '24px' });
+            
+            const finalEval = x => {
+                const numResult = numFactors.reduce((acc, f) => acc * f.eval(x), 1);
+                const denResult = denFactors.reduce((acc, f) => acc * f.eval(x), 1);
+                if (Math.abs(denResult) < 1e-9) return NaN;
+                return numResult / denResult;
+            };
+            drawSignLine(svg, y, finalEval, PADDING, CHART_WIDTH, points, scale);
+            
+            numFactors.forEach(f => {
+                if (f.zero !== null && !denFactors.some(df => df.zero === f.zero)) {
+                    svg.innerHTML += `<circle cx="${scale(f.zero)}" cy="${y}" r="6" fill="#f8f9fa" stroke="#2ecc71" stroke-width="3"/>`;
+                }
+            });
+            
+            denFactors.forEach(f => {
+                if (f.zero !== null) {
+                    const xPos = scale(f.zero);
+                    const crossSize = 9;
+                    svg.innerHTML += `<line x1="${xPos - crossSize}" y1="${y - crossSize}" x2="${xPos + crossSize}" y2="${y + crossSize}" stroke="#e74c3c" stroke-width="3.5"/>`;
+                    svg.innerHTML += `<line x1="${xPos + crossSize}" y1="${y - crossSize}" x2="${xPos - crossSize}" y2="${y + crossSize}" stroke="#e74c3c" stroke-width="3.5"/>`;
+                }
+            });
+            
+            chartContainer.appendChild(svg);
+            await MathJax.typesetPromise([chartContainer]);
+        }
+
+        // --- HELPER FUNCTIONS ---
+        function addMathLabel(svg, text, x, y, options = {}) {
+            const { color = '#2c3e50', fontSize = '16px', isBold = false, align = 'center' } = options;
+            const fo = document.createElementNS('http://www.w3.org/2000/svg', 'foreignObject');
+            
+            const width = text.length * 18 + 60;
+            const height = 50;
+
+            let xPos = x;
+            if (align === 'center') {
+                xPos = x - width / 2;
+            }
+            
+            fo.setAttribute('x', xPos);
+            fo.setAttribute('y', y - height / 2);
+            fo.setAttribute('width', width);
+            fo.setAttribute('height', height);
+
+            const div = document.createElement('div');
+            div.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
+            div.style.display = 'flex';
+            div.style.justifyContent = align === 'center' ? 'center' : 'flex-start';
+            div.style.alignItems = 'center';
+            div.style.height = '100%';
+            div.style.color = color;
+            div.style.fontSize = fontSize;
+            if (isBold) div.style.fontWeight = 'bold';
+            
+            div.innerHTML = `\\(${text}\\)`;
+            
+            fo.appendChild(div);
+            svg.appendChild(fo);
+        }
+        
+        function getSymbolForValue(value) {
+            for (const [key, symbol] of specialSymbols.entries()) {
+                if (Math.abs(value - key) < 1e-4) {
+                    return symbol;
+                }
+            }
+            const squaredValue = value * value;
+            if (Math.abs(squaredValue - Math.round(squaredValue)) < 1e-4) {
+                const integer = Math.round(squaredValue);
+                if (integer > 0) {
+                    return (value < 0 ? '-' : '') + `\\sqrt{${integer}}`;
+                }
+            }
+            return null;
+        }
+
+        function stringToLatex(str) {
+            const cleaned = str.replace(/\s/g, '');
+            return cleaned.replace(/rot\(([^)]+)\)/gi, (match, content) => `\\sqrt{${stringToLatex(content)}}`)
+                          .replace(/pi/gi, '\\pi')
+                          .replace(/\^/g, '^');
+        }
+
+        function parseValue(str) {
+            const lowerStr = str.toLowerCase().trim();
+            
+            const expMatch = lowerStr.match(/^(-?)\((.*)\)\^(.+)$|^(-?)([^()^]+)\^(.+)$/);
+            if (expMatch) {
+                const isNegative = expMatch[1] === '-' || expMatch[4] === '-';
+                const baseStr = expMatch[2] || expMatch[5];
+                const expStr = expMatch[3] || expMatch[6];
+                
+                const baseResult = parseValue(baseStr);
+                const expResult = parseValue(expStr);
+
+                if (baseResult && expResult) {
+                    const value = parseFloat(Math.pow(baseResult.value, expResult.value).toFixed(4));
+                    const baseSymbol = baseResult.symbol.length > 1 && !baseResult.symbol.startsWith('\\') ? `(${baseResult.symbol})` : baseResult.symbol;
+                    const symbol = `${baseSymbol}^{${expResult.symbol}}`;
+                    
+                    return { value: isNegative ? -value : value, symbol: (isNegative ? '-' : '') + symbol };
+                }
+            }
+            
+            const rotMatch = lowerStr.match(/^(-?)rot\((.*)\)$/);
+            if (rotMatch) {
+                const isNegative = rotMatch[1] === '-';
+                const content = rotMatch[2];
+                const valueInside = parseValue(content);
+                if (valueInside && !isNaN(valueInside.value) && valueInside.value >= 0) {
+                    const result = Math.sqrt(valueInside.value);
+                    const finalValue = parseFloat((isNegative ? -result : result).toFixed(4));
+                    const finalSymbol = (isNegative ? '-' : '') + `\\sqrt{${valueInside.symbol}}`;
+                    return { value: finalValue, symbol: finalSymbol };
+                }
+                return null;
+            }
+
+            if (lowerStr === 'pi') return { value: PI_APPROX, symbol: '\\pi' };
+            if (lowerStr === 'e') return { value: E_APPROX, symbol: 'e' };
+            if (lowerStr === '-pi') return { value: -PI_APPROX, symbol: '-\\pi' };
+            if (lowerStr === '-e') return { value: -E_APPROX, symbol: '-e' };
+
+            if (str.includes('/')) {
+                const parts = str.split('/');
+                const num = parseFloat(parts[0]);
+                const den = parseFloat(parts[1]);
+                if (!isNaN(num) && !isNaN(den) && den !== 0) {
+                    const value = parseFloat((num / den).toFixed(4));
+                    return { value: value, symbol: `\\frac{${num}}{${den}}` };
+                }
+            }
+            const numValue = parseFloat(str);
+            if (!isNaN(numValue)) {
+                return { value: numValue, symbol: str };
+            }
+            return null;
+        }
+
+        function parseSingleFactor(raw) {
+            const cleaned = raw.trim().replace(/\s/g, '');
+            if (cleaned === '') return null;
+            
+            let match;
+            let zero, zeroSymbol;
+            let evalFunc;
+            let latex;
+            const numPattern = '(-?rot\\([^)]+\\)|-?pi\\^\\d+|-?pi|-?e\\^\\d+|-?e|[\\d\\./\\^\\(\\)]+)';
+            const coeffPattern = '(-?(?:\\d*\\.?\\d+|pi|e|rot\\([^)]+\\))?)';
+
+            // Regex for forms like: ax, -x, 3x, pix
+            const ax_regex = new RegExp(`^${coeffPattern}x$`, 'i');
+            match = cleaned.match(ax_regex);
+            if (match) {
+                 let aStr = match[1];
+                 let aResult;
+                 if (aStr === '' || aStr === '+') aResult = parseValue('1');
+                 else if (aStr === '-') aResult = parseValue('-1');
+                 else aResult = parseValue(aStr);
+
+                 if (!aResult) return null;
+                 
+                 zero = 0;
+                 zeroSymbol = '0';
+                 evalFunc = x => aResult.value * x;
+                 latex = `${aResult.symbol === '1' ? '' : aResult.symbol}x`;
+                 if(aResult.symbol === '-1') latex = '-x';
+
+                 return { raw, latex, zero, zeroSymbol, eval: x => Math.sign(evalFunc(x)) };
+            }
+            
+            // Regex for forms like: ax+b, x+b, -x+b, 2x-pi, rot(3)x+1
+            const ax_plus_b_regex = new RegExp(`^${coeffPattern}x([+-])${numPattern}$`, 'i');
+            match = cleaned.match(ax_plus_b_regex);
+            
+            if (match) {
+                let aStr = match[1];
+                let aResult;
+                if (aStr === '' || aStr === '+') aResult = parseValue('1');
+                else if (aStr === '-') aResult = parseValue('-1');
+                else aResult = parseValue(aStr);
+
+                const operator = match[2];
+                const bResult = parseValue(match[3]);
+
+                if (!aResult || !bResult) return null;
+
+                const a = aResult.value;
+                const b = (operator === '+') ? bResult.value : -bResult.value;
+                
+                zero = parseFloat((-b / a).toFixed(4));
+                evalFunc = x => a * x + b;
+                
+                let aSymbol = aResult.symbol;
+                if (aSymbol === '1') aSymbol = '';
+                if (aSymbol === '-1') aSymbol = '-';
+
+                latex = `${aSymbol}x ${operator} ${bResult.symbol}`;
+                
+                const negBSymbol = (operator === '+') ? `-${bResult.symbol}` : bResult.symbol;
+                if (Math.abs(a) === 1) {
+                    zeroSymbol = (a > 0) ? negBSymbol : (operator === '+') ? bResult.symbol : `-${bResult.symbol}`;
+                } else {
+                    const isResultNegative = (-b / a) < 0;
+                    const finalNumSymbol = bResult.symbol.startsWith('-') ? `(${bResult.symbol})` : bResult.symbol;
+                    const finalDenSymbol = aResult.symbol.startsWith('-') ? `(${aResult.symbol})` : aResult.symbol;
+                    zeroSymbol = (isResultNegative ? '-' : '') + `\\frac{${finalNumSymbol.replace('-','')}}{${finalDenSymbol.replace('-','')}}`;
+                }
+
+                return { raw, latex, zero, zeroSymbol, eval: x => Math.sign(evalFunc(x)) };
+            }
+
+            // Regex for forms like: b+ax, 1+2x, pi-x
+            const b_plus_ax_regex = new RegExp(`^${numPattern}([+-])${coeffPattern}x$`, 'i');
+            match = cleaned.match(b_plus_ax_regex);
+            if (match) {
+                const bResult = parseValue(match[1]);
+                const operator = match[2];
+                let aStr = match[3];
+                let aResult;
+
+                if (aStr === '' || aStr === '+') aResult = parseValue('1');
+                else if (aStr === '-') aResult = parseValue('-1');
+                else aResult = parseValue(aStr);
+                
+                if (!aResult || !bResult) return null;
+
+                const b = bResult.value;
+                let a = aResult.value;
+                if (operator === '-') a = -a;
+
+                zero = parseFloat((-b / a).toFixed(4));
+                evalFunc = x => a * x + b;
+                
+                let aSymbol = aResult.symbol;
+                if (aSymbol === '1') aSymbol = '';
+                if (aSymbol === '-1') aSymbol = '-';
+
+                latex = `${bResult.symbol} ${operator} ${aSymbol}x`;
+
+                const negBSymbol = `-${bResult.symbol}`;
+                if (Math.abs(a) === 1) {
+                     zeroSymbol = (a > 0) ? negBSymbol : bResult.symbol;
+                } else {
+                    const isResultNegative = (-b / a) < 0;
+                    const finalNumSymbol = bResult.symbol.startsWith('-') ? `(${bResult.symbol})` : bResult.symbol;
+                    const finalDenSymbol = aResult.symbol.startsWith('-') ? `(${aResult.symbol})` : aResult.symbol;
+                    zeroSymbol = (isResultNegative ? '-' : '') + `\\frac{${finalNumSymbol.replace('-','')}}{${finalDenSymbol.replace('-','')}}`;
+                }
+
+                return { raw, latex, zero, zeroSymbol, eval: x => Math.sign(evalFunc(x)) };
+            }
+
+            // Fallback for constants
+            const constantValResult = parseValue(cleaned);
+            if (constantValResult && !isNaN(constantValResult.value)) {
+                return { 
+                    raw, 
+                    latex: constantValResult.symbol, 
+                    zero: null,
+                    zeroSymbol: null,
+                    eval: x => Math.sign(constantValResult.value) 
+                };
+            }
+
+            return null;
+        }
+
+        function drawSignLine(svg, y, evalFunc, startX, width, points, scale) {
+            const intervals = [-Infinity, ...points, Infinity];
+            for (let i = 0; i < intervals.length - 1; i++) {
+                const p1 = intervals[i];
+                const p2 = intervals[i+1];
+                const testPoint = (p1 === -Infinity) ? p2 - 1 : (p2 === Infinity) ? p1 + 1 : (p1 + p2) / 2;
+                const sign = evalFunc(testPoint);
+                if (isNaN(sign)) continue;
+                const x1 = (p1 === -Infinity) ? startX : scale(p1);
+                const x2 = (p2 === Infinity) ? startX + width : scale(p2);
+                const dashArray = sign < 0 ? '5 5' : 'none';
+                svg.innerHTML += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="#2c3e50" stroke-width="2" stroke-dasharray="${dashArray}"/>`;
+            }
+        }
+
+        // Initial language and arrow states
+        setLanguage('nn');
+        updateArrowStates();
+    </script>
+</body>
+</html>
