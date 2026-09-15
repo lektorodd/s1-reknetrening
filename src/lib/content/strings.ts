@@ -10,11 +10,16 @@ export const FADING_PROMPTS: Record<string, string> = {
 	fading_independent: 'Løys heile oppgåva sjølv.'
 };
 
-/** Short badge naming the amount of support on a card. */
+/**
+ * Short badge naming how much of the solution a card still shows.
+ *
+ * Level 0 is study-only and never appears in a session — it is what the Lærebok
+ * shows. Practice starts at level 1.
+ */
 export const FADING_BADGES: Record<number, string> = {
-	0: 'Lær først',
-	1: 'Nesten ferdig',
-	2: 'Siste to stega',
+	0: 'Gjennomgått døme',
+	1: 'Fullfør siste steg',
+	2: 'Fullfør dei to siste',
 	3: 'Din tur',
 	4: 'På eiga hand'
 };

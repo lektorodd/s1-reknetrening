@@ -32,9 +32,17 @@ Instruction and drill are deliberately separate:
 - **Treningsrom** (`/tren/`) — the generated problem bank from each module's
   `generator.ts`. Adaptive, scheduled, rated.
 
-Scaffolding is *not* a third place. Inside a session each card carries a fading level
-0–4 chosen per concept by `selectFadingLevel()`; level 0 is a worked example shown
-in-session ("Lær først"), level 4 is bare practice.
+**Every card in a session is work to do.** Scaffolding varies — `selectFadingLevel()`
+picks a level per concept — but a session never serves a study-only card. Level 0 is a
+fully worked example, which is instruction, so it belongs to the Lærebok; practice
+starts at level 1 (`MIN_PRACTICE_LEVEL`), a completion problem showing every step but
+the last. Opening the Treningsrom always means practising, never a coin flip between
+reading and doing. Each card links out to its Lærebok article for the worked example.
+
+The Lærebok holds both kinds of worked example: the curated one written in `theory.ts`,
+and fully solved generated problems at three difficulty levels (`WorkedExamples.svelte`),
+so a student can study as many examples of the same shape as they want without any of it
+being counted or scheduled.
 
 ## Architecture
 

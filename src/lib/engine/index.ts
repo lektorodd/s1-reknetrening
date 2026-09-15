@@ -19,9 +19,8 @@ export { selectNextProblems, splitBudget } from './problem-selector';
 export { selectFadingLevel, fadeSteps, type FadingLevel, type FadedSteps } from './guidance-fading';
 export {
 	buildSession,
-	isWorkedExample,
 	SESSION_LENGTH,
-	MAX_WORKED_EXAMPLES,
+	MIN_PRACTICE_LEVEL,
 	type Session,
 	type SessionCard
 } from './session';

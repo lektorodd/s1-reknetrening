@@ -23,11 +23,19 @@ the student a single button instead of a mode menu.
 - `TopicModule` contract (`modules/types.ts`) and a real `registry.ts`. Adding a topic
   is now a folder plus one registry line.
 - Deterministic problem ids (`derivative:chain:3:5`) with a seeded RNG (`modules/rng.ts`).
-- `engine/session.ts` — builds a session and attaches a per-concept fading level.
+- `engine/session.ts` — builds a session and attaches a per-concept fading level, never
+  below `MIN_PRACTICE_LEVEL`.
+- `WorkedExamples.svelte` — fully solved generated problems at three levels, shown in the
+  Lærebok under each topic's theory.
 - 21 new tests (68 total), covering the generators, the registry, the math convention,
   the session builder and storage migration.
 
 ### Changed
+- **Worked examples belong to the Lærebok, not to a session.** A session serves only
+  cards the student does something with (fading levels 1–4); the fully worked example
+  sits in the Lærebok and every card links to it. An earlier draft of this release mixed
+  study-only cards into the session, which made it unpredictable whether opening the
+  Treningsrom meant reading or practising.
 - **Nynorsk only.** The English and Spanish tables, the language picker and
   `src/lib/i18n/` are gone; content records hold plain strings.
 - `selectFadingLevel()` is now actually called. Both guided views previously walked a

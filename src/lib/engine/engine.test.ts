@@ -23,7 +23,7 @@ import {
 } from '$lib/engine/spaced-repetition';
 import { selectNextProblems, splitBudget } from '$lib/engine/problem-selector';
 import { selectFadingLevel, fadeSteps } from '$lib/engine/guidance-fading';
-import { buildSession, MAX_WORKED_EXAMPLES, SESSION_LENGTH } from '$lib/engine/session';
+import { buildSession, MIN_PRACTICE_LEVEL, SESSION_LENGTH } from '$lib/engine/session';
 import {
 	MODULE_REGISTRY,
 	conceptIdOf,
@@ -617,12 +617,20 @@ describe('Session builder', () => {
 		expect(session.cards).toHaveLength(SESSION_LENGTH);
 	});
 
-	it('caps worked examples so a first session is not all study cards', () => {
+	it('never serves a study-only card — every card is work to do', () => {
+		// Fully worked examples are instruction and belong to the Lærebok. A
+		// session that mixed them in would make it a coin flip whether opening
+		// the Treningsrom meant reading or practising.
 		const session = buildSession(createStudentModel());
-		const worked = session.cards.filter((c) => c.level === 0);
-		expect(worked.length).toBeLessThanOrEqual(MAX_WORKED_EXAMPLES);
-		// Everything past the cap still gets heavy scaffolding, not bare practice.
-		expect(session.cards.every((c) => c.level <= 1)).toBe(true);
+		expect(session.cards.every((c) => c.level >= MIN_PRACTICE_LEVEL)).toBe(true);
+		expect(session.cards.some((c) => c.level === 0)).toBe(false);
+	});
+
+	it('gives an unmet concept the gentlest practice card, not a lecture', () => {
+		const session = buildSession(createStudentModel());
+		// A new student has met nothing, so every card is a completion problem.
+		expect(session.cards.every((c) => c.level === 1)).toBe(true);
+		expect(session.cards.every((c) => c.isNewConcept)).toBe(true);
 	});
 
 	it('gives a well-practised concept less scaffolding', () => {

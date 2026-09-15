@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { base } from '$app/paths';
 	import TheoryArticle from '$lib/components/TheoryArticle.svelte';
+	import WorkedExamples from '$lib/components/WorkedExamples.svelte';
 
 	let { data } = $props();
 </script>
@@ -14,6 +15,17 @@
 </nav>
 
 <TheoryArticle entry={data.entry} />
+
+{#if data.examples.length > 0}
+	<section class="more-examples">
+		<h2>Fleire gjennomgåtte døme</h2>
+		<p class="hint">
+			Same emne på tre vanskegrader, løyst heilt ut. Les så mange du vil — ingenting
+			her blir talt eller vurdert.
+		</p>
+		<WorkedExamples examples={data.examples} />
+	</section>
+{/if}
 
 <nav class="pager" aria-label="Bla mellom emne">
 	{#if data.prev}
@@ -46,6 +58,23 @@
 
 	.crumbs a {
 		color: var(--color-primary);
+	}
+
+	.more-examples {
+		margin-top: var(--space-10);
+	}
+
+	.more-examples h2 {
+		margin: 0 0 var(--space-2);
+		font-size: var(--font-size-lg);
+		color: var(--color-primary);
+	}
+
+	.more-examples .hint {
+		margin: 0 0 var(--space-5);
+		max-width: 38rem;
+		color: var(--color-text-secondary);
+		font-size: var(--font-size-sm);
 	}
 
 	.pager {
