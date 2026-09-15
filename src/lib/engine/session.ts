@@ -1,9 +1,13 @@
 // Session builder — turns the student model into one short run of cards.
 //
-// This is what "Dagens økt" produces. Problems come from every module at once
-// (interleaving across topics is the point), and each card's scaffolding is
-// chosen per concept rather than per mode: a concept the student has barely met
-// arrives as a worked example, a familiar one as bare practice.
+// This is what "Dagens økt" produces. Problems come from every module at once,
+// because interleaving across topics is the point.
+//
+// Every card in a session is work to do. Scaffolding varies — a barely-met
+// concept shows all steps but the last, a familiar one shows none — but a
+// session never serves a card that is only to be read. Fully worked examples
+// are instruction and live in the Lærebok, so that opening the Treningsrom
+// always means practice rather than a coin flip between reading and doing.
 
 import type { Problem } from '$lib/modules/types';
 import { conceptIdOf, getFullBank } from '$lib/modules/registry';
@@ -15,20 +19,21 @@ import { selectFadingLevel, type FadingLevel } from './guidance-fading';
 export const SESSION_LENGTH = 10;
 
 /**
- * Most worked examples one session may contain.
+ * Least scaffolding-removal a practice card may have.
  *
- * Without a cap a brand-new student gets a session of nothing but study cards,
- * because every concept starts below the level-0 threshold. Beyond the cap the
- * remaining new concepts drop to level 1, which still shows every step but the
- * last — an example-problem pair rather than a lecture.
+ * Level 0 is study-only, which belongs to the Lærebok. Level 1 is the gentlest
+ * thing a student can be asked to *do*: every step shown but the last — a
+ * completion problem, the standard bridge out of a worked example.
  */
-export const MAX_WORKED_EXAMPLES = 3;
+export const MIN_PRACTICE_LEVEL: FadingLevel = 1;
 
 export interface SessionCard {
 	problem: Problem;
 	conceptId: string;
-	/** 0 = full worked example (study only), 4 = no scaffolding. */
+	/** 1 = every step but the last is shown, 4 = no scaffolding. Never 0. */
 	level: FadingLevel;
+	/** True when the student has not attempted this concept before. */
+	isNewConcept: boolean;
 }
 
 export interface Session {
@@ -49,25 +54,15 @@ export function buildSession(
 ): Session {
 	const problems = selectNextProblems(model, bank, count);
 
-	let workedExamples = 0;
 	const cards = problems.map((problem) => {
 		const conceptId = conceptIdOf(problem);
 		const concept = model.concepts[conceptId];
-		// An unknown concept has never been attempted, so it starts at level 0.
-		let level: FadingLevel = concept ? selectFadingLevel(concept) : 0;
+		const chosen = concept ? selectFadingLevel(concept) : 0;
+		const level = Math.max(chosen, MIN_PRACTICE_LEVEL) as FadingLevel;
+		const isNewConcept = !concept || concept.timesCorrect + concept.timesIncorrect === 0;
 
-		if (level === 0) {
-			if (workedExamples >= MAX_WORKED_EXAMPLES) level = 1;
-			else workedExamples++;
-		}
-
-		return { problem, conceptId, level };
+		return { problem, conceptId, level, isNewConcept };
 	});
 
 	return { cards, startedAt: Date.now() };
-}
-
-/** True when this card is instruction to study rather than work to do. */
-export function isWorkedExample(card: SessionCard): boolean {
-	return card.level === 0;
 }

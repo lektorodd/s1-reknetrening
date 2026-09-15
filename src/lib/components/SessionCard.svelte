@@ -6,6 +6,7 @@
 	import { fadingBadge, fadingPrompt } from '$lib/content/strings';
 	import { typesetElement } from '$lib/utils/mathjax';
 	import { rngFor } from '$lib/modules/rng';
+	import { base } from '$app/paths';
 
 	interface Props {
 		card: SessionCard;
@@ -22,7 +23,12 @@
 	let container = $state<HTMLElement | null>(null);
 
 	const faded = $derived(fadeSteps(card.problem.structuredSteps, card.level));
-	const isStudy = $derived(card.level === 0);
+
+	/** Where the fully worked example for this concept lives. */
+	const theoryHref = $derived.by(() => {
+		const mod = getModule(card.problem.moduleId);
+		return mod ? `${base}/laer/${mod.slug}/${card.problem.topic}/` : null;
+	});
 
 	/**
 	 * Pick a self-explanation prompt and shuffle its options.
@@ -71,7 +77,10 @@
 
 <article class="card session-card" bind:this={container}>
 	<header>
-		<span class="badge" class:study={isStudy}>{fadingBadge(card.level)}</span>
+		<span class="badge">{fadingBadge(card.level)}</span>
+		{#if card.isNewConcept}
+			<span class="badge new">Nytt emne</span>
+		{/if}
 		<span class="counter">{index + 1} av {total}</span>
 	</header>
 
@@ -111,9 +120,7 @@
 	{/if}
 
 	<div class="actions">
-		{#if isStudy}
-			<button class="btn btn-primary" onclick={() => rate(true)}>Forstått — neste</button>
-		{:else if !revealed}
+		{#if !revealed}
 			{#if !hintShown}
 				<button class="btn btn-ghost" onclick={() => (hintShown = true)}>💡 Hint</button>
 			{/if}
@@ -123,6 +130,13 @@
 			<button class="btn btn-primary" onclick={() => rate(true)}>Fekk det til</button>
 		{/if}
 	</div>
+
+	{#if theoryHref}
+		<p class="to-theory">
+			Står du fast?
+			<a href={theoryHref} target="_blank" rel="noopener">Sjå gjennomgått døme i Lærebok →</a>
+		</p>
+	{/if}
 
 	{#if revealed && prompt}
 		<section class="self-explanation">
@@ -157,8 +171,12 @@
 	header {
 		display: flex;
 		align-items: center;
-		justify-content: space-between;
-		gap: var(--space-3);
+		gap: var(--space-2);
+		flex-wrap: wrap;
+	}
+
+	.counter {
+		margin-left: auto;
 	}
 
 	.badge {
@@ -170,7 +188,7 @@
 		font-weight: 700;
 	}
 
-	.badge.study {
+	.badge.new {
 		background: var(--color-warning-light);
 		color: #92400e;
 	}
@@ -250,6 +268,12 @@
 
 	.actions .btn {
 		flex: 1 1 10rem;
+	}
+
+	.to-theory {
+		margin: 0;
+		font-size: var(--font-size-sm);
+		color: var(--color-text-muted);
 	}
 
 	.self-explanation {

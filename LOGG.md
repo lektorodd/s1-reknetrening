@@ -8,8 +8,13 @@
 Appen er delt i to på app-nivå: **Lærebok** for kuratert teori og gjennomgåtte døme, og
 **Treningsrom** for den genererte oppgåvebanken. Framsida er redusert til éin knapp,
 «Start økta», og modusvala (Smart Miks / Fokus / Rettleia) er borte. Stillasbygging er
-ikkje lenger ein eigen stad: kvart kort i økta får eit fading-nivå valt per konsept, så
-eit ferskt emne kjem som eit døme-kort inne i økta.
+ikkje lenger ein eigen stad, men ho blandar seg heller ikkje inn i oppgåvebanken: kvart
+kort i økta får eit fading-nivå valt per konsept, og botnen er nivå 1 — noko eleven skal
+gjera. Det heilt gjennomgåtte dømet ligg i Lærebok, med lenke frå kvart kort.
+
+Første utkast la nivå 0 inn i økta med tilvising til forskingsrapporten. Det braut med
+sjølve premissen: då vart det tilfeldig om «Start økta» gav deg noko å lesa eller noko å
+løysa. Retta før merge — Lærebok fekk i staden tre ferdig løyste døme per emne.
 
 Vi vurderte først to spor per emne, men det ville låst treninga inne i kvar modul og
 hindra veksling mellom emne — som er heile poenget med interleaving. App-nivå vann.

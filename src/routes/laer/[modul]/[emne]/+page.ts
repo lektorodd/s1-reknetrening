@@ -1,5 +1,8 @@
 import { error } from '@sveltejs/kit';
-import { MODULE_REGISTRY, getModuleBySlug } from '$lib/modules/registry';
+import { MODULE_REGISTRY, getFullBank, getModuleBySlug } from '$lib/modules/registry';
+
+/** Levels to draw a fully worked example from, easiest first. */
+const EXAMPLE_LEVELS = [1, 3, 5];
 
 export const prerender = true;
 
@@ -19,8 +22,18 @@ export function load({ params }) {
 
 	const index = mod.topics.findIndex((t) => t.id === params.emne);
 
+	// Fully worked generated problems. These are instruction, not practice, so
+	// they live here rather than in a session — a student who wants another
+	// example of the same shape can read as many as they like without it
+	// counting against anything.
+	const bank = getFullBank();
+	const examples = EXAMPLE_LEVELS.map((level) =>
+		bank.find((p) => p.moduleId === mod.id && p.topic === params.emne && p.level === level)
+	).filter((p) => p !== undefined);
+
 	return {
 		entry,
+		examples,
 		moduleName: mod.name,
 		moduleSlug: mod.slug,
 		moduleColor: mod.color,
