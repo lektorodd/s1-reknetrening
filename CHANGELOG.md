@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-09-15
+
+Corrects the Lektorodd theme against its real source. The first pass took the palette
+from the `itslearning-boksar` skill, which only describes what an inline-styled LMS box
+needs — not the page chrome. The full theme lives in the "Slik lagar du klassekart"
+artifact.
+
+### Added
+- **The squared-paper grid**, the theme's signature ground: two 1px linear-gradients in
+  `rgba(31,41,51,.045)` at `34px 34px`, fixed.
+- **Space Grotesk** for headings, alongside Source Sans 3 for body and JetBrains Mono.
+  Without the display face the page reads flat however right the colours are.
+- A four-step surface scale — ground `#F6F1E6`, surface `#FCFAF4`, raised `#FFFFFF`,
+  sunk `#EFE9DC` — replacing the two-step one.
+- The real `.mark`: a mint highlighter swept across a run of text. The circular glyph
+  that opens a titled box is now `.badge-mark`.
+
+### Fixed
+- **An inset field borrowed the page's cream** inside a raised card, which is what made
+  the question box look out of place. Inset fields take `--color-sunk`.
+- **Rules and borders were cool grey** `#E3E6EA` against a warm cream ground. They are
+  `--color-line #E8E1D2` now.
+- **Ghost buttons read as washed out** — muted grey on no surface. They carry ink-strong
+  labels on `--color-surface` with a `--color-line-strong` border.
+- Body text is `--color-text` again. The previous release darkened both greys to clear
+  AA, but the cause was the global `p` rule painting all body copy muted; the theme uses
+  full ink for body and reserves `#6B6F77` for ledes, captions and meta lines.
+- `.app-shell` painted a solid cream fill over the whole viewport, which would have
+  hidden the grid. It is transparent.
+
 ## [0.8.0] - 2026-09-15
 
 The app now wears the Lektorodd theme, the same one the teacher's own itslearning

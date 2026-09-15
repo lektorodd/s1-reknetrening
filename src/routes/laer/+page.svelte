@@ -99,6 +99,6 @@
 
 	a:hover {
 		border-color: var(--accent);
-		background: var(--color-bg);
+		background: var(--color-sunk);
 	}
 </style>

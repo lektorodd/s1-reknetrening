@@ -13,11 +13,12 @@
 </div>
 
 <style>
+	/* Deliberately transparent: the grid lives on <body>, and a solid fill here
+	   would paint straight over it. */
 	.app-shell {
 		min-height: 100vh;
 		display: flex;
 		flex-direction: column;
-		background: var(--color-bg);
 	}
 
 	main {
