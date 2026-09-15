@@ -2,6 +2,7 @@
 	import { base } from '$app/paths';
 	import TheoryArticle from '$lib/components/TheoryArticle.svelte';
 	import WorkedExamples from '$lib/components/WorkedExamples.svelte';
+	import PracticeLadder from '$lib/components/PracticeLadder.svelte';
 
 	let { data } = $props();
 </script>
@@ -24,6 +25,17 @@
 			her blir talt eller vurdert.
 		</p>
 		<WorkedExamples examples={data.examples} />
+	</section>
+{/if}
+
+{#if data.ladder.length > 0}
+	<section class="ladder-section">
+		<h2>Prøv sjølv — steg for steg</h2>
+		<p class="hint">
+			Fem oppgåver av same type, med mindre og mindre hjelp for kvart steg. Du bestemmer
+			sjølv når du vil ha mindre. Ingenting her blir talt eller vurdert.
+		</p>
+		<PracticeLadder rungs={data.ladder} prompts={data.prompts} />
 	</section>
 {/if}
 
@@ -71,6 +83,23 @@
 	}
 
 	.more-examples .hint {
+		margin: 0 0 var(--space-5);
+		max-width: 38rem;
+		color: var(--color-text-secondary);
+		font-size: var(--font-size-sm);
+	}
+
+	.ladder-section {
+		margin-top: var(--space-10);
+	}
+
+	.ladder-section h2 {
+		margin: 0 0 var(--space-2);
+		font-size: var(--font-size-lg);
+		color: var(--color-primary);
+	}
+
+	.ladder-section .hint {
 		margin: 0 0 var(--space-5);
 		max-width: 38rem;
 		color: var(--color-text-secondary);

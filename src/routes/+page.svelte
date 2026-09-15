@@ -67,10 +67,6 @@
 		<strong>Framgang</strong>
 		<span>Kva du kan, og kva som står for tur.</span>
 	</a>
-	<a href={`${base}/velg/`}>
-		<strong>Vel sjølv</strong>
-		<span>Øv på eit bestemt emne og nivå.</span>
-	</a>
 </nav>
 
 <style>

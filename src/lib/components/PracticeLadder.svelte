@@ -1,0 +1,318 @@
+<script lang="ts">
+	import type { LadderRung } from '$lib/engine/ladder';
+	import type { SelfExplanation } from '$lib/modules/types';
+	import { fadeSteps } from '$lib/engine/guidance-fading';
+	import { rungLabel, rungPrompt } from '$lib/content/strings';
+	import { typesetElement } from '$lib/utils/mathjax';
+	import { rngFor } from '$lib/modules/rng';
+
+	interface Props {
+		rungs: LadderRung[];
+		/** Self-explanation pool for this topic, if the module has one. */
+		prompts?: SelfExplanation[];
+	}
+
+	let { rungs, prompts = [] }: Props = $props();
+
+	// The ladder starts at the bottom — fully worked — the way a textbook does.
+	let position = $state(0);
+	let revealed = $state(false);
+	let chosen = $state<number | null>(null);
+	let container = $state<HTMLElement | null>(null);
+
+	const current = $derived(rungs[position]);
+	const faded = $derived(fadeSteps(current.problem.structuredSteps, current.rung));
+	const isStudy = $derived(current.rung === 0);
+
+	/**
+	 * Reflection prompt, shown once the solution is out on the middle rungs.
+	 *
+	 * Options are shuffled because every prompt was authored with the correct
+	 * one first. The shuffle is seeded by the problem id so it holds still.
+	 */
+	const prompt = $derived.by((): { q: SelfExplanation; order: number[] } | null => {
+		if (current.rung < 1 || current.rung > 3 || prompts.length === 0) return null;
+
+		const rng = rngFor(current.problem.id);
+		const q = prompts[Math.floor(rng() * prompts.length)];
+		const order = q.options.map((_, i) => i);
+		for (let i = order.length - 1; i > 0; i--) {
+			const j = Math.floor(rng() * (i + 1));
+			[order[i], order[j]] = [order[j], order[i]];
+		}
+		return { q, order };
+	});
+
+	$effect(() => {
+		void position;
+		void revealed;
+		if (container) typesetElement(container);
+	});
+
+	function go(to: number) {
+		position = Math.max(0, Math.min(rungs.length - 1, to));
+		revealed = false;
+		chosen = null;
+	}
+</script>
+
+<div class="ladder" bind:this={container}>
+	<nav class="rungs" aria-label="Kor mykje hjelp">
+		{#each rungs as r, i (r.problem.id)}
+			<button
+				class="dot"
+				class:active={i === position}
+				class:done={i < position}
+				aria-current={i === position ? 'step' : undefined}
+				aria-label={rungLabel(r.rung)}
+				title={rungLabel(r.rung)}
+				onclick={() => go(i)}
+			></button>
+		{/each}
+	</nav>
+
+	<p class="rung-name">{rungLabel(current.rung)}</p>
+	<p class="prompt">{rungPrompt(faded.prompt)}</p>
+
+	<div class="question">{`\\[${current.problem.q}\\]`}</div>
+
+	{#if faded.shown.length > 0}
+		<ol class="steps">
+			{#each faded.shown as step, i (i)}
+				<li>
+					<span class="step-label">{step.label}</span>
+					<span class="step-math">{`\\(${step.latex}\\)`}</span>
+				</li>
+			{/each}
+		</ol>
+	{/if}
+
+	{#if faded.hidden.length > 0 && !revealed}
+		<p class="your-turn">
+			Din tur — {faded.hidden.length} steg att
+		</p>
+	{/if}
+
+	{#if revealed && faded.hidden.length > 0}
+		<ol class="steps revealed" start={faded.shown.length + 1}>
+			{#each faded.hidden as step, i (i)}
+				<li>
+					<span class="step-label">{step.label}</span>
+					<span class="step-math">{`\\(${step.latex}\\)`}</span>
+				</li>
+			{/each}
+		</ol>
+	{/if}
+
+	{#if !isStudy && !revealed}
+		<button class="btn btn-secondary reveal" onclick={() => (revealed = true)}>Vis løysing</button>
+	{/if}
+
+	{#if revealed && prompt}
+		<section class="self-explanation">
+			<h4>{prompt.q.question}</h4>
+			{#each prompt.order as optionIndex (optionIndex)}
+				<button
+					class="option"
+					class:correct={chosen !== null && optionIndex === prompt.q.correct}
+					class:wrong={chosen === optionIndex && optionIndex !== prompt.q.correct}
+					disabled={chosen !== null}
+					onclick={() => (chosen = optionIndex)}
+				>
+					{prompt.q.options[optionIndex]}
+				</button>
+			{/each}
+			{#if chosen !== null}
+				<p class="verdict">
+					{chosen === prompt.q.correct ? '✓ Riktig.' : '✗ Ikkje heilt — sjå det grøne svaret.'}
+				</p>
+			{/if}
+		</section>
+	{/if}
+
+	<div class="nav">
+		<button class="btn btn-ghost" disabled={position === 0} onclick={() => go(position - 1)}>
+			← Meir hjelp
+		</button>
+		<button
+			class="btn btn-primary"
+			disabled={position === rungs.length - 1}
+			onclick={() => go(position + 1)}
+		>
+			Mindre hjelp →
+		</button>
+	</div>
+</div>
+
+<style>
+	.ladder {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-4);
+		padding: var(--space-6);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-lg);
+		background: var(--color-surface);
+	}
+
+	.rungs {
+		display: flex;
+		gap: var(--space-2);
+	}
+
+	.dot {
+		flex: 1;
+		height: 6px;
+		padding: 0;
+		border: 0;
+		border-radius: var(--radius-full);
+		background: var(--color-border);
+		cursor: pointer;
+		transition: background var(--transition-fast);
+	}
+
+	.dot.done {
+		background: var(--color-primary-100);
+	}
+
+	.dot.active {
+		background: var(--color-primary);
+	}
+
+	.rung-name {
+		margin: 0;
+		font-size: var(--font-size-xs);
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		color: var(--color-primary);
+	}
+
+	.prompt {
+		margin: 0;
+		color: var(--color-text-secondary);
+		font-size: var(--font-size-sm);
+	}
+
+	.question {
+		padding: var(--space-4);
+		border-radius: var(--radius-md);
+		background: var(--color-bg);
+		overflow-x: auto;
+	}
+
+	.steps {
+		margin: 0;
+		padding-left: var(--space-5);
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-3);
+	}
+
+	.steps li {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-1);
+	}
+
+	.steps.revealed li {
+		animation: fade-in var(--transition-base) both;
+	}
+
+	.step-label {
+		font-size: var(--font-size-xs);
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		color: var(--color-primary);
+	}
+
+	.step-math {
+		overflow-x: auto;
+	}
+
+	.your-turn {
+		margin: 0;
+		padding: var(--space-4);
+		border: 2px dashed var(--color-border);
+		border-radius: var(--radius-md);
+		text-align: center;
+		color: var(--color-text-secondary);
+		font-weight: 600;
+	}
+
+	.reveal {
+		align-self: flex-start;
+	}
+
+	.self-explanation {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-2);
+		padding-top: var(--space-4);
+		border-top: 1px solid var(--color-border);
+	}
+
+	.self-explanation h4 {
+		margin: 0 0 var(--space-1);
+		font-size: var(--font-size-base);
+	}
+
+	.option {
+		padding: var(--space-3) var(--space-4);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+		background: var(--color-surface);
+		font: inherit;
+		text-align: left;
+		cursor: pointer;
+		transition: border-color var(--transition-fast), background var(--transition-fast);
+	}
+
+	.option:hover:not(:disabled) {
+		border-color: var(--color-primary);
+	}
+
+	.option:disabled {
+		cursor: default;
+	}
+
+	.option.correct {
+		border-color: var(--color-success);
+		background: var(--color-success-light);
+	}
+
+	.option.wrong {
+		border-color: var(--color-error);
+		background: var(--color-error-light);
+	}
+
+	.verdict {
+		margin: 0;
+		font-size: var(--font-size-sm);
+		color: var(--color-text-secondary);
+	}
+
+	.nav {
+		display: flex;
+		justify-content: space-between;
+		gap: var(--space-3);
+		padding-top: var(--space-2);
+	}
+
+	.nav .btn:disabled {
+		opacity: 0.4;
+		cursor: not-allowed;
+	}
+
+	@keyframes fade-in {
+		from {
+			opacity: 0;
+			transform: translateY(-4px);
+		}
+		to {
+			opacity: 1;
+			transform: none;
+		}
+	}
+</style>

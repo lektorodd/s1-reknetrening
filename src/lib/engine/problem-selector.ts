@@ -109,9 +109,12 @@ function fallbackSelection(model: StudentModel, bank: Problem[], count: number):
 			const weight = !concept || concept.lastSeen === 0 ? 5 : concept.confidence < 0.5 ? 3 : 0.2;
 			if (Math.random() > weight / 5) continue;
 
-			const candidates = (index.get(conceptId) ?? []).filter(
-				(p) => !used.has(p.id) && p.level <= maxLevel
-			);
+			const free = (index.get(conceptId) ?? []).filter((p) => !used.has(p.id));
+			// The level cap is a preference, not a filter. When the caller has
+			// narrowed the bank — the topic filter picking level 5, say — capping
+			// hard would return an empty session rather than the thing asked for.
+			const withinLevel = free.filter((p) => p.level <= maxLevel);
+			const candidates = withinLevel.length > 0 ? withinLevel : free;
 			if (candidates.length === 0) continue;
 			const pick = candidates[Math.floor(Math.random() * candidates.length)];
 			selected.push(pick);
@@ -119,11 +122,14 @@ function fallbackSelection(model: StudentModel, bank: Problem[], count: number):
 		}
 	}
 
-	// Top up if the weighting was unlucky.
-	const easy = bank.filter((p) => !used.has(p.id) && p.level <= maxLevel);
-	shuffle(easy);
-	while (selected.length < count && easy.length > 0) {
-		const pick = easy.pop()!;
+	// Top up if the weighting was unlucky, again preferring easy but not
+	// insisting on it.
+	const remaining = bank.filter((p) => !used.has(p.id));
+	const easy = remaining.filter((p) => p.level <= maxLevel);
+	const topUp = easy.length > 0 ? easy : remaining;
+	shuffle(topUp);
+	while (selected.length < count && topUp.length > 0) {
+		const pick = topUp.pop()!;
 		selected.push(pick);
 		used.add(pick.id);
 	}

@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-09-15
+
+Difficulty and support are two different axes, and this release stops mixing them.
+A session varies difficulty; the fading ladder varies support and belongs to the Lærebok.
+
+### Added
+- **Practice ladder** in the Lærebok (`PracticeLadder.svelte`, `engine/ladder.ts`). Five
+  rungs per topic, from a fully worked example to an unaided problem, with a *different*
+  problem at each rung so the student practises the pattern rather than memorising one
+  answer. The student steps through it at their own pace; nothing is rated or scheduled.
+- **Topic filter** at the top of `/tren/` (`TopicFilter.svelte`) — pin a topic and/or a
+  level, or leave it alone and let the engine choose. Replaces the separate `/velg/` page.
+
+### Changed
+- **A training session is the plain problem bank again.** Cards are ordinary problems:
+  question, optional hint, "Vis løysing" showing the whole solution, self-assessment.
+  No partially-filled solutions, no hidden steps. Previously the session drew faded and
+  unfaded problems side by side, so it was pot luck which kind of task came next.
+- Card badges now name **topic and level** ("Kjerneregelen · Nivå 3") rather than how
+  much help is shown.
+- Self-explanation prompts moved from the session to the ladder's middle rungs, which is
+  the placement they were written for.
+- The cold-start level cap is a preference rather than a filter. A new student who picked
+  level 5 in the topic filter previously got an empty session, because cold start refuses
+  anything above level 2.
+
+### Removed
+- `selectFadingLevel()` — with the ladder browsed by the student, nothing picks a fading
+  level on their behalf. Removed rather than left as dead code.
+- `src/routes/velg/` — the choice now lives in `/tren/` where it is used.
+
 ## [0.6.0] - 2026-09-15
 
 A restructure around one idea: keep instruction and drill in separate places, and give

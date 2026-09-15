@@ -1,13 +1,14 @@
-// Guidance Fading – Backward fading levels 0-4
-// Based on future-report §6.1
+// Backward fading, levels 0-4 — based on future-report §6.1.
+//
+// Used only by the Lærebok's practice ladder. A session never fades: how much
+// of a solution is shown is instruction, and the student chooses it there
+// rather than having it drawn for them.
 
 // Generic step entry — both derivative and logarithm modules use this shape
 export interface FadingStepEntry {
 	label: string;
 	latex: string;
 }
-
-import type { ConceptKnowledge } from './student-model';
 
 // ── Fading Levels ──
 
@@ -18,29 +19,6 @@ export interface FadedSteps {
 	hidden: FadingStepEntry[];   // Steps the student must complete
 	prompt: string;        // Instruction for the student (i18n key)
 	level: FadingLevel;
-}
-
-/**
- * Select the appropriate fading level based on concept knowledge.
- *
- * Level 0: Full worked example (study only) — < 2 correct
- * Level 1: Complete last step — confidence < 0.4 or success rate < 0.6
- * Level 2: Complete last two steps — confidence < 0.6 or success rate < 0.7
- * Level 3: Apply & simplify — confidence < 0.8 or success rate < 0.8
- * Level 4: Independent practice — confident
- */
-export function selectFadingLevel(concept: ConceptKnowledge): FadingLevel {
-	const total = concept.timesCorrect + concept.timesIncorrect;
-
-	// Brand new concept — full worked example
-	if (total < 2) return 0;
-
-	const successRate = total > 0 ? concept.timesCorrect / total : 0;
-
-	if (concept.confidence < 0.4 || successRate < 0.6) return 1;
-	if (concept.confidence < 0.6 || successRate < 0.7) return 2;
-	if (concept.confidence < 0.8 || successRate < 0.8) return 3;
-	return 4;
 }
 
 /**
