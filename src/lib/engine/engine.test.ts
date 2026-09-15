@@ -685,4 +685,20 @@ describe('Practice ladder', () => {
 	it('returns nothing for a topic that does not exist', () => {
 		expect(buildLadder('derivative', 'finst-ikkje', getFullBank())).toEqual([]);
 	});
+
+	it('offers a full ladder at every difficulty the topic has', () => {
+		// The Lærebok now lets the student pick difficulty as well as support,
+		// so every level must carry a whole ladder — not just the default one.
+		for (const mod of MODULE_REGISTRY) {
+			for (const topic of mod.topics) {
+				for (const level of [1, 2, 3, 4, 5]) {
+					const ladder = buildLadder(mod.id, topic.id, getFullBank(), level);
+					expect(ladder, `${mod.id}/${topic.id} nivå ${level}`).toHaveLength(
+						LADDER_RUNGS.length
+					);
+					expect(ladder.every((r) => r.problem.level === level)).toBe(true);
+				}
+			}
+		}
+	});
 });

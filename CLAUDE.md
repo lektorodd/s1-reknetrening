@@ -42,16 +42,18 @@ Instruction and drill are deliberately separate:
   it is instruction. `PracticeLadder.svelte` on each Lærebok topic page walks five rungs
   from a fully worked example to an unaided problem, a different problem at each rung, at
   the student's own pace. Nothing there is rated or scheduled, and the self-explanation
-  prompts live there too.
+  prompts live there too. The ladder carries **both** axes: the student picks a
+  difficulty (1-5) as well as a rung, so `+page.ts` loads one ladder per level.
 
 A session must never mix the two. Faded and unfaded problems drawn side by side make it
 pot luck which kind of task comes next, which is what the split exists to prevent.
 `fadeSteps()` is used by the ladder alone; there is deliberately no function that picks a
 fading level on the student's behalf.
 
-The Lærebok therefore holds three things per topic: the curated theory and worked example
-from `theory.ts`, fully solved generated problems at three difficulty levels
-(`WorkedExamples.svelte`), and the ladder.
+The Lærebok holds two things per topic: the curated theory and worked example from
+`theory.ts`, and the ladder. A separate row of fixed worked examples at levels 1/3/5 was
+tried and removed — the ladder's first rung is already a fully worked example, and its
+difficulty selector covers the rest, so the row was a third copy of the same thing.
 
 ## Architecture
 
@@ -61,7 +63,7 @@ src/lib/
   engine/       session.ts · ladder.ts · problem-selector.ts
                 spaced-repetition.ts · student-model.ts · guidance-fading.ts
   components/   AppHeader · SessionCard · TopicFilter
-                TheoryArticle · WorkedExamples · PracticeLadder
+                TheoryArticle · PracticeLadder
   content/      strings.ts (shared UI text)
   utils/        storage.ts · mathjax.ts
 src/routes/     / · /tren/ · /laer/[modul]/[emne]/ · /framgang/
