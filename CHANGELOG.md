@@ -13,6 +13,8 @@ Difficulty and support are two different axes, and this release stops mixing the
 A session varies difficulty; the fading ladder varies support and belongs to the Lærebok.
 
 ### Added
+- The ladder carries **both axes**: a difficulty selector (1-5) alongside the support
+  rungs, so a student can rerun the same sequence on harder problems.
 - **Practice ladder** in the Lærebok (`PracticeLadder.svelte`, `engine/ladder.ts`). Five
   rungs per topic, from a fully worked example to an unaided problem, with a *different*
   problem at each rung so the student practises the pattern rather than memorising one
@@ -34,6 +36,10 @@ A session varies difficulty; the fading ladder varies support and belongs to the
   anything above level 2.
 
 ### Removed
+- The "Fleire gjennomgåtte døme" row (three fixed worked examples at levels 1/3/5) and
+  `WorkedExamples.svelte`. The ladder's first rung is already a fully worked example and
+  its difficulty selector covers the spread, so the row was a third copy of the same
+  thing on an already long page.
 - `selectFadingLevel()` — with the ladder browsed by the student, nothing picks a fading
   level on their behalf. Removed rather than left as dead code.
 - `src/routes/velg/` — the choice now lives in `/tren/` where it is used.

@@ -2,9 +2,6 @@ import { error } from '@sveltejs/kit';
 import { MODULE_REGISTRY, getFullBank, getModuleBySlug } from '$lib/modules/registry';
 import { buildLadder } from '$lib/engine/ladder';
 
-/** Levels to draw a fully worked example from, easiest first. */
-const EXAMPLE_LEVELS = [1, 3, 5];
-
 export const prerender = true;
 
 /** Enumerate every topic page so adapter-static renders them all. */
@@ -22,25 +19,25 @@ export function load({ params }) {
 	if (!entry) error(404, 'Ukjend emne');
 
 	const index = mod.topics.findIndex((t) => t.id === params.emne);
-
-	// Fully worked generated problems. These are instruction, not practice, so
-	// they live here rather than in a session — a student who wants another
-	// example of the same shape can read as many as they like without it
-	// counting against anything.
 	const bank = getFullBank();
-	const examples = EXAMPLE_LEVELS.map((level) =>
-		bank.find((p) => p.moduleId === mod.id && p.topic === params.emne && p.level === level)
-	).filter((p) => p !== undefined);
 
-	// The fading ladder: progressively less-solved problems the student walks
-	// through themselves. This is instruction, which is why it lives here and
-	// not in a session.
-	const ladder = buildLadder(mod.id, params.emne, bank);
+	// One ladder per difficulty the topic offers. The student picks a difficulty
+	// and then walks the support rungs, so both axes are theirs to choose —
+	// which is what a separate row of fixed worked examples used to cover, less
+	// usefully, by showing three of them side by side.
+	const levels = [
+		...new Set(
+			bank.filter((p) => p.moduleId === mod.id && p.topic === params.emne).map((p) => p.level)
+		)
+	].sort((a, b) => a - b);
+
+	const ladders = levels
+		.map((level) => ({ level, rungs: buildLadder(mod.id, params.emne, bank, level) }))
+		.filter((l) => l.rungs.length > 0);
 
 	return {
 		entry,
-		examples,
-		ladder,
+		ladders,
 		prompts: mod.selfExplanations[params.emne] ?? [],
 		moduleName: mod.name,
 		moduleSlug: mod.slug,

@@ -2,24 +2,39 @@
 	import type { LadderRung } from '$lib/engine/ladder';
 	import type { SelfExplanation } from '$lib/modules/types';
 	import { fadeSteps } from '$lib/engine/guidance-fading';
-	import { rungLabel, rungPrompt } from '$lib/content/strings';
+	import { rungLabel, rungPrompt, levelName } from '$lib/content/strings';
 	import { typesetElement } from '$lib/utils/mathjax';
 	import { rngFor } from '$lib/modules/rng';
 
 	interface Props {
-		rungs: LadderRung[];
+		/** One ladder per difficulty the topic offers, easiest first. */
+		ladders: { level: number; rungs: LadderRung[] }[];
 		/** Self-explanation pool for this topic, if the module has one. */
 		prompts?: SelfExplanation[];
 	}
 
-	let { rungs, prompts = [] }: Props = $props();
+	let { ladders, prompts = [] }: Props = $props();
 
-	// The ladder starts at the bottom — fully worked — the way a textbook does.
-	let position = $state(0);
+	/**
+	 * Two axes, both the student's to choose: how hard the problem is, and how
+	 * much of the solution is already filled in.
+	 */
+	// Null means "not chosen yet", which resolves to the second-easiest ladder.
+	// Kept as a choice rather than an initial value so that navigating to
+	// another topic — where SvelteKit reuses this component — re-resolves it.
+	let chosenLevel = $state<number | null>(null);
+	let chosenRung = $state(0);
 	let revealed = $state(false);
 	let chosen = $state<number | null>(null);
 	let container = $state<HTMLElement | null>(null);
 
+	const levelIndex = $derived(
+		Math.min(chosenLevel ?? 1, ladders.length - 1)
+	);
+	const rungs = $derived(ladders[levelIndex].rungs);
+	// Changing difficulty keeps the rung where possible, so you can retake the
+	// same amount of support on a harder problem.
+	const position = $derived(Math.min(chosenRung, rungs.length - 1));
 	const current = $derived(rungs[position]);
 	const faded = $derived(fadeSteps(current.problem.structuredSteps, current.rung));
 	const isStudy = $derived(current.rung === 0);
@@ -44,32 +59,64 @@
 	});
 
 	$effect(() => {
+		void levelIndex;
 		void position;
 		void revealed;
 		if (container) typesetElement(container);
 	});
 
-	function go(to: number) {
-		position = Math.max(0, Math.min(rungs.length - 1, to));
+	function reset() {
 		revealed = false;
 		chosen = null;
+	}
+
+	function go(to: number) {
+		chosenRung = Math.max(0, Math.min(rungs.length - 1, to));
+		reset();
+	}
+
+	function setLevel(i: number) {
+		chosenLevel = i;
+		reset();
 	}
 </script>
 
 <div class="ladder" bind:this={container}>
-	<nav class="rungs" aria-label="Kor mykje hjelp">
-		{#each rungs as r, i (r.problem.id)}
-			<button
-				class="dot"
-				class:active={i === position}
-				class:done={i < position}
-				aria-current={i === position ? 'step' : undefined}
-				aria-label={rungLabel(r.rung)}
-				title={rungLabel(r.rung)}
-				onclick={() => go(i)}
-			></button>
-		{/each}
-	</nav>
+	<div class="axes">
+		<div class="axis">
+			<span class="axis-label">Vanskegrad</span>
+			<div class="levels">
+				{#each ladders as l, i (l.level)}
+					<button
+						class="level"
+						class:active={i === levelIndex}
+						aria-current={i === levelIndex ? 'true' : undefined}
+						title={levelName(l.level)}
+						onclick={() => setLevel(i)}
+					>
+						{l.level}
+					</button>
+				{/each}
+			</div>
+		</div>
+
+		<div class="axis">
+			<span class="axis-label">Hjelp</span>
+			<nav class="rungs" aria-label="Kor mykje hjelp">
+				{#each rungs as r, i (r.problem.id)}
+					<button
+						class="dot"
+						class:active={i === position}
+						class:done={i < position}
+						aria-current={i === position ? 'step' : undefined}
+						aria-label={rungLabel(r.rung)}
+						title={rungLabel(r.rung)}
+						onclick={() => go(i)}
+					></button>
+				{/each}
+			</nav>
+		</div>
+	</div>
 
 	<p class="rung-name">{rungLabel(current.rung)}</p>
 	<p class="prompt">{rungPrompt(faded.prompt)}</p>
@@ -153,6 +200,58 @@
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-lg);
 		background: var(--color-surface);
+	}
+
+	.axes {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-5);
+		align-items: flex-end;
+	}
+
+	.axis {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-2);
+	}
+
+	.axis:last-child {
+		flex: 1;
+		min-width: 9rem;
+	}
+
+	.axis-label {
+		font-size: var(--font-size-xs);
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		color: var(--color-text-muted);
+	}
+
+	.levels {
+		display: flex;
+		gap: var(--space-1);
+	}
+
+	.level {
+		width: 1.9rem;
+		height: 1.9rem;
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-full);
+		background: var(--color-surface);
+		font: inherit;
+		font-size: var(--font-size-sm);
+		cursor: pointer;
+		transition: border-color var(--transition-fast), background var(--transition-fast);
+	}
+
+	.level:hover {
+		border-color: var(--color-primary);
+	}
+
+	.level.active {
+		border-color: var(--color-primary);
+		background: var(--color-primary);
+		color: var(--color-text-inverse);
 	}
 
 	.rungs {

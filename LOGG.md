@@ -27,6 +27,13 @@ Skiljet brukaren bad om frå første melding var det rette heile vegen.
 **Ein reell bug funnen på vegen:** kaldstarten kappa nivået hardt til maks 2. Ein fersk
 elev som valde nivå 5 i filteret ville fått null oppgåver. Taket er no ein preferanse.
 
+**Rydding etter gjennomgang av ei emneside:** sida viste gjennomgått døme tre stader —
+det kuraterte med prosaforklaring, ein rad med tre genererte på nivå 1/3/5, og stigen sitt
+første trinn. Raden er fjerna, og stigen har i staden fått ein vanskegrad-veljar, så begge
+aksene ligg i same modulen. Ein ting til å merka seg for seinare: i alle tre
+derivasjonsemna løyser «Tenk høgt» same uttrykket som «Gjennomgått døme», heilt fram til
+svaret. Logaritmeemna gjer det ikkje. Det er innhald, ikkje kode.
+
 **Potensielle utfordringar:** fading er no brukt éin stad. Om elevane sjeldan opnar stigen,
 er spørsmålet om han bør lenkast tydelegare frå kort dei vurderte til «Trong øving» — men
 det krev observasjon, ikkje gjetting.
