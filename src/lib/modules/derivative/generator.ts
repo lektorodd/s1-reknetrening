@@ -31,6 +31,23 @@ function par(val: number): string {
 	return val < 0 ? `(${val})` : `${val}`;
 }
 
+/** Format a fraction p/2 as a LaTeX exponent: simplify when divisible, skip when 1. */
+function fmtFracHalf(p: number): string {
+	if (p === 0) return '^{0}';
+	if (p % 2 === 0) {
+		const simplified = p / 2;
+		return simplified === 1 ? '' : `^{${simplified}}`;
+	}
+	return `^{${p}/2}`;
+}
+
+/** Format kx for use in e^{kx}: e^x when k=1, e^{-x} when k=-1, e^{kx} otherwise. */
+function fmtExp(k: number): string {
+	if (k === 1) return 'x';
+	if (k === -1) return '-x';
+	return `${k}x`;
+}
+
 function rand(min: number, max: number): number {
 	return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -47,7 +64,8 @@ function pick<T>(arr: T[]): T {
 // Lvl 5: nested chain — √((ax+b)^n), e^(√(x+b)), (e^(ax))^n
 
 function generateChainProblem(lvl: number): Omit<Problem, 'id'> {
-	const a = rand(2, Math.min(lvl + 2, 5)) * (lvl >= 3 && Math.random() > 0.7 ? -1 : 1);
+	// Keep coefficients positive at level 5 — structural complexity is the difficulty
+	const a = rand(2, Math.min(lvl + 2, 5)) * (lvl >= 3 && lvl < 5 && Math.random() > 0.7 ? -1 : 1);
 	const b = rand(1, 4);
 	const n = pick(lvl <= 2 ? [2, 3] : [2, 3, 4]);
 
@@ -165,14 +183,17 @@ function generateChainProblem(lvl: number): Omit<Problem, 'id'> {
 
 		if (variant === 'sqrt_power') {
 			// √((ax+b)^n) = ((ax+b)^n)^(1/2)
-			q = `f(x) = \\sqrt{(${linear})^{${n}}}`;
+			// Force n >= 3 to avoid the degenerate 0/2 exponent when n=2
+			const nSqrt = pick([3, 4]);
+			const expNum = nSqrt - 2; // numerator of simplified exponent (always >= 1)
+			q = `f(x) = \\sqrt{(${linear})^{${nSqrt}}}`;
 			structuredSteps = [
-				{ label: 'Identify', latex: `\\text{Ytre: } \\sqrt{\\cdot}, \\quad \\text{Midtre: } u^{${n}}, \\quad \\text{Indre: } ${linear}` },
-				{ label: 'Rewrite', latex: `f(x) = ((${linear})^{${n}})^{1/2} = (${linear})^{${n}/2}` },
-				{ label: 'Apply chain rule', latex: `f'(x) = \\frac{${n}}{2}(${linear})^{${n}/2 - 1} \\cdot (${linear})'` },
+				{ label: 'Identify', latex: `\\text{Ytre: } \\sqrt{\\cdot}, \\quad \\text{Midtre: } u^{${nSqrt}}, \\quad \\text{Indre: } ${linear}` },
+				{ label: 'Rewrite', latex: `f(x) = ((${linear})^{${nSqrt}})^{1/2} = (${linear})^{${nSqrt}/2}` },
+				{ label: 'Apply chain rule', latex: `f'(x) = \\frac{${nSqrt}}{2}(${linear})${fmtFracHalf(expNum)} \\cdot (${linear})'` },
 				{ label: 'Differentiate inner', latex: `(${linear})' = ${a}` },
-				{ label: 'Substitute', latex: `f'(x) = \\frac{${n}}{2}(${linear})^{${n - 2}/2} \\cdot ${par(a)}` },
-				{ label: 'Simplify', latex: `f'(x) = \\frac{${n * a}}{2}(${linear})^{${n - 2}/2}` }
+				{ label: 'Substitute', latex: `f'(x) = \\frac{${nSqrt}}{2}(${linear})${fmtFracHalf(expNum)} \\cdot ${par(a)}` },
+				{ label: 'Simplify', latex: `f'(x) = \\frac{${nSqrt * a}}{2}(${linear})${fmtFracHalf(expNum)}` }
 			];
 		} else if (variant === 'exp_sqrt') {
 			// e^(√(x+b))
@@ -294,16 +315,17 @@ function generateProductProblem(lvl: number): Omit<Problem, 'id'> {
 		// lvl 5: (ax+b)^n · e^(cx) — both factors need chain rule
 		const c = rand(1, 3);
 		const linear = `${fmt(a, 'x')}${fmtNum(b)}`;
-		q = `f(x) = (${linear})^{${n}} \\cdot e^{${c}x}`;
+		const ce = fmtExp(c);
+		q = `f(x) = (${linear})^{${n}} \\cdot e^{${ce}}`;
 		structuredSteps = [
 			{ label: 'Identify u', latex: `u = (${linear})^{${n}}` },
-			{ label: 'Identify v', latex: `v = e^{${c}x}` },
+			{ label: 'Identify v', latex: `v = e^{${ce}}` },
 			{ label: 'Differentiate u (chain rule)', latex: `u' = ${n}(${linear})${fmtPow(n - 1)} \\cdot ${a} = ${n * a}(${linear})${fmtPow(n - 1)}` },
-			{ label: 'Differentiate v (chain rule)', latex: `v' = ${c}e^{${c}x}` },
+			{ label: 'Differentiate v (chain rule)', latex: `v' = ${c}e^{${ce}}` },
 			{ label: 'Apply product rule', latex: `f'(x) = u'v + uv'` },
-			{ label: 'Substitute', latex: `f'(x) = ${n * a}(${linear})${fmtPow(n - 1)} \\cdot e^{${c}x} + (${linear})^{${n}} \\cdot ${c}e^{${c}x}` },
-			{ label: 'Factor out', latex: `f'(x) = (${linear})${fmtPow(n - 1)} \\cdot e^{${c}x}[${n * a} + ${c}(${linear})]` },
-			{ label: 'Simplify', latex: `f'(x) = (${linear})${fmtPow(n - 1)} e^{${c}x}(${n * a + c * a}x${fmtNum(c * b)})` }
+			{ label: 'Substitute', latex: `f'(x) = ${n * a}(${linear})${fmtPow(n - 1)} \\cdot e^{${ce}} + (${linear})^{${n}} \\cdot ${c}e^{${ce}}` },
+			{ label: 'Factor out', latex: `f'(x) = (${linear})${fmtPow(n - 1)} \\cdot e^{${ce}}[${n * a} + ${c}(${linear})]` },
+			{ label: 'Simplify', latex: `f'(x) = (${linear})${fmtPow(n - 1)} e^{${ce}}(${c * a}x${fmtNum(n * a + c * b)})` }
 		];
 	}
 

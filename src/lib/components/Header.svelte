@@ -2,6 +2,7 @@
 	import type { Lang } from '$lib/i18n';
 	import { AVAILABLE_LANGS, LANG_FLAGS, getStrings } from '$lib/i18n';
 	import type { ViewId } from '$lib/stores';
+	import { base } from '$app/paths';
 
 	interface Props {
 		language: Lang;
@@ -45,7 +46,7 @@
 <header class="app-header">
 	<div class="header-inner">
 		{#if showBackLink}
-			<a href="/" class="back-link">{texts.nav_back_modules}</a>
+			<a href={`${base}/`} class="back-link">{texts.nav_back_modules}</a>
 		{/if}
 
 		<button class="logo" onclick={() => onNavigate('dashboard')}>

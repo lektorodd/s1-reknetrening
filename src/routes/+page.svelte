@@ -3,6 +3,7 @@
 	import { MODULE_REGISTRY, type TopicModuleMeta } from '$lib/modules/registry';
 	import * as storage from '$lib/utils/storage';
 	import { loadStudentModel, getSuccessRate, getConceptCount } from '$lib/engine/student-model';
+	import { base } from '$app/paths';
 
 	let language = $state<Lang>(storage.load<Lang>('language', 'nn'));
 	const texts = $derived(getStrings(language));
@@ -52,7 +53,7 @@
 		<div class="modules-grid">
 			{#each MODULE_REGISTRY as mod}
 				{@const progress = getModuleProgress(mod)}
-				<a href={mod.route} class="module-card" style="--accent: {mod.color}">
+				<a href={`${base}${mod.route}`} class="module-card" style="--accent: {mod.color}">
 					<div class="module-icon">{mod.icon}</div>
 					<h3 class="module-name">{mod.name[language]}</h3>
 					<p class="module-desc">{mod.description[language]}</p>

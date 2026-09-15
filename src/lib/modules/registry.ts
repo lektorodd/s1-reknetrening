@@ -21,7 +21,7 @@ const derivativeModule: TopicModuleMeta = {
 	id: 'derivative',
 	icon: '∂',
 	color: '#3F51B5',  // Indigo (matches current design)
-	route: '/derivasjon',
+	route: '/derivasjon/',
 	conceptIds: [
 		'chain_poly', 'chain_root', 'chain_exp', 'chain_log',
 		'product_poly', 'product_root', 'product_exp', 'product_log',
@@ -45,7 +45,7 @@ const logarithmModule: TopicModuleMeta = {
 	id: 'logarithm',
 	icon: 'log',
 	color: '#0D9488',  // Teal
-	route: '/logaritmer',
+	route: '/logaritmer/',
 	conceptIds: [
 		'log_product', 'log_quotient', 'log_power',
 		'log_simplify', 'log_equation', 'exp_equation'

@@ -449,8 +449,8 @@
 			{#if mode === 'focus'}
 				<!-- Topic Selector -->
 				<div class="topic-selector">
-					<label class="filter-label">{texts.filter_rule}</label>
-					<div class="topic-pills">
+					<span id="log-topic-filter-label" class="filter-label">{texts.filter_rule}</span>
+					<div class="topic-pills" role="group" aria-labelledby="log-topic-filter-label">
 						{#each logTopics as t}
 							<button
 								class="pill"
@@ -465,8 +465,8 @@
 
 				<!-- Level Filter -->
 				<div class="filter-row">
-					<label class="filter-label">{texts.filter_levels}</label>
-					<div class="filter-pills">
+					<span id="log-level-filter-label" class="filter-label">{texts.filter_levels}</span>
+					<div class="filter-pills" role="group" aria-labelledby="log-level-filter-label">
 						{#each [1, 2, 3, 4, 5] as lvl}
 							<button
 								class="pill small"
@@ -661,10 +661,6 @@
 		cursor: pointer;
 		transition: transform 0.2s ease, box-shadow 0.2s ease;
 		font-family: inherit;
-	}
-
-	.dash-card.wide {
-		grid-column: 1 / -1;
 	}
 
 	.dash-card:hover {
@@ -1152,9 +1148,6 @@
 		font-weight: 600;
 		margin-bottom: var(--space-2, 0.5rem);
 	}
-
-	.solution h4 { margin: 0 0 var(--space-2, 0.5rem); font-size: var(--font-size-sm, 0.875rem); }
-
 	.step-row {
 		display: flex;
 		flex-direction: column;
