@@ -1,42 +1,49 @@
-# sv
+# Mattetrening
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+Adaptiv rekneterping for S1. Nynorsk, ingen innlogging, ingen server — alt ligg i
+nettlesaren og appen byggjer til statiske filer.
 
-## Creating a project
+Målet er at eleven skal jobbe **jamt, ofte og på sitt eige nivå**. Difor opnar appen
+med éin knapp i staden for ein meny.
 
-If you're seeing this, you've probably already done this step. Congrats!
+## Dei fire stadene
 
-```sh
-# create a new project
-npx sv create my-app
-```
+| Rute | Kva det er |
+|---|---|
+| `/` | Heim — «Start økta», rekkje og kva som ventar på repetisjon |
+| `/tren/` | Treningsrom — ei kort økt på ti oppgåver, blanda på tvers av emne |
+| `/laer/` | Lærebok — teori og gjennomgåtte døme, til oppslag |
+| `/framgang/` | Framgang — kva du kan, og kva som står for tur |
+| `/velg/` | Vel sjølv — manuelt emne- og nivåval |
 
-To recreate this project with the same configuration:
+Skiljet mellom **Lærebok** (kuratert, handskrive) og **Treningsrom** (generert,
+adaptivt) er med vilje. Inne i økta avgjer motoren kor mykje støtte kvart kort får:
+eit heilt nytt emne kjem som eit gjennomgått døme, eit kjent emne som bar oppgåve.
 
-```sh
-# recreate this project
-npx sv@0.12.8 create --template minimal --types ts --install npm ./
-```
+## Emne
 
-## Developing
+Derivasjon (kjerneregelen, produktregelen, brøkregelen) og logaritmar (dei tre
+reknereglane, forenkling, logaritme- og eksponentiallikningar). 360 oppgåver, generert
+deterministisk — same oppgåve-id gir alltid same oppgåve.
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
+## Kom i gang
 
 ```sh
-npm run build
+npm install
+npm run dev      # http://localhost:5190
 ```
 
-You can preview the production build with `npm run preview`.
+```sh
+npm run test     # vitest
+npm run check    # svelte-check
+npm run build    # statiske filer i build/
+npm run preview
+```
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+## Leggje til eit emne
+
+Lag ei mappe under `src/lib/modules/` som eksporterer eit `TopicModule`
+(sjå `src/lib/modules/types.ts`), og legg det til i `MODULE_REGISTRY` i
+`src/lib/modules/registry.ts`. Ingen nye ruter eller komponentar trengst.
+
+Detaljar i [CLAUDE.md](CLAUDE.md).

@@ -43,17 +43,7 @@ export function getRegisteredConceptIds(): string[] {
 	return getAllConceptIds();
 }
 
-/** Legacy alias for backward compatibility with tests */
-export const ALL_CONCEPT_IDS = [
-	'chain_poly', 'chain_root', 'chain_exp', 'chain_log',
-	'product_poly', 'product_root', 'product_exp', 'product_log',
-	'quotient_poly', 'quotient_root', 'quotient_exp', 'quotient_log'
-] as const;
 
-/** Derive a concept ID from a problem's topic and type */
-export function conceptIdFromProblem(topic: string, type: string): string {
-	return `${topic}_${type}`;
-}
 
 // ── Factory ──
 
@@ -90,22 +80,34 @@ export function createStudentModel(): StudentModel {
 const STORAGE_KEY = 'student_model';
 
 export function loadStudentModel(): StudentModel {
+	// Runs before the first read so pre-0.6 progress is already in place.
+	storage.migrateLegacy();
+
 	const saved = storage.load<StudentModel | null>(STORAGE_KEY, null);
 	if (!saved) return createStudentModel();
 
-	// Ensure all concept IDs exist (handles schema migration + new modules)
-	const model = { ...saved };
+	const model = { ...saved, concepts: { ...saved.concepts } };
 	const allIds = getRegisteredConceptIds();
+
+	// Seed concepts introduced by a new module.
 	for (const id of allIds) {
-		if (!model.concepts[id]) {
-			model.concepts[id] = createDefaultConcept(id);
-		}
+		if (!model.concepts[id]) model.concepts[id] = createDefaultConcept(id);
 	}
 
-	// Phase 5 migration: add session history fields if missing
-	if (!model.sessionHistory) model.sessionHistory = [];
-	if (model.streakDays == null) model.streakDays = 0;
-	if (!model.lastActiveDate) model.lastActiveDate = '';
+	// Drop concepts no module claims any more. Without this, ids that were once
+	// declared but never generated linger forever and pollute every average.
+	const live = new Set(allIds);
+	for (const id of Object.keys(model.concepts)) {
+		if (!live.has(id)) delete model.concepts[id];
+	}
+
+	// Repair fields added after this model was first written.
+	if (!Array.isArray(model.sessionHistory)) model.sessionHistory = [];
+	if (typeof model.streakDays !== 'number') model.streakDays = 0;
+	if (typeof model.lastActiveDate !== 'string') model.lastActiveDate = '';
+	if (typeof model.totalAttempts !== 'number') model.totalAttempts = 0;
+	if (typeof model.totalCorrect !== 'number') model.totalCorrect = 0;
+	if (typeof model.overallLevel !== 'number') model.overallLevel = 1.0;
 
 	return model;
 }

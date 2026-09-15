@@ -1,212 +1,154 @@
-// Problem Selector – 60/30/10 split (review/challenge/new)
-// Based on future-report §3.2
+// Problem selector — 60/30/10 split (review / challenge / new).
+// Based on future-report §3.2, but module-neutral: it knows nothing about
+// derivatives, logarithms or any future topic. Concepts are opaque string ids
+// and problems are grouped by whatever the owning module says trains them.
 
-import type { Problem } from '$lib/modules/derivative/types';
+import type { Problem } from '$lib/modules/types';
+import { conceptIdOf } from '$lib/modules/registry';
 import type { StudentModel, ConceptKnowledge } from './student-model';
-import { conceptIdFromProblem } from './student-model';
 import { isDue, urgency } from './spaced-repetition';
 
-/**
- * Select problems using the adaptive 60/30/10 algorithm:
- * - 60% Review: concepts due for review, sorted by urgency
- * - 30% Challenge: weakest concepts, slightly above current level
- * - 10% New: unseen concepts at easy difficulty
- *
- * Falls back to weighted-random when insufficient data.
- */
+/** Split a session budget into review / challenge / new without losing a slot. */
+export function splitBudget(count: number): { review: number; challenge: number; fresh: number } {
+	const review = Math.round(count * 0.6);
+	// floor() on the challenge slice, not round(), so the remainder left for new
+	// material never rounds away. The old ceil()-based split produced 3 + 2 + 0
+	// at count = 5, which is why students stopped meeting unseen concepts.
+	const challenge = Math.floor(count * 0.3);
+	const fresh = Math.max(0, count - review - challenge);
+	return { review, challenge, fresh };
+}
+
+/** Index the bank by concept once, so picking is O(1) per concept. */
+function byConcept(bank: Problem[]): Map<string, Problem[]> {
+	const map = new Map<string, Problem[]>();
+	for (const p of bank) {
+		const id = conceptIdOf(p);
+		const list = map.get(id);
+		if (list) list.push(p);
+		else map.set(id, [p]);
+	}
+	return map;
+}
+
 export function selectNextProblems(
 	model: StudentModel,
 	bank: Problem[],
-	count: number = 5
+	count: number = 10
 ): Problem[] {
-	const concepts = model.concepts;
-	const attempted = Object.values(concepts).filter(c => c.lastSeen > 0);
+	const index = byConcept(bank);
+	const concepts = Object.values(model.concepts).filter((c) => index.has(c.conceptId));
+	const attempted = concepts.filter((c) => c.lastSeen > 0);
 
-	// If student has very little data, fall back to diverse sampling
-	if (attempted.length < 3) {
-		return fallbackSelection(model, bank, count);
-	}
+	if (attempted.length < 3) return fallbackSelection(model, bank, count);
 
-	const reviewCount = Math.ceil(count * 0.6);   // 3 of 5
-	const challengeCount = Math.ceil(count * 0.3); // 2 of 5
-	const newCount = count - reviewCount - challengeCount; // 0 of 5 (or 1 if count > 5)
-
+	const { review, challenge, fresh } = splitBudget(count);
 	const selected: Problem[] = [];
-	const usedIds = new Set<number>();
+	const used = new Set<string>();
 
-	// ── 1. REVIEW (60%) ──
-	const dueConcepts = attempted
-		.filter(c => isDue(c))
-		.sort((a, b) => urgency(b) - urgency(a));
-
-	// If not enough due concepts, pad with lowest-confidence attempted
-	const reviewCandidates = dueConcepts.length >= reviewCount
-		? dueConcepts
-		: [
-			...dueConcepts,
-			...attempted
-				.filter(c => !isDue(c))
-				.sort((a, b) => a.confidence - b.confidence)
-		];
-
-	for (let i = 0; i < reviewCount && i < reviewCandidates.length; i++) {
-		const concept = reviewCandidates[i];
-		const problem = pickProblemForConcept(concept, bank, usedIds);
+	const take = (concept: ConceptKnowledge | undefined, level?: number) => {
+		if (!concept) return;
+		const problem = pickForConcept(concept, index, used, level);
 		if (problem) {
 			selected.push(problem);
-			usedIds.add(problem.id);
+			used.add(problem.id);
 		}
-	}
+	};
 
-	// ── 2. CHALLENGE (30%) ──
-	const weakConcepts = attempted
-		.sort((a, b) => a.confidence - b.confidence)
-		.slice(0, 5); // top 5 weakest
+	// ── 1. Review — due concepts, most overdue first ──
+	const due = attempted.filter(isDue).sort((a, b) => urgency(b) - urgency(a));
+	const reviewPool =
+		due.length >= review
+			? due
+			: [...due, ...attempted.filter((c) => !isDue(c)).sort((a, b) => a.confidence - b.confidence)];
+	for (let i = 0; i < review && i < reviewPool.length; i++) take(reviewPool[i]);
 
-	for (let i = 0; i < challengeCount && i < weakConcepts.length; i++) {
-		const concept = weakConcepts[i];
-		const targetLevel = Math.min(5, Math.ceil(model.overallLevel) + 1);
-		const problem = pickProblemForConcept(concept, bank, usedIds, targetLevel);
-		if (problem) {
-			selected.push(problem);
-			usedIds.add(problem.id);
-		}
-	}
+	// ── 2. Challenge — weakest concepts, one level above current ──
+	const weak = [...attempted].sort((a, b) => a.confidence - b.confidence).slice(0, 5);
+	const targetLevel = Math.min(5, Math.ceil(model.overallLevel) + 1);
+	for (let i = 0; i < challenge && i < weak.length; i++) take(weak[i], targetLevel);
 
-	// ── 3. NEW (10%) ──
-	const unseenConcepts = Object.values(concepts).filter(c => c.lastSeen === 0);
-	const newTarget = Math.max(newCount, unseenConcepts.length > 0 ? 1 : 0);
-	for (let i = 0; i < newTarget && i < unseenConcepts.length && selected.length < count; i++) {
-		const concept = unseenConcepts[i];
-		const problem = pickProblemForConcept(concept, bank, usedIds, 1); // start easy
-		if (problem) {
-			selected.push(problem);
-			usedIds.add(problem.id);
-		}
-	}
+	// ── 3. New — unseen concepts, starting easy ──
+	const unseen = concepts.filter((c) => c.lastSeen === 0);
+	for (let i = 0; i < fresh && i < unseen.length; i++) take(unseen[i], 1);
 
-	// Fill remaining slots if needed
+	// ── 4. Fill any slots the above could not satisfy ──
 	while (selected.length < count) {
-		const remaining = bank.filter(p => !usedIds.has(p.id));
+		const remaining = bank.filter((p) => !used.has(p.id));
 		if (remaining.length === 0) break;
 		const pick = remaining[Math.floor(Math.random() * remaining.length)];
 		selected.push(pick);
-		usedIds.add(pick.id);
+		used.add(pick.id);
 	}
 
-	// ── 4. INTERLEAVE ──
+	// ── 5. Interleave — never serve a run of one concept ──
 	shuffle(selected);
-
 	return selected;
 }
 
 /**
- * Fallback for cold-start: weighted random favoring unseen, weak, and
- * easy-level problems, with diversity across topics.
- * New students should start with levels 1-2.
+ * Cold start: weighted random favouring unseen and weak concepts at easy
+ * levels, spread across every module so the first session already shows the
+ * student that topics mix.
  */
-function fallbackSelection(
-	model: StudentModel,
-	bank: Problem[],
-	count: number
-): Problem[] {
-	// Group by topic and pick from each
-	const topics = ['chain', 'product', 'quotient'] as const;
-	const perTopic = Math.max(1, Math.floor(count / topics.length));
-	const selected: Problem[] = [];
-	const usedIds = new Set<number>();
-
-	// Determine max level based on student's overall level
+function fallbackSelection(model: StudentModel, bank: Problem[], count: number): Problem[] {
+	const index = byConcept(bank);
+	const conceptIds = [...index.keys()];
 	const maxLevel = Math.max(2, Math.ceil(model.overallLevel));
+	const selected: Problem[] = [];
+	const used = new Set<string>();
 
-	for (const topic of topics) {
-		const topicProblems = bank.filter(p => p.topic === topic);
-		const weighted = topicProblems.map(p => {
-			const cId = conceptIdFromProblem(p.topic, p.type);
-			const concept = model.concepts[cId];
-			let weight = 1;
-			if (!concept || concept.lastSeen === 0) weight = 5;       // prefer unseen
-			else if (concept.confidence < 0.5) weight = 3;            // prefer weak
-			else if (concept.confidence > 0.8) weight = 0.2;         // deprioritise strong
+	// Round-robin across concepts, so a module with more concepts does not
+	// crowd out a smaller one.
+	const order = shuffled(conceptIds);
+	let guard = 0;
+	while (selected.length < count && guard++ < count * conceptIds.length) {
+		for (const conceptId of order) {
+			if (selected.length >= count) break;
+			const concept = model.concepts[conceptId];
+			const weight = !concept || concept.lastSeen === 0 ? 5 : concept.confidence < 0.5 ? 3 : 0.2;
+			if (Math.random() > weight / 5) continue;
 
-			// Strongly prefer easy levels for cold-start
-			if (p.level <= maxLevel) {
-				weight *= 10;  // 10× boost for appropriate-level problems
-			} else {
-				weight *= 0.05; // near-zero for level 4-5 at cold start
-			}
-			return { problem: p, weight };
-		});
-
-		// Weighted random sampling
-		for (let i = 0; i < perTopic; i++) {
-			const pick = weightedRandom(weighted.filter(w => !usedIds.has(w.problem.id)));
-			if (pick) {
-				selected.push(pick.problem);
-				usedIds.add(pick.problem.id);
-			}
+			const candidates = (index.get(conceptId) ?? []).filter(
+				(p) => !used.has(p.id) && p.level <= maxLevel
+			);
+			if (candidates.length === 0) continue;
+			const pick = candidates[Math.floor(Math.random() * candidates.length)];
+			selected.push(pick);
+			used.add(pick.id);
 		}
 	}
 
-	// Fill remaining — also prefer easy levels
-	while (selected.length < count) {
-		const remaining = bank.filter(p => !usedIds.has(p.id) && p.level <= maxLevel);
-		if (remaining.length === 0) {
-			// If truly exhausted, accept any level
-			const any = bank.filter(p => !usedIds.has(p.id));
-			if (any.length === 0) break;
-			const pick = any[Math.floor(Math.random() * any.length)];
-			selected.push(pick);
-			usedIds.add(pick.id);
-		} else {
-			const pick = remaining[Math.floor(Math.random() * remaining.length)];
-			selected.push(pick);
-			usedIds.add(pick.id);
-		}
+	// Top up if the weighting was unlucky.
+	const easy = bank.filter((p) => !used.has(p.id) && p.level <= maxLevel);
+	shuffle(easy);
+	while (selected.length < count && easy.length > 0) {
+		const pick = easy.pop()!;
+		selected.push(pick);
+		used.add(pick.id);
 	}
 
 	shuffle(selected);
 	return selected;
 }
 
-/**
- * Pick a problem from the bank matching a concept, optionally targeting a level.
- */
-function pickProblemForConcept(
+function pickForConcept(
 	concept: ConceptKnowledge,
-	bank: Problem[],
-	usedIds: Set<number>,
+	index: Map<string, Problem[]>,
+	used: Set<string>,
 	targetLevel?: number
 ): Problem | null {
-	const [topic, type] = concept.conceptId.split('_');
-
-	let candidates = bank.filter(
-		p => p.topic === topic && p.type === type && !usedIds.has(p.id)
-	);
-
+	let candidates = (index.get(concept.conceptId) ?? []).filter((p) => !used.has(p.id));
 	if (candidates.length === 0) return null;
 
 	if (targetLevel !== undefined) {
-		// Prefer problems near the target level
-		candidates.sort((a, b) =>
-			Math.abs(a.level - targetLevel) - Math.abs(b.level - targetLevel)
+		candidates = [...candidates].sort(
+			(a, b) => Math.abs(a.level - targetLevel) - Math.abs(b.level - targetLevel)
 		);
-		// Take from the top third closest
 		candidates = candidates.slice(0, Math.max(3, Math.ceil(candidates.length / 3)));
 	}
 
 	return candidates[Math.floor(Math.random() * candidates.length)];
-}
-
-function weightedRandom<T extends { weight: number }>(items: T[]): T | null {
-	if (items.length === 0) return null;
-	const totalWeight = items.reduce((sum, item) => sum + item.weight, 0);
-	let random = Math.random() * totalWeight;
-	for (const item of items) {
-		random -= item.weight;
-		if (random <= 0) return item;
-	}
-	return items[items.length - 1];
 }
 
 function shuffle<T>(arr: T[]): void {
@@ -214,4 +156,10 @@ function shuffle<T>(arr: T[]): void {
 		const j = Math.floor(Math.random() * (i + 1));
 		[arr[i], arr[j]] = [arr[j], arr[i]];
 	}
+}
+
+function shuffled<T>(arr: T[]): T[] {
+	const copy = [...arr];
+	shuffle(copy);
+	return copy;
 }
