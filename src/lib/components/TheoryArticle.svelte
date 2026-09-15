@@ -20,7 +20,7 @@
 	<p class="intro">{entry.intro}</p>
 
 	<section class="formula-block">
-		<h2><span class="mark" aria-hidden="true">Σ</span> Regelen</h2>
+		<h2><span class="badge-mark" aria-hidden="true">Σ</span> Regelen</h2>
 		<div class="formula">{`\\[${entry.formula}\\]`}</div>
 		<p class="rule-text">{entry.ruleText}</p>
 		<p class="example">{entry.example}</p>
@@ -50,7 +50,7 @@
 
 	{#if entry.mnemonic}
 		<aside class="mnemonic">
-			<strong><span class="mark" aria-hidden="true">✓</span> Hugseregel</strong>
+			<strong><span class="badge-mark" aria-hidden="true">✓</span> Hugseregel</strong>
 			<p>{entry.mnemonic}</p>
 		</aside>
 	{/if}
@@ -161,12 +161,12 @@
 		color: var(--color-text);
 	}
 
-	/* The formula field: white on a warm border, as in the boxes. */
+	/* An inset formula field: the sunk surface, never the page's cream. */
 	.step-math {
 		padding: var(--space-3) var(--space-4);
-		border: 1px solid var(--color-border-warm);
+		border: 1px solid var(--color-line-strong);
 		border-radius: var(--radius-sm);
-		background: var(--color-surface);
+		background: var(--color-sunk);
 		text-align: center;
 		overflow-x: auto;
 	}

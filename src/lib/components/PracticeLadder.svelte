@@ -297,9 +297,9 @@
 
 	.question {
 		padding: var(--space-4);
-		border: 1px solid var(--color-border-warm);
+		border: 1px solid var(--color-line-strong);
 		border-radius: var(--radius-sm);
-		background: var(--color-bg);
+		background: var(--color-sunk);
 		text-align: center;
 		overflow-x: auto;
 	}

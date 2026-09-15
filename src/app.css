@@ -1,28 +1,53 @@
 /* ============================================================
    Lektorodd
-   Same farge- og formkode som lærarens materiale i itslearning,
-   so a student meets one visual language in both places.
-   Palette source: the itslearning-boksar skill.
+   Same visual language as the teacher's own material, so a student
+   meets one code both here and in itslearning.
+
+   Source: the "Slik lagar du klassekart" artifact, which carries the
+   full theme — page chrome included. The itslearning-boksar skill only
+   describes what an inline-styled LMS box needs, which is why an earlier
+   pass here was missing the grid, the surface scale and the display face.
    ============================================================ */
 
 /* ── Google Fonts ── */
-@import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Source+Sans+3:ital,wght@0,300..700;1,300..700&family=JetBrains+Mono:wght@400..600&display=swap');
 
 /* ── Design Tokens ── */
 :root {
-  /* Brand — blue is the "info" accent, and carries primary actions */
+  /* Surfaces, ground to raised. Keeping all four apart matters: an inset
+     field on a raised card must not borrow the page's cream, which is what
+     made the question box look out of place. */
+  --color-ground: #F6F1E6;
+  --color-surface: #FCFAF4;
+  --color-raised: #FFFFFF;
+  --color-sunk: #EFE9DC;
+  /* Alias kept so components reading --color-bg still land on the ground. */
+  --color-bg: var(--color-ground);
+
+  /* Lines are warm. A cool grey reads as a stray mark against cream. */
+  --color-line: #E8E1D2;
+  --color-line-strong: #D8D2C4;
+  --color-border: var(--color-line);
+  --color-border-warm: var(--color-line-strong);
+  --color-border-focus: var(--color-primary);
+
+  /* The faint squared-paper grid behind the page. */
+  --color-grid: rgba(31, 41, 51, 0.045);
+
+  /* Ink. Body copy is --color-text; --color-text-muted is for ledes,
+     captions and meta lines only. Painting all body copy muted is what
+     dropped running text to 4.48:1 against cream in an earlier pass. */
+  --color-text: #1F2933;
+  --color-text-strong: #15202B;
+  --color-text-secondary: #6B6F77;
+  --color-text-muted: #6B6F77;
+  --color-text-inverse: #FFFFFF;
+
+  /* Accents. Each owns a meaning, the same one it has in itslearning. */
   --color-primary: #2B6CB0;
-  --color-primary-dark: #22568C;
+  --color-primary-dark: #1E4B7B;
   --color-primary-50: #E8F0F8;
   --color-primary-100: #CBDDEE;
-
-  /* Surfaces — cream is the signature ground */
-  --color-bg: #F6F1E6;
-  --color-surface: #FFFFFF;
-
-  /* Accents. Each one owns a meaning, the same meaning as in itslearning:
-     green = task done right, red = warning, yellow = note, violet = worked
-     example or formula, mint = the house highlight. */
   --color-success: #276749;
   --color-success-light: #E6F0EA;
   --color-warning: #B7791F;
@@ -33,40 +58,26 @@
   --color-example-light: #F1EBFB;
   --color-info: #2B6CB0;
   --color-mint: #98D3B4;
+  --color-mint-soft: #9FD8BD;
+  --color-mint-deep: #86C9A6;
   --color-mint-light: #E6F5EE;
 
-  /* Text.
-     The palette's muted grey is #6B6F77, which measures 4.48:1 on the cream
-     ground — just under AA. In an itslearning box that colour carries a short
-     meta line; here it would carry running body text, so both greys are
-     darkened a step to clear 4.5:1 (5.35:1 and 4.97:1). */
-  --color-text: #1F2933;
-  --color-text-secondary: #5F636B;
-  --color-text-muted: #64686F;
-  --color-text-inverse: #FFFFFF;
+  --shadow-sm: 0 1px 3px rgba(2, 6, 23, 0.06);
+  --shadow-md: 0 2px 8px -2px rgba(2, 6, 23, 0.09);
+  --shadow-lg: 0 6px 18px -6px rgba(2, 6, 23, 0.12);
 
-  /* Borders — warm against cream, neutral against white */
-  --color-border: #E3E6EA;
-  --color-border-warm: #D8D2C4;
-  --color-border-focus: var(--color-primary);
-
-  /* Shadows — restrained; the left accent border does the separating */
-  --shadow-sm: 0 1px 2px 0 rgb(31 41 51 / 0.05);
-  --shadow-md: 0 2px 8px -2px rgb(31 41 51 / 0.09);
-  --shadow-lg: 0 6px 18px -6px rgb(31 41 51 / 0.12);
-
-  /* Radii — calm corners, not pills */
-  --radius-sm: 4px;
-  --radius-md: 6px;
+  /* Calm corners, not pills */
+  --radius-sm: 3px;
+  --radius-md: 5px;
   --radius-lg: 8px;
   --radius-full: 9999px; /* only for genuinely circular things */
 
   /* The coloured left edge that marks a box as ours */
   --accent-edge: 4px;
 
-  /* Typography */
-  --font-family: 'Source Sans 3', 'Segoe UI', system-ui, -apple-system, Helvetica, Arial,
-    sans-serif;
+  /* Typography — three faces: display, body, mono */
+  --font-display: 'Space Grotesk', 'Source Sans 3', system-ui, sans-serif;
+  --font-family: 'Source Sans 3', system-ui, -apple-system, Helvetica, Arial, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
@@ -105,25 +116,37 @@
 }
 
 html {
-  font-size: 16px;
+  font-size: 17px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* The faint squared-paper grid is the theme's signature ground. */
 body {
   font-family: var(--font-family);
   color: var(--color-text);
-  background-color: var(--color-bg);
-  line-height: 1.55;
+  background-color: var(--color-ground);
+  background-image: linear-gradient(var(--color-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
+  background-size: 34px 34px;
+  background-attachment: fixed;
+  line-height: 1.65;
   min-height: 100vh;
 }
 
 /* ── Typography ── */
 h1, h2, h3, h4, h5, h6 {
-  font-weight: 700;
-  line-height: 1.25;
-  color: var(--color-text);
-  letter-spacing: 0.01em;
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.15;
+  color: var(--color-text-strong);
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+h1 {
+  letter-spacing: -0.03em;
+  line-height: 1.04;
 }
 
 h1 { font-size: var(--font-size-3xl); }
@@ -132,8 +155,13 @@ h3 { font-size: var(--font-size-xl); }
 h4 { font-size: var(--font-size-lg); }
 
 p {
-  color: var(--color-text-secondary);
-  line-height: 1.7;
+  color: var(--color-text);
+  line-height: 1.65;
+}
+
+/* Opt-in muted text: ledes, captions, meta lines. */
+.muted {
+  color: var(--color-text-muted);
 }
 
 small {
@@ -188,26 +216,32 @@ a:hover {
 }
 
 .btn-secondary {
-  background-color: var(--color-surface);
+  background-color: var(--color-raised);
   color: var(--color-primary);
   border-color: var(--color-primary);
 }
 
 .btn-secondary:hover {
   background-color: var(--color-primary-50);
-  color: var(--color-primary);
+  color: var(--color-primary-dark);
 }
 
+/* Full-ink label on a real surface: a quiet button, not a faded one. */
 .btn-ghost {
-  background-color: transparent;
-  color: var(--color-text-secondary);
-  border-color: var(--color-border-warm);
+  background-color: var(--color-surface);
+  color: var(--color-text-strong);
+  border-color: var(--color-line-strong);
 }
 
 .btn-ghost:hover {
-  background-color: var(--color-primary-50);
-  color: var(--color-primary);
-  border-color: var(--color-primary-100);
+  background-color: var(--color-sunk);
+  color: var(--color-text-strong);
+  border-color: var(--color-line-strong);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .btn-lg {
@@ -219,8 +253,8 @@ a:hover {
    The 4px coloured left edge is the signature of a Lektorodd box. Components
    override --accent to colour it by meaning or by module. */
 .card {
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background-color: var(--color-raised);
+  border: 1px solid var(--color-line);
   border-left: var(--accent-edge) solid var(--accent, var(--color-primary));
   border-radius: var(--radius-md);
   padding: var(--space-6) var(--space-6);
@@ -238,8 +272,24 @@ a:hover {
   border-radius: var(--radius-sm);
 }
 
-/* ── Circular mark that opens a titled box (i, ✓, !, Σ) ── */
+/* ── The house highlighter: mint swept across a run of text ── */
 .mark {
+  background: linear-gradient(
+    100deg,
+    rgba(152, 211, 180, 0) 1%,
+    var(--color-mint-soft) 5%,
+    var(--color-mint-deep) 95%,
+    rgba(152, 211, 180, 0) 99%
+  );
+  color: var(--color-text-strong);
+  padding: 0 0.2em;
+  border-radius: 1px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* ── Circular glyph that opens a titled box (i, ✓, !, Σ) ── */
+.badge-mark {
   display: inline-grid;
   place-items: center;
   width: 1.3rem;
@@ -267,7 +317,7 @@ a:hover {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-border-warm);
+  background: var(--color-line-strong);
   border-radius: var(--radius-full);
 }
 
@@ -284,6 +334,6 @@ a:hover {
 /* ── Focus Visible ── */
 :focus-visible {
   outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-  border-radius: var(--radius-sm);
+  outline-offset: 3px;
+  border-radius: 2px;
 }

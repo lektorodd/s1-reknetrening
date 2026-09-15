@@ -2,6 +2,35 @@
 
 ---
 
+## Stage 7b – Drakta mot rett kjelde (v0.8.1)
+**Dato:** 2026-09-15
+
+Første runde med Lektorodd-drakta bygde på skillen `itslearning-boksar`. Den skillen er
+laga for inline-stil i ein LMS-editor og har difor berre det ein boks treng — ikkje
+sidechromet. Difor mangla rutenettet, flateskalaen og display-skrifta.
+
+Den fulle drakta låg i ein artefakt frå ein tidlegare samtale. `lektorodd.no` er blokkert
+av egress-proxyen, og repoet er ikkje oppdatert, så artefakten var einaste veg inn.
+
+Tre ting brukaren peika på hadde éi felles årsak: eg hadde flata ut ein fireleddet
+flateskala til to. Difor låg eit innfelt felt på sidebotnen sin krem inni eit kvitt kort.
+Linjene mine var kalde `#E3E6EA` mot varm krem, og knappane mangla `--ink-strong` og
+`--line-strong` heilt.
+
+**Lærdomen:** ein skill som skildrar ein komponent er ikkje det same som eit tema. Eg
+generaliserte frå boksen til heile sida og fann opp det som mangla i staden for å leita
+vidare etter kjelda.
+
+**Og ein til:** eg mørkna begge gråtonane forrige runde fordi brødteksten berre klarte
+4,48:1. Det var symptombehandling. Temaet set `body { color: var(--ink) }` — brødtekst er
+full ink, og grå er berre for ingressar og metalinjer. Feilen var den globale `p`-regelen.
+
+**Verifisering som faktisk fann noko:** `getComputedStyle(document.body)` sa at rutenettet
+var på plass, men skjermbiletet viste ingenting. `.app-shell` målte ein solid krembotn
+rett oppå. Ei berekna verdi på rett element beviser ikkje at noko er synleg.
+
+---
+
 ## Stage 7 – Lektorodd-drakt (v0.8.0)
 **Dato:** 2026-09-15
 

@@ -127,9 +127,9 @@
 
 	.question {
 		padding: var(--space-5);
-		border: 1px solid var(--color-border-warm);
+		border: 1px solid var(--color-line-strong);
 		border-radius: var(--radius-sm);
-		background: var(--color-bg);
+		background: var(--color-sunk);
 		font-size: var(--font-size-lg);
 		text-align: center;
 		overflow-x: auto;
