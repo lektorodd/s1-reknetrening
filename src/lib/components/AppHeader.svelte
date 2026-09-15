@@ -43,7 +43,11 @@
 		flex-wrap: wrap;
 		padding: var(--space-4) var(--space-6);
 		background: var(--color-surface);
-		border-bottom: 1px solid var(--color-border);
+		border-bottom: 1px solid var(--color-border-warm);
+	}
+
+	.nav-link:hover {
+		text-decoration: none;
 	}
 
 	.brand {
@@ -73,7 +77,7 @@
 
 	.nav-link {
 		padding: var(--space-2) var(--space-4);
-		border-radius: var(--radius-full);
+		border-radius: var(--radius-md);
 		text-decoration: none;
 		color: var(--color-text-secondary);
 		font-size: var(--font-size-sm);

@@ -16,7 +16,7 @@ export const logarithmModule: TopicModule = {
 	id: MODULE_ID,
 	slug: 'logaritmar',
 	icon: 'log',
-	color: '#0D9488',
+	color: '#276749',
 	name: 'Logaritmar',
 	description: 'Reknereglane, forenkling og likningar',
 	topics: Object.entries(TOPIC_NAMES).map(([id, name]) => ({ id, name })),

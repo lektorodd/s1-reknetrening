@@ -22,6 +22,8 @@
 		mod?.topics.find((t) => t.id === card.problem.topic)?.name ?? card.problem.topic
 	);
 	const theoryHref = $derived(mod ? `${base}/laer/${mod.slug}/${card.problem.topic}/` : null);
+	/** The card's left edge carries the module's colour. */
+	const accent = $derived(mod?.color ?? 'var(--color-primary)');
 
 	// Re-typeset whenever the card or what it shows changes.
 	$effect(() => {
@@ -43,7 +45,7 @@
 	}
 </script>
 
-<article class="card session-card" bind:this={container}>
+<article class="card session-card" style="--accent: {accent}" bind:this={container}>
 	<header>
 		<span class="badge">{topicName} · Nivå {card.problem.level}</span>
 		{#if card.isNewConcept}
@@ -104,8 +106,8 @@
 	}
 
 	.badge {
-		padding: var(--space-1) var(--space-3);
-		border-radius: var(--radius-full);
+		padding: var(--space-1) var(--space-2);
+		border-radius: var(--radius-sm);
 		background: var(--color-primary-50);
 		color: var(--color-primary-dark);
 		font-size: var(--font-size-xs);
@@ -114,7 +116,7 @@
 
 	.badge.new {
 		background: var(--color-warning-light);
-		color: #92400e;
+		color: var(--color-warning);
 	}
 
 	.counter {
@@ -125,18 +127,23 @@
 
 	.question {
 		padding: var(--space-5);
-		border-radius: var(--radius-md);
+		border: 1px solid var(--color-border-warm);
+		border-radius: var(--radius-sm);
 		background: var(--color-bg);
 		font-size: var(--font-size-lg);
+		text-align: center;
 		overflow-x: auto;
 	}
 
+	/* A hint is a "merk deg" note: yellow edge, body text on a pale ground.
+	   The yellow itself is too light to carry running text. */
 	.hint {
 		margin: 0;
 		padding: var(--space-3) var(--space-4);
-		border-radius: var(--radius-md);
+		border-left: var(--accent-edge) solid var(--color-warning);
+		border-radius: var(--radius-sm);
 		background: var(--color-warning-light);
-		color: #78350f;
+		color: var(--color-text);
 	}
 
 	.steps {
@@ -154,12 +161,14 @@
 		animation: fade-in var(--transition-base) both;
 	}
 
+	/* Solution steps are worked-example material, so they take the violet the
+	   itslearning boxes use for that. */
 	.step-label {
 		font-size: var(--font-size-xs);
 		font-weight: 700;
 		text-transform: uppercase;
 		letter-spacing: 0.04em;
-		color: var(--color-primary);
+		color: var(--color-example);
 	}
 
 	.step-math {

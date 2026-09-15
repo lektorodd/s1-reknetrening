@@ -20,7 +20,7 @@ export const derivativeModule: TopicModule = {
 	id: MODULE_ID,
 	slug: 'derivasjon',
 	icon: '∂',
-	color: '#3F51B5',
+	color: '#2B6CB0',
 	name: 'Derivasjon',
 	description: 'Kjerneregelen, produktregelen og brøkregelen',
 	topics: Object.entries(TOPIC_NAMES).map(([id, name]) => ({ id, name })),

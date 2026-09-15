@@ -139,16 +139,18 @@
 		gap: var(--space-1);
 		padding: var(--space-5);
 		border: 1px solid var(--color-border);
-		border-radius: var(--radius-lg);
+		border-left: var(--accent-edge) solid var(--color-border-warm);
+		border-radius: var(--radius-md);
 		background: var(--color-surface);
 		text-decoration: none;
 		color: var(--color-text);
-		transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+		transition: border-left-color var(--transition-fast), box-shadow var(--transition-fast);
 	}
 
 	.elsewhere a:hover {
-		border-color: var(--color-primary);
+		border-left-color: var(--color-primary);
 		box-shadow: var(--shadow-md);
+		text-decoration: none;
 	}
 
 	.elsewhere span {

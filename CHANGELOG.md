@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-09-15
+
+The app now wears the Lektorodd theme, the same one the teacher's own itslearning
+material uses, so a student meets one visual language in both places.
+
+### Changed
+- **Palette** from the `itslearning-boksar` skill: cream `#F6F1E6` ground, `#1F2933`
+  body text, and the four accents that each carry a fixed meaning — blue `#2B6CB0`
+  (info, primary action), green `#276749` (correct), red `#C53030` (warning), violet
+  `#805AD5` (worked example and formula), plus mint `#98D3B4` as the house highlight.
+- **Typography** Epilogue → Source Sans 3, with JetBrains Mono available for formula
+  fields.
+- **Form**: pills are gone. Radii drop to 4/6/8px, and cards and boxes carry the 4px
+  coloured left edge that marks a Lektorodd box. `--radius-full` survives only for
+  genuinely circular things — progress dots, level buttons, step numbers.
+- **Colour now means something specific.** The rule box is violet with a `Σ` mark,
+  worked-example steps are numbered in violet circles, the mnemonic sits on mint with a
+  `✓`, a hint has a yellow edge, and right/wrong are green/red — the same coding as in
+  the itslearning boxes.
+- **Module accents**: derivative `#3F51B5` → `#2B6CB0`, logarithm `#0D9488` → `#276749`.
+- `DESIGN.md` rewritten from "Axiom Geometric" to Lektorodd.
+
+### Fixed
+- Body text met only 4.48:1 against the cream ground, under AA. Both muted greys are a
+  step darker than the palette's `#6B6F77` — `#5F636B` (5.35:1) and `#64686F` (4.97:1) —
+  because this app puts running text where an itslearning box puts a short meta line.
+
 ## [0.7.0] - 2026-09-15
 
 Difficulty and support are two different axes, and this release stops mixing them.

@@ -192,13 +192,15 @@
 </div>
 
 <style>
+	/* The ladder is worked-example material too, so it carries the violet edge. */
 	.ladder {
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-4);
 		padding: var(--space-6);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-lg);
+		border: 1px solid var(--color-border-warm);
+		border-left: var(--accent-edge) solid var(--color-example);
+		border-radius: var(--radius-md);
 		background: var(--color-surface);
 	}
 
@@ -284,7 +286,7 @@
 		font-weight: 700;
 		text-transform: uppercase;
 		letter-spacing: 0.04em;
-		color: var(--color-primary);
+		color: var(--color-example);
 	}
 
 	.prompt {
@@ -295,8 +297,10 @@
 
 	.question {
 		padding: var(--space-4);
-		border-radius: var(--radius-md);
+		border: 1px solid var(--color-border-warm);
+		border-radius: var(--radius-sm);
 		background: var(--color-bg);
+		text-align: center;
 		overflow-x: auto;
 	}
 
@@ -318,12 +322,14 @@
 		animation: fade-in var(--transition-base) both;
 	}
 
+	/* Solution steps are worked-example material, so they take the violet the
+	   itslearning boxes use for that. */
 	.step-label {
 		font-size: var(--font-size-xs);
 		font-weight: 700;
 		text-transform: uppercase;
 		letter-spacing: 0.04em;
-		color: var(--color-primary);
+		color: var(--color-example);
 	}
 
 	.step-math {
@@ -333,8 +339,8 @@
 	.your-turn {
 		margin: 0;
 		padding: var(--space-4);
-		border: 2px dashed var(--color-border);
-		border-radius: var(--radius-md);
+		border: 2px dashed var(--color-border-warm);
+		border-radius: var(--radius-sm);
 		text-align: center;
 		color: var(--color-text-secondary);
 		font-weight: 600;
