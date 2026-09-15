@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.2] - 2026-09-15
+
+Treningsrommet seier no kva fag ein oppgåve høyrer til. Filteret listar emna under
+fagoverskrifter i staden for flatt, og kortet ber modulnamnet.
+
+### Added
+- **Filteret er gruppert per fag**, med fagets ikon og farge som overskrift — same
+  mønster som Lærebok og Framgang. «Potenssetninga» seier ingenting til ein elev som
+  ikkje alt veit at ho er logaritmar, og med integrasjon ville den flate lista blitt
+  fjorten emne lang.
+- **«Alle» per fag**, det steget mellom «alle fag» og eitt emne som ikkje fanst. Ein kan
+  no trena heile derivasjon utan å velja eitt emne.
+- **Modulnamnet på oppgåvekortet**, som eigen merkelapp i fagfargen framfor emne og nivå.
+  Kortet hadde alt fagfargen på venstrekanten, men farge åleine seier ikkje kva faget
+  heiter, og ei økt blandar fag med vilje.
+- `filterBank(bank, { moduleId, topic, level })` i `engine/session.ts` — filtreringa låg
+  inline i sida og kunne ikkje testast. «Tom? bruk heile banken»-utvegen ligg no på éin
+  stad.
+
+### Changed
+- Filtertilstanden er `moduleId` + `topic` i staden for éin samanslegen streng
+  `"derivative:chain"`, som ikkje kunne uttrykkja «heile derivasjon».
+- Oppsummeringslinja seier «Derivasjon · Kjerneregelen · nivå 3», ikkje «Alle emne».
+
+### Fixed
+- **Lyseblå strekar over sida.** `--color-primary-50/-100` var tekne i bruk som flater.
+  Verst var framdriftsstripa i Tren: ved start er fyllet null breitt, så heile sporet
+  stod att som ein blå strek. Spor og skinner er varme no — stripa, stigens hjelpe-
+  prikkar og søylene på Framgang. Blå ber det som er *fylt*.
+- **Oppgåveboksen var for mørk.** Førre runde sette han til `--color-sunk` for å hindra at
+  han lånte sidebotnen sin krem; det var ei overkorrigering. `--sunk` ber små innfelte
+  ting som `kbd` og `code`, ikkje ei stor flate. Boksen, stigens formelfelt og felta i
+  gjennomgått døme ligg no eit hakk mjukare, med `--color-line`-ramme.
+- **Oppgåveboksen var uforholdsmessig høg.** Høgda kom ikkje frå polstringa, men frå
+  MathJax sine eigne 1em-marginar på display-matte oppå polstringa. Dei er trimma.
+
 ## [0.8.1] - 2026-09-15
 
 Corrects the Lektorodd theme against its real source. The first pass took the palette

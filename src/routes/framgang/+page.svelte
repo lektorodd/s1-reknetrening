@@ -233,13 +233,14 @@
 		height: 100%;
 	}
 
+	/* A warm rail behind the bars; the blue belongs to what is filled. */
 	.bar-track {
 		flex: 1;
 		width: 100%;
 		display: flex;
 		align-items: flex-end;
 		border-radius: var(--radius-sm);
-		background: var(--color-primary-50);
+		background: var(--color-line);
 	}
 
 	.bar {

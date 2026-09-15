@@ -3,18 +3,18 @@
 	import { base } from '$app/paths';
 	import SessionCard from '$lib/components/SessionCard.svelte';
 	import TopicFilter from '$lib/components/TopicFilter.svelte';
-	import { buildSession, SESSION_LENGTH, type Session } from '$lib/engine/session';
+	import { buildSession, filterBank, SESSION_LENGTH, type Session } from '$lib/engine/session';
 	import { loadStudentModel, saveStudentModel, type StudentModel } from '$lib/engine/student-model';
 	import { updateAfterAttempt } from '$lib/engine/spaced-repetition';
 	import { getFullBank } from '$lib/modules/registry';
-	import type { Problem } from '$lib/modules/types';
 
 	let model = $state<StudentModel | null>(null);
 	let session = $state<Session | null>(null);
 	let position = $state(0);
 	let correctCount = $state(0);
 
-	/** null on both means "let the engine choose", which is the default. */
+	/** All null means "let the engine choose", which is the default. */
+	let moduleId = $state<string | null>(null);
 	let topic = $state<string | null>(null);
 	let level = $state<number | null>(null);
 
@@ -30,29 +30,23 @@
 		start();
 	});
 
-	/** The slice of the bank the current filter allows. */
-	function filteredBank(): Problem[] {
-		const bank = getFullBank();
-		const [moduleId, topicId] = topic ? topic.split(':') : [null, null];
-
-		const subset = bank.filter(
-			(p) =>
-				(moduleId === null || (p.moduleId === moduleId && p.topic === topicId)) &&
-				(level === null || p.level === level)
-		);
-
-		// A filter matching nothing would end the session before it starts.
-		return subset.length > 0 ? subset : bank;
-	}
-
 	function start() {
 		if (!model) return;
-		session = buildSession(model, SESSION_LENGTH, filteredBank());
+		session = buildSession(
+			model,
+			SESSION_LENGTH,
+			filterBank(getFullBank(), { moduleId, topic, level })
+		);
 		position = 0;
 		correctCount = 0;
 	}
 
-	function changeFilter(nextTopic: string | null, nextLevel: number | null) {
+	function changeFilter(
+		nextModule: string | null,
+		nextTopic: string | null,
+		nextLevel: number | null
+	) {
+		moduleId = nextModule;
 		topic = nextTopic;
 		level = nextLevel;
 		start();
@@ -72,7 +66,7 @@
 
 <svelte:head><title>Tren – Mattetrening</title></svelte:head>
 
-<TopicFilter {topic} {level} onChange={changeFilter} />
+<TopicFilter {moduleId} {topic} {level} onChange={changeFilter} />
 
 {#if !session}
 	<p class="loading">Set saman økta…</p>
@@ -113,7 +107,7 @@
 	.progress-strip {
 		height: 6px;
 		border-radius: var(--radius-full);
-		background: var(--color-primary-50);
+		background: var(--color-line-strong);
 		overflow: hidden;
 		margin-bottom: var(--space-4);
 	}

@@ -307,6 +307,13 @@ a:hover {
   font-size: 1.15em !important;
 }
 
+/* Display maths always sits in a box that already has padding. MathJax's own
+   1em margins stack on top of that, which is what made the question box look
+   twice as tall as it is. */
+mjx-container[display='true'] {
+  margin: 0.25em 0 !important;
+}
+
 /* ── Scrollbar ── */
 ::-webkit-scrollbar {
   width: 6px;

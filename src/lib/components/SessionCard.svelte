@@ -47,6 +47,9 @@
 
 <article class="card session-card" style="--accent: {accent}" bind:this={container}>
 	<header>
+		{#if mod}
+			<span class="badge module">{mod.name}</span>
+		{/if}
 		<span class="badge">{topicName} · Nivå {card.problem.level}</span>
 		{#if card.isNewConcept}
 			<span class="badge new">Nytt emne</span>
@@ -114,6 +117,13 @@
 		font-weight: 700;
 	}
 
+	/* A session interleaves subjects, so the card has to say which one this is.
+	   The left edge already carries the colour; the name makes it readable. */
+	.badge.module {
+		background: var(--accent);
+		color: var(--color-text-inverse);
+	}
+
 	.badge.new {
 		background: var(--color-warning-light);
 		color: var(--color-warning);
@@ -125,11 +135,13 @@
 		font-size: var(--font-size-sm);
 	}
 
+	/* An inset field, but a large one: the soft surface, not the sunk tone that
+	   carries small things like kbd and code. */
 	.question {
-		padding: var(--space-5);
-		border: 1px solid var(--color-line-strong);
+		padding: var(--space-4) var(--space-5);
+		border: 1px solid var(--color-line);
 		border-radius: var(--radius-sm);
-		background: var(--color-sunk);
+		background: var(--color-surface);
 		font-size: var(--font-size-lg);
 		text-align: center;
 		overflow-x: auto;

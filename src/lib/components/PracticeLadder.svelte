@@ -261,19 +261,21 @@
 		gap: var(--space-2);
 	}
 
+	/* The track is a warm rail; blue is kept for the rungs actually taken. */
 	.dot {
 		flex: 1;
 		height: 6px;
 		padding: 0;
 		border: 0;
 		border-radius: var(--radius-full);
-		background: var(--color-border);
+		background: var(--color-line-strong);
 		cursor: pointer;
 		transition: background var(--transition-fast);
 	}
 
 	.dot.done {
-		background: var(--color-primary-100);
+		background: var(--color-primary);
+		opacity: 0.45;
 	}
 
 	.dot.active {
@@ -296,10 +298,10 @@
 	}
 
 	.question {
-		padding: var(--space-4);
-		border: 1px solid var(--color-line-strong);
+		padding: var(--space-3) var(--space-4);
+		border: 1px solid var(--color-line);
 		border-radius: var(--radius-sm);
-		background: var(--color-sunk);
+		background: var(--color-raised);
 		text-align: center;
 		overflow-x: auto;
 	}

@@ -23,7 +23,7 @@ import {
 } from '$lib/engine/spaced-repetition';
 import { selectNextProblems, splitBudget } from '$lib/engine/problem-selector';
 import { fadeSteps } from '$lib/engine/guidance-fading';
-import { buildSession, SESSION_LENGTH } from '$lib/engine/session';
+import { buildSession, filterBank, SESSION_LENGTH } from '$lib/engine/session';
 import { buildLadder, LADDER_LEVEL, LADDER_RUNGS } from '$lib/engine/ladder';
 import {
 	MODULE_REGISTRY,
@@ -637,6 +637,42 @@ describe('Session builder', () => {
 		for (const card of session.cards) {
 			expect(card.conceptId).toBe(conceptIdOf(card.problem));
 		}
+	});
+});
+
+describe('Bank filter', () => {
+	it('leaves the bank untouched when nothing is chosen', () => {
+		const bank = getFullBank();
+		expect(filterBank(bank)).toBe(bank);
+		expect(filterBank(bank, {})).toBe(bank);
+	});
+
+	it('narrows to a subject, keeping every topic within it', () => {
+		const subset = filterBank(getFullBank(), { moduleId: 'derivative' });
+		expect(subset.length).toBeGreaterThan(0);
+		expect(subset.every((p) => p.moduleId === 'derivative')).toBe(true);
+		// "Whole subject" is the step between all subjects and one topic, so it
+		// has to span more than one topic to mean anything.
+		expect(new Set(subset.map((p) => p.topic)).size).toBeGreaterThan(1);
+	});
+
+	it('narrows to one topic within a subject', () => {
+		const subset = filterBank(getFullBank(), { moduleId: 'derivative', topic: 'chain' });
+		expect(subset.length).toBeGreaterThan(0);
+		expect(subset.every((p) => p.moduleId === 'derivative' && p.topic === 'chain')).toBe(true);
+	});
+
+	it('takes the intersection when a level is combined with a subject', () => {
+		const subset = filterBank(getFullBank(), { moduleId: 'logarithm', level: 4 });
+		expect(subset.length).toBeGreaterThan(0);
+		expect(subset.every((p) => p.moduleId === 'logarithm' && p.level === 4)).toBe(true);
+	});
+
+	it('falls back to the whole bank rather than yielding an empty session', () => {
+		// A topic from one subject with another subject's id matches nothing.
+		const bank = getFullBank();
+		const subset = filterBank(bank, { moduleId: 'logarithm', topic: 'chain' });
+		expect(subset).toBe(bank);
 	});
 });
 
