@@ -22,8 +22,9 @@ import {
 	updateAfterAttempt
 } from '$lib/engine/spaced-repetition';
 import { selectNextProblems, splitBudget } from '$lib/engine/problem-selector';
-import { selectFadingLevel, fadeSteps } from '$lib/engine/guidance-fading';
-import { buildSession, MIN_PRACTICE_LEVEL, SESSION_LENGTH } from '$lib/engine/session';
+import { fadeSteps } from '$lib/engine/guidance-fading';
+import { buildSession, SESSION_LENGTH } from '$lib/engine/session';
+import { buildLadder, LADDER_LEVEL, LADDER_RUNGS } from '$lib/engine/ladder';
 import {
 	MODULE_REGISTRY,
 	conceptIdOf,
@@ -364,27 +365,6 @@ describe('Guidance Fading', () => {
 		model = createStudentModel();
 	});
 
-	it('new concept gets fading level 0 (full example)', () => {
-		const concept = model.concepts['chain_poly'];
-		expect(selectFadingLevel(concept)).toBe(0);
-	});
-
-	it('after few weak attempts gets level 1', () => {
-		const concept = model.concepts['chain_poly'];
-		concept.timesCorrect = 2;
-		concept.timesIncorrect = 2;
-		concept.confidence = 0.35;
-		expect(selectFadingLevel(concept)).toBe(1);
-	});
-
-	it('confident student gets level 4 (independent)', () => {
-		const concept = model.concepts['chain_poly'];
-		concept.timesCorrect = 10;
-		concept.timesIncorrect = 1;
-		concept.confidence = 0.9;
-		expect(selectFadingLevel(concept)).toBe(4);
-	});
-
 	it('fadeSteps level 0 shows all steps', () => {
 		const result = fadeSteps(sampleSteps, 0);
 		expect(result.shown).toHaveLength(6);
@@ -617,30 +597,39 @@ describe('Session builder', () => {
 		expect(session.cards).toHaveLength(SESSION_LENGTH);
 	});
 
-	it('never serves a study-only card — every card is work to do', () => {
-		// Fully worked examples are instruction and belong to the Lærebok. A
-		// session that mixed them in would make it a coin flip whether opening
-		// the Treningsrom meant reading or practising.
+	it('carries no scaffolding level — a session is the plain problem bank', () => {
+		// How much of a solution is shown is instruction, and belongs to the
+		// Lærebok ladder where the student steps through it deliberately.
+		// Drawing faded and unfaded problems side by side made it pot luck which
+		// kind of task the next card would be.
 		const session = buildSession(createStudentModel());
-		expect(session.cards.every((c) => c.level >= MIN_PRACTICE_LEVEL)).toBe(true);
-		expect(session.cards.some((c) => c.level === 0)).toBe(false);
+		for (const card of session.cards) {
+			expect(card).not.toHaveProperty('level');
+		}
 	});
 
-	it('gives an unmet concept the gentlest practice card, not a lecture', () => {
+	it('varies difficulty, which is the axis a session does vary', () => {
+		const model = createStudentModel();
+		const levels = new Set<number>();
+		for (let i = 0; i < 20; i++) {
+			for (const c of buildSession(model).cards) levels.add(c.problem.level);
+		}
+		expect(levels.size).toBeGreaterThan(1);
+	});
+
+	it('flags concepts the student has not met', () => {
 		const session = buildSession(createStudentModel());
-		// A new student has met nothing, so every card is a completion problem.
-		expect(session.cards.every((c) => c.level === 1)).toBe(true);
 		expect(session.cards.every((c) => c.isNewConcept)).toBe(true);
 	});
 
-	it('gives a well-practised concept less scaffolding', () => {
-		const model = createStudentModel();
-		for (let i = 0; i < 8; i++) {
-			updateAfterAttempt(model, { conceptId: 'chain_poly', correct: true, hintUsed: false });
+	it('honours a narrowed bank, as the topic filter supplies', () => {
+		const bank = getFullBank().filter((p) => p.topic === 'chain' && p.level === 3);
+		const session = buildSession(createStudentModel(), 5, bank);
+		expect(session.cards.length).toBeGreaterThan(0);
+		for (const card of session.cards) {
+			expect(card.problem.topic).toBe('chain');
+			expect(card.problem.level).toBe(3);
 		}
-		const bank = getFullBank().filter((p) => conceptIdOf(p) === 'chain_poly');
-		const session = buildSession(model, 3, bank);
-		expect(session.cards.every((c) => c.level === 4)).toBe(true);
 	});
 
 	it('attaches the owning module concept to every card', () => {
@@ -648,5 +637,52 @@ describe('Session builder', () => {
 		for (const card of session.cards) {
 			expect(card.conceptId).toBe(conceptIdOf(card.problem));
 		}
+	});
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// LADDER
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+describe('Practice ladder', () => {
+	it('gives a distinct problem at every rung', () => {
+		for (const mod of MODULE_REGISTRY) {
+			for (const topic of mod.topics) {
+				const ladder = buildLadder(mod.id, topic.id, getFullBank());
+				const ids = ladder.map((r) => r.problem.id);
+				expect(new Set(ids).size, `${mod.id}/${topic.id}`).toBe(ids.length);
+			}
+		}
+	});
+
+	it('holds difficulty fixed and varies only support', () => {
+		const ladder = buildLadder('derivative', 'chain', getFullBank());
+		expect(ladder).toHaveLength(LADDER_RUNGS.length);
+		expect(ladder.map((r) => r.rung)).toEqual(LADDER_RUNGS);
+		for (const r of ladder) {
+			expect(r.problem.level).toBe(LADDER_LEVEL);
+			expect(r.problem.topic).toBe('chain');
+		}
+	});
+
+	it('starts fully worked and ends unaided', () => {
+		const ladder = buildLadder('logarithm', 'log_power', getFullBank());
+		const first = ladder[0];
+		const last = ladder[ladder.length - 1];
+		expect(fadeSteps(first.problem.structuredSteps, first.rung).hidden).toHaveLength(0);
+		expect(fadeSteps(last.problem.structuredSteps, last.rung).shown).toHaveLength(0);
+	});
+
+	it('shortens rather than repeating a problem when a topic is thin', () => {
+		const thin = getFullBank()
+			.filter((p) => p.moduleId === 'derivative' && p.topic === 'chain' && p.level === LADDER_LEVEL)
+			.slice(0, 2);
+		const ladder = buildLadder('derivative', 'chain', thin);
+		expect(ladder).toHaveLength(2);
+		expect(new Set(ladder.map((r) => r.problem.id)).size).toBe(2);
+	});
+
+	it('returns nothing for a topic that does not exist', () => {
+		expect(buildLadder('derivative', 'finst-ikkje', getFullBank())).toEqual([]);
 	});
 });

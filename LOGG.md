@@ -2,6 +2,37 @@
 
 ---
 
+## Stage 6 – Stigen inn i Lærebok (v0.7.0)
+**Dato:** 2026-09-15
+
+To akser har vore blanda: vanskegrad (nivå 1-5 i oppgåvebanken) og mengd hjelp (kor mykje
+av løysinga som alt er fylt ut). Økta varierte begge, så eleven visste aldri om neste kort
+var ei oppgåve å løysa eller ei halvferdig løysing å fullføra.
+
+No varierer økta berre vanskegrad — vanlege oppgåver, som den opphavlege ferdighetstreninga.
+Mengd hjelp er blitt ein stige i Lærebok: fem trinn, fem ulike oppgåver av same type, frå
+heilt gjennomgått til heilt utan hjelp, som eleven blar seg gjennom sjølv. Refleksjons-
+spørsmåla flytta med. Tren fekk til gjengjeld ei synleg filterrad for emne og nivå, så
+`/velg/` fall bort.
+
+**Kva gjekk bra:** `fadeSteps()` trong ingen endring — han var alltid rein. At stigen har
+ei eiga oppgåve per trinn kom ut av at brukaren valde det; det er betre enn å visa same
+oppgåva fem gonger, der eleven allereie har sett fasiten på første trinn.
+
+**Det eg tok feil om, tredje gong:** eg har no tre gonger late fading og oppgåvebank flyta
+saman, kvar gong med ei grunngjeving frå forskingsrapporten. Rapporten argumenterer for at
+gjennomgått løysing skal koma *før* øving — ikkje at oppgåvebanken skal husa lesestoff.
+Skiljet brukaren bad om frå første melding var det rette heile vegen.
+
+**Ein reell bug funnen på vegen:** kaldstarten kappa nivået hardt til maks 2. Ein fersk
+elev som valde nivå 5 i filteret ville fått null oppgåver. Taket er no ein preferanse.
+
+**Potensielle utfordringar:** fading er no brukt éin stad. Om elevane sjeldan opnar stigen,
+er spørsmålet om han bør lenkast tydelegare frå kort dei vurderte til «Trong øving» — men
+det krev observasjon, ikkje gjetting.
+
+---
+
 ## Stage 5 – Lærebok og Treningsrom (v0.6.0)
 **Dato:** 2026-09-15
 

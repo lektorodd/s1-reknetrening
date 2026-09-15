@@ -1,5 +1,6 @@
 import { error } from '@sveltejs/kit';
 import { MODULE_REGISTRY, getFullBank, getModuleBySlug } from '$lib/modules/registry';
+import { buildLadder } from '$lib/engine/ladder';
 
 /** Levels to draw a fully worked example from, easiest first. */
 const EXAMPLE_LEVELS = [1, 3, 5];
@@ -31,9 +32,16 @@ export function load({ params }) {
 		bank.find((p) => p.moduleId === mod.id && p.topic === params.emne && p.level === level)
 	).filter((p) => p !== undefined);
 
+	// The fading ladder: progressively less-solved problems the student walks
+	// through themselves. This is instruction, which is why it lives here and
+	// not in a session.
+	const ladder = buildLadder(mod.id, params.emne, bank);
+
 	return {
 		entry,
 		examples,
+		ladder,
+		prompts: mod.selfExplanations[params.emne] ?? [],
 		moduleName: mod.name,
 		moduleSlug: mod.slug,
 		moduleColor: mod.color,

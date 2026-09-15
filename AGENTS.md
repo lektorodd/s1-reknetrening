@@ -32,29 +32,39 @@ Instruction and drill are deliberately separate:
 - **Treningsrom** (`/tren/`) — the generated problem bank from each module's
   `generator.ts`. Adaptive, scheduled, rated.
 
-**Every card in a session is work to do.** Scaffolding varies — `selectFadingLevel()`
-picks a level per concept — but a session never serves a study-only card. Level 0 is a
-fully worked example, which is instruction, so it belongs to the Lærebok; practice
-starts at level 1 (`MIN_PRACTICE_LEVEL`), a completion problem showing every step but
-the last. Opening the Treningsrom always means practising, never a coin flip between
-reading and doing. Each card links out to its Lærebok article for the worked example.
+**Difficulty and support are separate axes, and they live in separate places.**
 
-The Lærebok holds both kinds of worked example: the curated one written in `theory.ts`,
-and fully solved generated problems at three difficulty levels (`WorkedExamples.svelte`),
-so a student can study as many examples of the same shape as they want without any of it
-being counted or scheduled.
+- *Difficulty* is the bank's five levels per topic. A session varies this, and only this:
+  every card is an ordinary problem — question, optional hint, "Vis løysing" showing the
+  whole solution, then self-assessment. The topic filter at the top of `/tren/` lets a
+  student pin a topic and/or level; left alone, the engine chooses.
+- *Support* — how much of the solution is already filled in — is the fading ladder, and
+  it is instruction. `PracticeLadder.svelte` on each Lærebok topic page walks five rungs
+  from a fully worked example to an unaided problem, a different problem at each rung, at
+  the student's own pace. Nothing there is rated or scheduled, and the self-explanation
+  prompts live there too.
+
+A session must never mix the two. Faded and unfaded problems drawn side by side make it
+pot luck which kind of task comes next, which is what the split exists to prevent.
+`fadeSteps()` is used by the ladder alone; there is deliberately no function that picks a
+fading level on the student's behalf.
+
+The Lærebok therefore holds three things per topic: the curated theory and worked example
+from `theory.ts`, fully solved generated problems at three difficulty levels
+(`WorkedExamples.svelte`), and the ladder.
 
 ## Architecture
 
 ```
 src/lib/
   modules/      types.ts (shared contract) · registry.ts · rng.ts · derivative/ · logarithm/
-  engine/       session.ts · problem-selector.ts · spaced-repetition.ts
-                student-model.ts · guidance-fading.ts
-  components/   AppHeader · SessionCard · TheoryArticle
+  engine/       session.ts · ladder.ts · problem-selector.ts
+                spaced-repetition.ts · student-model.ts · guidance-fading.ts
+  components/   AppHeader · SessionCard · TopicFilter
+                TheoryArticle · WorkedExamples · PracticeLadder
   content/      strings.ts (shared UI text)
   utils/        storage.ts · mathjax.ts
-src/routes/     / · /tren/ · /laer/[modul]/[emne]/ · /framgang/ · /velg/
+src/routes/     / · /tren/ · /laer/[modul]/[emne]/ · /framgang/
 ```
 
 ### Module contract

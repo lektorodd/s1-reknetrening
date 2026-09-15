@@ -2,64 +2,60 @@
 	import { onMount } from 'svelte';
 	import { base } from '$app/paths';
 	import SessionCard from '$lib/components/SessionCard.svelte';
+	import TopicFilter from '$lib/components/TopicFilter.svelte';
 	import { buildSession, SESSION_LENGTH, type Session } from '$lib/engine/session';
-	import type { Problem } from '$lib/modules/types';
 	import { loadStudentModel, saveStudentModel, type StudentModel } from '$lib/engine/student-model';
 	import { updateAfterAttempt } from '$lib/engine/spaced-repetition';
-	import { getFullBank, getModule } from '$lib/modules/registry';
+	import { getFullBank } from '$lib/modules/registry';
+	import type { Problem } from '$lib/modules/types';
 
 	let model = $state<StudentModel | null>(null);
 	let session = $state<Session | null>(null);
 	let position = $state(0);
 	let correctCount = $state(0);
-	let filterLabel = $state<string | null>(null);
 
-	const current = $derived(session && position < session.cards.length ? session.cards[position] : null);
+	/** null on both means "let the engine choose", which is the default. */
+	let topic = $state<string | null>(null);
+	let level = $state<number | null>(null);
+
+	const current = $derived(
+		session && position < session.cards.length ? session.cards[position] : null
+	);
 	const done = $derived(session !== null && position >= session.cards.length);
 
 	onMount(() => {
 		// Warm the bank before the first card so MathJax has content to typeset.
 		getFullBank();
+		model = loadStudentModel();
 		start();
 	});
 
-	/**
-	 * "Vel sjølv" narrows the session to one topic via query params. Read at
-	 * mount rather than during load, so the route stays prerenderable.
-	 */
+	/** The slice of the bank the current filter allows. */
 	function filteredBank(): Problem[] {
-		const params = new URLSearchParams(window.location.search);
-		const moduleId = params.get('modul');
-		const topic = params.get('emne');
-		const level = Number(params.get('nivaa')) || null;
+		const bank = getFullBank();
+		const [moduleId, topicId] = topic ? topic.split(':') : [null, null];
 
-		if (!moduleId || !topic) {
-			filterLabel = null;
-			return getFullBank();
-		}
-
-		const mod = getModule(moduleId);
-		const subset = getFullBank().filter(
-			(p) => p.moduleId === moduleId && p.topic === topic && (level === null || p.level === level)
+		const subset = bank.filter(
+			(p) =>
+				(moduleId === null || (p.moduleId === moduleId && p.topic === topicId)) &&
+				(level === null || p.level === level)
 		);
 
-		// A filter that matches nothing would end the session before it starts.
-		if (subset.length === 0) {
-			filterLabel = null;
-			return getFullBank();
-		}
-
-		const topicName = mod?.topics.find((t) => t.id === topic)?.name ?? topic;
-		filterLabel = level ? `${topicName} · nivå ${level}` : topicName;
-		return subset;
+		// A filter matching nothing would end the session before it starts.
+		return subset.length > 0 ? subset : bank;
 	}
 
 	function start() {
-		const m = loadStudentModel();
-		model = m;
-		session = buildSession(m, SESSION_LENGTH, filteredBank());
+		if (!model) return;
+		session = buildSession(model, SESSION_LENGTH, filteredBank());
 		position = 0;
 		correctCount = 0;
+	}
+
+	function changeFilter(nextTopic: string | null, nextLevel: number | null) {
+		topic = nextTopic;
+		level = nextLevel;
+		start();
 	}
 
 	function handleAnswer(correct: boolean, hintUsed: boolean) {
@@ -72,13 +68,11 @@
 		if (correct) correctCount++;
 		position++;
 	}
-
-	function moduleName(moduleId: string): string {
-		return getModule(moduleId)?.name ?? moduleId;
-	}
 </script>
 
 <svelte:head><title>Tren – Mattetrening</title></svelte:head>
+
+<TopicFilter {topic} {level} onChange={changeFilter} />
 
 {#if !session}
 	<p class="loading">Set saman økta…</p>
@@ -86,13 +80,6 @@
 	<div class="progress-strip" aria-hidden="true">
 		<div class="progress-fill" style="width: {(position / session.cards.length) * 100}%"></div>
 	</div>
-
-	<p class="context">
-		{#if filterLabel}
-			<span class="filter-tag">Vald: {filterLabel}</span>
-		{/if}
-		{moduleName(current.problem.moduleId)} · nivå {current.problem.level}
-	</p>
 
 	{#key current.problem.id}
 		<SessionCard
@@ -135,24 +122,6 @@
 		height: 100%;
 		background: var(--color-primary);
 		transition: width var(--transition-base);
-	}
-
-	.context {
-		display: flex;
-		align-items: center;
-		gap: var(--space-2);
-		flex-wrap: wrap;
-		margin: 0 0 var(--space-3);
-		font-size: var(--font-size-sm);
-		color: var(--color-text-muted);
-	}
-
-	.filter-tag {
-		padding: var(--space-1) var(--space-3);
-		border-radius: var(--radius-full);
-		background: var(--color-primary-50);
-		color: var(--color-primary-dark);
-		font-weight: 600;
 	}
 
 	.done {
