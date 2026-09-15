@@ -133,7 +133,7 @@
 	.chip {
 		padding: var(--space-2) var(--space-3);
 		border: 1px solid var(--color-border);
-		border-radius: var(--radius-full);
+		border-radius: var(--radius-md);
 		background: var(--color-surface);
 		font: inherit;
 		font-size: var(--font-size-sm);

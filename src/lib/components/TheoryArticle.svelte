@@ -20,7 +20,7 @@
 	<p class="intro">{entry.intro}</p>
 
 	<section class="formula-block">
-		<h2>Regelen</h2>
+		<h2><span class="mark" aria-hidden="true">Σ</span> Regelen</h2>
 		<div class="formula">{`\\[${entry.formula}\\]`}</div>
 		<p class="rule-text">{entry.ruleText}</p>
 		<p class="example">{entry.example}</p>
@@ -50,7 +50,7 @@
 
 	{#if entry.mnemonic}
 		<aside class="mnemonic">
-			<strong>Hugseregel</strong>
+			<strong><span class="mark" aria-hidden="true">✓</span> Hugseregel</strong>
 			<p>{entry.mnemonic}</p>
 		</aside>
 	{/if}
@@ -63,6 +63,9 @@
 	}
 
 	h2 {
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
 		margin: 0 0 var(--space-3);
 		font-size: var(--font-size-lg);
 		color: var(--color-primary);
@@ -79,10 +82,19 @@
 		margin-bottom: var(--space-8);
 	}
 
+	/* Worked example / formula: violet, the same meaning it carries in the
+	   itslearning boxes. */
 	.formula-block {
-		padding: var(--space-6);
-		border-radius: var(--radius-lg);
-		background: var(--color-primary-50);
+		--accent: var(--color-example);
+		padding: var(--space-5) var(--space-6);
+		border: 1px solid var(--color-border-warm);
+		border-left: var(--accent-edge) solid var(--accent);
+		border-radius: var(--radius-md);
+		background: var(--color-example-light);
+	}
+
+	.formula-block h2 {
+		color: var(--color-example);
 	}
 
 	.formula {
@@ -105,39 +117,80 @@
 
 	blockquote.flow {
 		padding-left: var(--space-4);
-		border-left: 3px solid var(--color-border);
+		border-left: var(--accent-edge) solid var(--color-border-warm);
 		color: var(--color-text-secondary);
 		font-style: italic;
 	}
 
+	/* Numbered violet circles, matching the step lists in the itslearning boxes. */
 	.worked {
 		margin: 0;
-		padding-left: var(--space-5);
+		padding: 0;
+		list-style: none;
+		counter-reset: step;
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-5);
 	}
 
-	.explanation {
-		margin: 0 0 var(--space-2);
+	.worked li {
+		counter-increment: step;
+		padding-left: var(--space-8);
+		position: relative;
 	}
 
+	.worked li::before {
+		content: counter(step);
+		position: absolute;
+		left: 0;
+		top: 0.1em;
+		display: grid;
+		place-items: center;
+		width: 1.3rem;
+		height: 1.3rem;
+		border-radius: var(--radius-full);
+		background: var(--color-example);
+		color: var(--color-text-inverse);
+		font-size: var(--font-size-xs);
+		font-weight: 700;
+		line-height: 1;
+	}
+
+	.explanation {
+		margin: 0 0 var(--space-2);
+		color: var(--color-text);
+	}
+
+	/* The formula field: white on a warm border, as in the boxes. */
 	.step-math {
 		padding: var(--space-3) var(--space-4);
-		border-radius: var(--radius-md);
-		background: var(--color-bg);
+		border: 1px solid var(--color-border-warm);
+		border-radius: var(--radius-sm);
+		background: var(--color-surface);
+		text-align: center;
 		overflow-x: auto;
 	}
 
+	/* Mnemonic gets the house mint — the signature highlight. */
 	.mnemonic {
+		--accent: var(--color-success);
 		padding: var(--space-5);
-		border-radius: var(--radius-lg);
-		background: var(--color-warning-light);
-		color: #78350f;
+		border: 1px solid var(--color-mint);
+		border-left: var(--accent-edge) solid var(--color-mint);
+		border-radius: var(--radius-md);
+		background: var(--color-mint-light);
+	}
+
+	.mnemonic strong {
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+		color: var(--color-success);
 	}
 
 	.mnemonic p {
 		margin: var(--space-2) 0 0;
 		white-space: pre-line;
+		color: var(--color-text);
 	}
 </style>

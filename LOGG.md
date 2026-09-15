@@ -2,6 +2,32 @@
 
 ---
 
+## Stage 7 – Lektorodd-drakt (v0.8.0)
+**Dato:** 2026-09-15
+
+Appen er flytta frå «Axiom Geometric» — indigo, kald grå botn, Epilogue, pilleknappar —
+til Lektorodd-temaet som læraren sitt itslearning-materiale alt brukar. Krembotn,
+Source Sans 3, rolege 4/6/8px-hjørne, og den 4px farga venstrekanten som er signaturen i
+boksane. Paletten er henta frå skillen `itslearning-boksar`, ikkje funnen opp på nytt.
+
+Det mest verdifulle var ikkje fargane, men at fargane no **tyder** noko: violett er
+gjennomgått døme og formel overalt, gult er «merk deg», grønt og raudt er rett og galt.
+Eleven lærer éin kode som gjeld begge stader.
+
+**Kva gjekk bra:** tokenlaget heldt. Fordi komponentane alt brukte `var(--…)` nesten
+overalt, var det berre tre hardkoda fargar att i heile appen. Logikken vart ikkje rørt,
+og alle 73 testar stod urørte gjennom heile omlegginga.
+
+**Det skjermbiletet avslørte:** eg hadde rekna kontrast på den dempa tekstfargen i éi
+rolle, men gløymt at den globale `p`-regelen brukar same fargen til all brødtekst.
+`#6B6F77` gir 4,48:1 på krem — under AA. Begge dei grå er no mørkna eitt hakk. Lærdomen
+er at det ikkje held å måla paletten; ein må måla han der han faktisk blir brukt.
+
+**Potensielle utfordringar:** MathJax-rendering er framleis ikkje verifiserbar her (CDN
+blokkert av proxyen), så det er farge og form som er sjekka, ikkje formelrendering.
+
+---
+
 ## Stage 6 – Stigen inn i Lærebok (v0.7.0)
 **Dato:** 2026-09-15
 
