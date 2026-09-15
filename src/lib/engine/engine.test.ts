@@ -6,7 +6,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
 	createStudentModel,
-	conceptIdFromProblem,
 	getSuccessRate,
 	getConceptCount,
 	getDueCount,
@@ -15,7 +14,6 @@ import {
 	todayISO,
 	getReviewBuckets,
 	getRegisteredConceptIds,
-	ALL_CONCEPT_IDS,
 	type StudentModel
 } from '$lib/engine/student-model';
 import {
@@ -23,49 +21,50 @@ import {
 	urgency,
 	updateAfterAttempt
 } from '$lib/engine/spaced-repetition';
-import { selectNextProblems } from '$lib/engine/problem-selector';
+import { selectNextProblems, splitBudget } from '$lib/engine/problem-selector';
 import { selectFadingLevel, fadeSteps } from '$lib/engine/guidance-fading';
-import { getAllConceptIds } from '$lib/modules/registry';
-import type { Problem, StepEntry } from '$lib/modules/derivative/types';
+import { buildSession, MAX_WORKED_EXAMPLES, SESSION_LENGTH } from '$lib/engine/session';
+import {
+	MODULE_REGISTRY,
+	conceptIdOf,
+	getAllConceptIds,
+	getFullBank,
+	getModuleBySlug
+} from '$lib/modules/registry';
+import type { Problem, StepEntry } from '$lib/modules/types';
 
 // ── Helpers ──
 
-function makeProblem(overrides: Partial<Problem> & { id: number }): Problem {
+function makeProblem(overrides: Partial<Problem> & { id: string }): Problem {
 	return {
+		moduleId: 'derivative',
 		topic: 'chain',
 		level: 1,
 		type: 'poly',
 		q: 'f(x) = x^2',
 		a: "f'(x) = 2x",
-		steps: 'potensregelen',
 		structuredSteps: [
-			{ label: 'Identify', latex: 'g(u) = u^2' },
-			{ label: 'Differentiate g', latex: "g'(u) = 2u" },
-			{ label: 'Differentiate u', latex: "u'(x) = 1" },
-			{ label: 'Apply', latex: "f'(x) = g'(u) * u'(x)" },
-			{ label: 'Substitute', latex: "f'(x) = 2x * 1" },
-			{ label: 'Simplify', latex: "f'(x) = 2x" }
+			{ label: 'Identifiser', latex: 'g(u) = u^2' },
+			{ label: 'Deriver g', latex: "g'(u) = 2u" },
+			{ label: 'Deriver u', latex: "u'(x) = 1" },
+			{ label: 'Bruk kjerneregelen', latex: "f'(x) = g'(u) * u'(x)" },
+			{ label: 'Sett inn', latex: "f'(x) = 2x * 1" },
+			{ label: 'Forenkle', latex: "f'(x) = 2x" }
 		],
 		hint: 'Bruk potensregelen',
 		...overrides
 	};
 }
 
-/** Generate a small problem bank with known structure */
-function makeBank(): Problem[] {
-	const bank: Problem[] = [];
-	let id = 0;
-	const topics = ['chain', 'product', 'quotient'] as const;
-	const types = ['poly', 'root', 'exp', 'log'] as const;
-
-	for (const topic of topics) {
-		for (const type of types) {
-			for (let level = 1; level <= 5; level++) {
-				bank.push(makeProblem({ id: id++, topic, type, level }));
-			}
-		}
-	}
-	return bank; // 60 problems: 3 topics × 4 types × 5 levels
+/**
+ * The real bank, not a synthetic one.
+ *
+ * The previous suite built a 3x4x5 fixture covering combinations the generator
+ * cannot actually produce, which is exactly why it never noticed that 7 of the
+ * 12 declared concepts had no problems behind them.
+ */
+function realBank(): Problem[] {
+	return getFullBank();
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -86,11 +85,8 @@ describe('StudentModel', () => {
 
 	it('includes both derivative and logarithm concepts', () => {
 		const model = createStudentModel();
-		// Derivative concepts still present
-		for (const id of ALL_CONCEPT_IDS) {
-			expect(model.concepts[id]).toBeDefined();
-		}
-		// Logarithm concepts present
+		expect(model.concepts['chain_poly']).toBeDefined();
+		expect(model.concepts['quotient_poly']).toBeDefined();
 		expect(model.concepts['log_product']).toBeDefined();
 		expect(model.concepts['exp_equation']).toBeDefined();
 	});
@@ -100,9 +96,13 @@ describe('StudentModel', () => {
 		expect(model.overallLevel).toBe(1.0);
 	});
 
-	it('conceptIdFromProblem derives correct ID', () => {
-		expect(conceptIdFromProblem('chain', 'poly')).toBe('chain_poly');
-		expect(conceptIdFromProblem('quotient', 'log')).toBe('quotient_log');
+	it('conceptIdOf routes a problem through its owning module', () => {
+		const derivative = makeProblem({ id: 'x', moduleId: 'derivative', topic: 'chain', type: 'root' });
+		expect(conceptIdOf(derivative)).toBe('chain_root');
+
+		// The logarithm module treats the topic itself as the concept.
+		const logarithm = makeProblem({ id: 'y', moduleId: 'logarithm', topic: 'log_power', type: 'lg' });
+		expect(conceptIdOf(logarithm)).toBe('log_power');
 	});
 
 	it('getSuccessRate returns 0 with no attempts', () => {
@@ -245,7 +245,7 @@ describe('Problem Selector', () => {
 
 	beforeEach(() => {
 		model = createStudentModel();
-		bank = makeBank();
+		bank = realBank();
 	});
 
 	it('returns requested number of problems', () => {
@@ -279,8 +279,8 @@ describe('Problem Selector', () => {
 		expect(topics.size).toBeGreaterThanOrEqual(2);
 	});
 
-	it('after rating concepts, uses 60/30/10 split', () => {
-		const concepts = ['chain_poly', 'chain_root', 'product_poly', 'quotient_exp'];
+	it('after rating concepts, still fills the whole request', () => {
+		const concepts = ['chain_poly', 'chain_root', 'product_poly', 'log_power'];
 		for (const cId of concepts) {
 			updateAfterAttempt(model, { conceptId: cId, correct: true, hintUsed: false });
 		}
@@ -302,7 +302,7 @@ describe('Problem Selector', () => {
 			updateAfterAttempt(model, { conceptId: 'chain_poly', correct: true, hintUsed: false });
 			updateAfterAttempt(model, { conceptId: 'chain_root', correct: false, hintUsed: false });
 			updateAfterAttempt(model, { conceptId: 'product_poly', correct: true, hintUsed: false });
-			updateAfterAttempt(model, { conceptId: 'product_root', correct: false, hintUsed: false });
+			updateAfterAttempt(model, { conceptId: 'log_power', correct: false, hintUsed: false });
 		}
 
 		let weakCount = 0;
@@ -310,12 +310,37 @@ describe('Problem Selector', () => {
 		for (let i = 0; i < 50; i++) {
 			const selected = selectNextProblems(model, bank, 5);
 			for (const p of selected) {
-				const cId = conceptIdFromProblem(p.topic, p.type);
-				if (cId === 'chain_root' || cId === 'product_root') weakCount++;
+				const cId = conceptIdOf(p);
+				if (cId === 'chain_root' || cId === 'log_power') weakCount++;
 				if (cId === 'chain_poly' || cId === 'product_poly') strongCount++;
 			}
 		}
 		expect(weakCount).toBeGreaterThan(strongCount);
+	});
+
+	it('mixes modules once more than one has been started', () => {
+		updateAfterAttempt(model, { conceptId: 'chain_poly', correct: true, hintUsed: false });
+		updateAfterAttempt(model, { conceptId: 'log_product', correct: false, hintUsed: false });
+		updateAfterAttempt(model, { conceptId: 'quotient_poly', correct: true, hintUsed: false });
+
+		const modules = new Set<string>();
+		for (let i = 0; i < 10; i++) {
+			for (const p of selectNextProblems(model, bank, SESSION_LENGTH)) modules.add(p.moduleId);
+		}
+		expect(modules.size).toBeGreaterThanOrEqual(2);
+	});
+
+	it('splitBudget keeps a slot for new material', () => {
+		// The old ceil()-based split produced 3 + 2 + 0 here.
+		const five = splitBudget(5);
+		expect(five.review + five.challenge + five.fresh).toBe(5);
+		expect(five.fresh).toBeGreaterThan(0);
+
+		const ten = splitBudget(10);
+		expect(ten.review + ten.challenge + ten.fresh).toBe(10);
+		expect(ten.review).toBe(6);
+		expect(ten.challenge).toBe(3);
+		expect(ten.fresh).toBe(1);
 	});
 });
 
@@ -487,5 +512,133 @@ describe('Review Buckets', () => {
 		concept.currentInterval = 2; // due every 2 days
 		const buckets = getReviewBuckets(model);
 		expect(buckets.dueNow).toContain(concept);
+	});
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// MODULES & BANK
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+describe('Module registry and problem bank', () => {
+	it('every declared concept is actually produced by a generator', () => {
+		// The bug this locks down: the pre-0.6 registry declared 12 derivative
+		// concepts while the generator could only produce 5.
+		const produced = new Set(getFullBank().map(conceptIdOf));
+		for (const id of getAllConceptIds()) {
+			expect(produced.has(id), `no problem generates concept "${id}"`).toBe(true);
+		}
+	});
+
+	it('problem ids are unique across every module', () => {
+		const ids = getFullBank().map((p) => p.id);
+		expect(new Set(ids).size).toBe(ids.length);
+	});
+
+	it('the same id always yields the same problem', () => {
+		const first = MODULE_REGISTRY.flatMap((m) => m.generateBank());
+		const second = MODULE_REGISTRY.flatMap((m) => m.generateBank());
+		expect(JSON.stringify(second)).toBe(JSON.stringify(first));
+	});
+
+	it('ids encode module, topic, level and variant', () => {
+		for (const p of getFullBank()) {
+			expect(p.id).toBe(`${p.moduleId}:${p.topic}:${p.level}:${p.id.split(':')[3]}`);
+		}
+	});
+
+	it('every problem has steps, a question and an answer', () => {
+		for (const p of getFullBank()) {
+			expect(p.structuredSteps.length, p.id).toBeGreaterThan(0);
+			expect(p.q.length, p.id).toBeGreaterThan(0);
+			expect(p.a.length, p.id).toBeGreaterThan(0);
+			for (const step of p.structuredSteps) {
+				expect(step.label.length, p.id).toBeGreaterThan(0);
+			}
+		}
+	});
+
+	it('every module has theory for each of its topics', () => {
+		for (const mod of MODULE_REGISTRY) {
+			for (const topic of mod.topics) {
+				const entry = mod.theory[topic.id];
+				expect(entry, `${mod.id}/${topic.id}`).toBeDefined();
+				expect(entry.workedSteps.length).toBeGreaterThan(0);
+			}
+		}
+	});
+
+	it('self-explanation prompts point at a real option', () => {
+		for (const mod of MODULE_REGISTRY) {
+			for (const [topic, pool] of Object.entries(mod.selfExplanations)) {
+				for (const prompt of pool) {
+					expect(prompt.options.length, `${mod.id}/${topic}`).toBeGreaterThan(1);
+					expect(prompt.correct).toBeGreaterThanOrEqual(0);
+					expect(prompt.correct).toBeLessThan(prompt.options.length);
+				}
+			}
+		}
+	});
+
+	it('stores bare LaTeX, leaving delimiters to the view', () => {
+		// Pre-0.6 the derivative module wrapped answers in $$ and the logarithm
+		// module did not, so a shared card component could not render both.
+		for (const p of getFullBank()) {
+			expect(p.q, p.id).not.toMatch(/\$/);
+			expect(p.a, p.id).not.toMatch(/\$/);
+			for (const step of p.structuredSteps) {
+				expect(step.latex, p.id).not.toMatch(/\$/);
+			}
+		}
+
+		for (const mod of MODULE_REGISTRY) {
+			for (const [topic, entry] of Object.entries(mod.theory)) {
+				expect(entry.formula, `${mod.id}/${topic}`).not.toMatch(/\$/);
+				for (const step of entry.workedSteps) {
+					expect(step.latex, `${mod.id}/${topic}`).not.toMatch(/\$/);
+				}
+			}
+		}
+	});
+
+	it('exposes modules by slug for the Lærebok routes', () => {
+		expect(getModuleBySlug('derivasjon')?.id).toBe('derivative');
+		expect(getModuleBySlug('logaritmar')?.id).toBe('logarithm');
+		expect(getModuleBySlug('finst-ikkje')).toBeUndefined();
+	});
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// SESSION
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+describe('Session builder', () => {
+	it('builds a full session for a brand-new student', () => {
+		const session = buildSession(createStudentModel());
+		expect(session.cards).toHaveLength(SESSION_LENGTH);
+	});
+
+	it('caps worked examples so a first session is not all study cards', () => {
+		const session = buildSession(createStudentModel());
+		const worked = session.cards.filter((c) => c.level === 0);
+		expect(worked.length).toBeLessThanOrEqual(MAX_WORKED_EXAMPLES);
+		// Everything past the cap still gets heavy scaffolding, not bare practice.
+		expect(session.cards.every((c) => c.level <= 1)).toBe(true);
+	});
+
+	it('gives a well-practised concept less scaffolding', () => {
+		const model = createStudentModel();
+		for (let i = 0; i < 8; i++) {
+			updateAfterAttempt(model, { conceptId: 'chain_poly', correct: true, hintUsed: false });
+		}
+		const bank = getFullBank().filter((p) => conceptIdOf(p) === 'chain_poly');
+		const session = buildSession(model, 3, bank);
+		expect(session.cards.every((c) => c.level === 4)).toBe(true);
+	});
+
+	it('attaches the owning module concept to every card', () => {
+		const session = buildSession(createStudentModel());
+		for (const card of session.cards) {
+			expect(card.conceptId).toBe(conceptIdOf(card.problem));
+		}
 	});
 });

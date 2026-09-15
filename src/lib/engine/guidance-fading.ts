@@ -85,8 +85,12 @@ export function fadeSteps(steps: FadingStepEntry[], level: FadingLevel): FadedSt
 		}
 
 		case 3: {
-			// Show only identification steps (first ~40%)
-			const split = Math.max(1, Math.ceil(steps.length * 0.4));
+			// Show only the identification steps (first ~40%).
+			// Clamped against level 2 so the ladder stays monotonic: on a short
+			// 3-step problem, ceil(0.4 * 3) = 2 would otherwise reveal *more*
+			// than level 2 does.
+			const levelTwoSplit = Math.max(1, steps.length - 2);
+			const split = Math.max(1, Math.min(levelTwoSplit, Math.ceil(steps.length * 0.4)));
 			return {
 				shown: steps.slice(0, split),
 				hidden: steps.slice(split),

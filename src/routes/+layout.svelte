@@ -1,15 +1,15 @@
 <script lang="ts">
 	import '../app.css';
+	import AppHeader from '$lib/components/AppHeader.svelte';
 
 	let { children } = $props();
 </script>
 
-<svelte:head>
-	<title>Mattetrening</title>
-</svelte:head>
-
 <div class="app-shell">
-	{@render children()}
+	<AppHeader />
+	<main>
+		{@render children()}
+	</main>
 </div>
 
 <style>
@@ -17,5 +17,14 @@
 		min-height: 100vh;
 		display: flex;
 		flex-direction: column;
+		background: var(--color-bg);
+	}
+
+	main {
+		flex: 1;
+		width: 100%;
+		max-width: 56rem;
+		margin: 0 auto;
+		padding: var(--space-6) var(--space-4) var(--space-12);
 	}
 </style>

@@ -8,134 +8,84 @@
 
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code (claude.ai/code) when working in this repository.
 
 ## Project Overview
 
-This repository contains two standalone educational web applications for teaching mathematics at the Norwegian secondary school level (videregående skole):
+**Mattetrening** — a SvelteKit app for adaptive maths practice at Norwegian upper
+secondary level (S1). Nynorsk only. Ships as static files (`adapter-static`), stores
+everything in localStorage, and has no backend.
 
-1. **derivasjon-v2.html** - Interactive derivative practice application ("Ferdighetstrening Derivasjon")
-2. **forteiknslinjer.html** - Sign chart generator ("Forteiknsskjemagenerator")
+The goal shaping every decision: make it easy for a student to work **steadily, often,
+and at their own level**. Simplicity of the student's path beats feature count.
 
-Both applications are self-contained single-file HTML applications with embedded JavaScript, CSS, and use external CDN dependencies.
+Two legacy single-file apps sit at the repo root and are **not** part of the SvelteKit
+build: `derivasjon-v2.html` (superseded) and `forteiknslinjer.html` (a sign-chart
+generator, earmarked as a future module).
+
+## The central split
+
+Instruction and drill are deliberately separate:
+
+- **Lærebok** (`/laer/`) — curated, hand-written content from each module's
+  `theory.ts`. Read-only: no rating, no scheduling, no problems to answer.
+- **Treningsrom** (`/tren/`) — the generated problem bank from each module's
+  `generator.ts`. Adaptive, scheduled, rated.
+
+Scaffolding is *not* a third place. Inside a session each card carries a fading level
+0–4 chosen per concept by `selectFadingLevel()`; level 0 is a worked example shown
+in-session ("Lær først"), level 4 is bare practice.
 
 ## Architecture
 
-### Technology Stack
-- **Frontend Framework**: Vanilla JavaScript (no build system)
-- **Styling**: Tailwind CSS (CDN) for derivasjon-v2.html, custom CSS for forteiknslinjer.html
-- **Math Rendering**: MathJax 3 for LaTeX rendering
-- **Charts**: Chart.js (derivasjon-v2.html only)
-- **Fonts**: Google Fonts (Inter, JetBrains Mono)
-- **Icons**: FontAwesome 6.4.0 (derivasjon-v2.html only)
-
-### Application Structure
-
-Both applications follow a similar pattern:
-- Single HTML file with inline `<script>` and `<style>` tags
-- Client-side state management using JavaScript objects
-- LocalStorage for persistence
-- Multi-language support (Norwegian, English, Spanish)
-
-## Derivasjon-v2.html (Derivative Practice)
-
-### Core Features
-- **Smart Mix Mode**: Adaptive algorithm that prioritizes problems the student needs practice with
-- **Focus Mode**: Allows students to filter problems by rule, difficulty level (1-5), and math area
-- **Three Derivative Rules**: Chain rule, Product rule, Quotient rule
-- **Problem Types**: Polynomials, roots, exponential, logarithms
-- **Progress Tracking**: LocalStorage-based progress with Chart.js visualizations
-
-### Key State Management
-```javascript
-state = {
-    currentView: 'dashboard' | 'theory' | 'practice' | 'stats' | 'help',
-    language: 'no' | 'en' | 'es',
-    activeTopic: 'chain' | 'product' | 'quotient',
-    mode: 'focus' | 'mix',
-    progress: {}, // Maps problem ID to 'mastered' | 'practice'
-    hints: [],    // Array of problem IDs where hints were used
-    activeProblems: [],
-    filters: { levels: [1-5], types: ['poly', 'root', 'exp', 'log'] }
-}
+```
+src/lib/
+  modules/      types.ts (shared contract) · registry.ts · rng.ts · derivative/ · logarithm/
+  engine/       session.ts · problem-selector.ts · spaced-repetition.ts
+                student-model.ts · guidance-fading.ts
+  components/   AppHeader · SessionCard · TheoryArticle
+  content/      strings.ts (shared UI text)
+  utils/        storage.ts · mathjax.ts
+src/routes/     / · /tren/ · /laer/[modul]/[emne]/ · /framgang/ · /velg/
 ```
 
-### Problem Generation
-- Problems are generated procedurally in `generateProblemBank()` at runtime
-- Each problem includes: question (LaTeX), answer, step-by-step solution, and hint
-- ~1200 problems generated (3 rules × 5 levels × 4 types × 20 variations)
+### Module contract
 
-### Navigation
-- Single-page application with view switching via `navigateTo(viewId)`
-- Views: dashboard, theory, practice, stats, help
+`TopicModule` in `src/lib/modules/types.ts` is the only thing the rest of the app knows
+about a topic. A module folder exports one of these; `MODULE_REGISTRY` lists it. Nothing
+else — no route, no component, no engine branch — is per-module.
 
-## Forteiknslinjer.html (Sign Chart Generator)
+**Adding a topic (e.g. integrasjon):**
+1. `src/lib/modules/integral/` with `generator.ts`, `theory.ts`, `self-explanation.ts`,
+   `index.ts` exporting a `TopicModule`.
+2. Add it to `MODULE_REGISTRY` in `registry.ts`.
 
-### Core Features
-- Interactive sign chart generator for rational functions
-- Supports multiple factors in numerator and denominator
-- Automatic zero detection and sign analysis
-- SVG-based rendering with MathJax integration
+Concept ids are **derived from the generated bank**, never hand-declared — a test
+asserts every concept has problems behind it.
 
-### Mathematical Parsing
-- Parses linear expressions: `ax + b`, `b + ax`, `ax`, `-x`
-- Supports special constants: `pi`, `e`, `rot(n)` (square root)
-- Supports fractions: `1/2`, exponents: `2^3`
-- Automatic symbolic representation with LaTeX
+### Conventions that bite if broken
 
-### Key Functions
-- `parseSingleFactor(raw)`: Parses mathematical expressions into evaluable functions
-- `generateSignChart()`: Main orchestration function
-- `drawSignLine()`: SVG rendering for sign intervals
-- `parseValue(str)`: Recursive parser for mathematical values
+- **Bare LaTeX.** `Problem.q`, `Problem.a`, `StepEntry.latex`, `TheoryEntry.formula` and
+  `workedSteps[].latex` hold LaTeX with **no delimiters**; the view adds `\[...\]`.
+  Prose fields (`intro`, `patternRecognition`, `thinkAloud`, `mnemonic`, `example`,
+  step `explanation`) may carry their own inline `$...$`. A test enforces this.
+- **Deterministic ids.** A problem id is `<moduleId>:<topic>:<level>:<variant>` and the
+  generator seeds its RNG from it (`rngFor` in `modules/rng.ts`), so the same id always
+  yields the same problem. Never introduce unseeded `Math.random()` into a generator.
+- **Storage** is namespaced `mattetrening_v1_` and every access is wrapped — a browser
+  can refuse localStorage entirely.
 
-### Factor Reordering
-- Users can reorder factors with up/down arrow buttons
-- `moveFactorUp()`, `moveFactorDown()`, `updateArrowStates()`
+## Development
 
-## Development Workflow
-
-### Testing
-No automated tests exist. Manual testing workflow:
-1. Open HTML files directly in a browser
-2. Test mathematical expression parsing with edge cases
-3. Verify MathJax rendering completes
-4. Test LocalStorage persistence (derivasjon-v2.html)
-5. Test across browsers (Safari, Chrome, Firefox)
-
-### Localization
-Both apps use i18n objects:
-```javascript
-const i18n = {
-    nn: { key: "Norsk tekst" },
-    en: { key: "English text" },
-    es: { key: "Texto español" }
-}
+```bash
+npm install
+npm run dev      # http://localhost:5190
+npm run test     # vitest
+npm run check    # svelte-check — keep at 0 errors
+npm run build    # static output in build/
 ```
-Update translations in all three languages when adding features.
 
-### MathJax Integration
-- Both apps use `MathJax.typeset()` after DOM updates
-- For dynamic content: `await MathJax.typesetPromise([container])`
-- Inline math: `$...$` or `\(...\)`
-- Display math: `$$...$$` or `\[...\]`
+MathJax loads from a CDN in `src/app.html`; in a sandboxed environment it may be
+blocked, so assert the `\[...\]` markup rather than rendered `mjx-container` elements.
 
-## Common Patterns
-
-### Adding New Problem Types (derivasjon-v2.html)
-1. Add type to `types` array in `generateProblemBank()`
-2. Extend the switch/if logic in `generateSingleProblem()` for each rule
-3. Update filter UI in HTML to include new type checkbox
-4. Add translations for the new type in `i18n` object
-
-### Modifying Sign Chart Rendering (forteiknslinjer.html)
-1. SVG dimensions: `CHART_WIDTH`, `ROW_HEIGHT`, `PADDING` constants
-2. Scaling function: `scale(x)` maps domain values to pixel coordinates
-3. All rendering uses SVG primitives or MathJax foreignObject elements
-
-## File References
-- derivasjon-v2.html:305-318 - Core state object definition
-- derivasjon-v2.html:503-526 - Problem bank generation
-- derivasjon-v2.html:528-698 - Problem generation logic by rule
-- forteiknslinjer.html:592-750 - Main sign chart generation
-- forteiknslinjer.html:865-992 - Mathematical expression parser
+Call `typesetElement(el)` after DOM updates that introduce maths.

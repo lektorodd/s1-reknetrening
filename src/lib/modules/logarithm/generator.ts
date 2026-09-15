@@ -3,16 +3,30 @@
 // Uses lg (log₁₀) and ln (logₑ) matching Norwegian S1 curriculum
 // Each problem has 3-5 structured steps for meaningful backward fading
 
-import type { LogProblem, LogTopicId, StepEntry } from './types';
+import type { Problem, StepEntry } from '../types';
+import { rngFor } from '../rng';
+
+export type LogTopicId =
+	| 'log_product' | 'log_quotient' | 'log_power'
+	| 'log_simplify' | 'log_equation' | 'exp_equation';
+
+/** Draft problem — id and moduleId are attached by generateBank(). */
+type Draft = Omit<Problem, 'id' | 'moduleId'>;
+
+/**
+ * Active random source. generateBank() swaps in a seeded generator so that a
+ * given problem id always yields the same coefficients.
+ */
+let rng: () => number = Math.random;
 
 // ── Helpers ──
 
 function rand(min: number, max: number): number {
-	return Math.floor(Math.random() * (max - min + 1)) + min;
+	return Math.floor(rng() * (max - min + 1)) + min;
 }
 
 function pick<T>(arr: T[]): T {
-	return arr[Math.floor(Math.random() * arr.length)];
+	return arr[Math.floor(rng() * arr.length)];
 }
 
 /** Pick lg or ln */
@@ -27,7 +41,7 @@ function logCmd(base: 'lg' | 'ln'): string {
 
 // ── Product Rule: lg(a·b) = lg a + lg b ──
 
-function generateLogProductProblem(lvl: number): Omit<LogProblem, 'id'> {
+function generateLogProductProblem(lvl: number): Draft {
 	const base = pickBase();
 	const log = logCmd(base);
 	let q = '', structuredSteps: StepEntry[] = [];
@@ -85,8 +99,7 @@ function generateLogProductProblem(lvl: number): Omit<LogProblem, 'id'> {
 		level: lvl,
 		type: base,
 		q,
-		a: `$$ ${lastStep.latex} $$`,
-		steps: structuredSteps.map(s => `$$${s.latex}$$`).join('\n'),
+		a: lastStep.latex,
 		structuredSteps,
 		hint: 'Produktsetningen: log(a·b) = log a + log b'
 	};
@@ -94,7 +107,7 @@ function generateLogProductProblem(lvl: number): Omit<LogProblem, 'id'> {
 
 // ── Quotient Rule: lg(a/b) = lg a − lg b ──
 
-function generateLogQuotientProblem(lvl: number): Omit<LogProblem, 'id'> {
+function generateLogQuotientProblem(lvl: number): Draft {
 	const base = pickBase();
 	const log = logCmd(base);
 	let q = '', structuredSteps: StepEntry[] = [];
@@ -148,8 +161,7 @@ function generateLogQuotientProblem(lvl: number): Omit<LogProblem, 'id'> {
 		level: lvl,
 		type: base,
 		q,
-		a: `$$ ${lastStep.latex} $$`,
-		steps: structuredSteps.map(s => `$$${s.latex}$$`).join('\n'),
+		a: lastStep.latex,
 		structuredSteps,
 		hint: 'Kvotientsetningen: log(a/b) = log a − log b'
 	};
@@ -157,7 +169,7 @@ function generateLogQuotientProblem(lvl: number): Omit<LogProblem, 'id'> {
 
 // ── Power Rule: lg(aⁿ) = n·lg a ──
 
-function generateLogPowerProblem(lvl: number): Omit<LogProblem, 'id'> {
+function generateLogPowerProblem(lvl: number): Draft {
 	const base = pickBase();
 	const log = logCmd(base);
 	let q = '', structuredSteps: StepEntry[] = [];
@@ -218,8 +230,7 @@ function generateLogPowerProblem(lvl: number): Omit<LogProblem, 'id'> {
 		level: lvl,
 		type: base,
 		q,
-		a: `$$ ${lastStep.latex} $$`,
-		steps: structuredSteps.map(s => `$$${s.latex}$$`).join('\n'),
+		a: lastStep.latex,
 		structuredSteps,
 		hint: 'Potenssetningen: log(aⁿ) = n·log a'
 	};
@@ -227,7 +238,7 @@ function generateLogPowerProblem(lvl: number): Omit<LogProblem, 'id'> {
 
 // ── Simplify: combine multiple rules ──
 
-function generateLogSimplifyProblem(lvl: number): Omit<LogProblem, 'id'> {
+function generateLogSimplifyProblem(lvl: number): Draft {
 	const base = pickBase();
 	const log = logCmd(base);
 	let q = '', structuredSteps: StepEntry[] = [];
@@ -286,8 +297,7 @@ function generateLogSimplifyProblem(lvl: number): Omit<LogProblem, 'id'> {
 		level: lvl,
 		type: base,
 		q,
-		a: `$$ ${lastStep.latex} $$`,
-		steps: structuredSteps.map(s => `$$${s.latex}$$`).join('\n'),
+		a: lastStep.latex,
 		structuredSteps,
 		hint: 'Bruk fleire setningar saman: produkt, kvotient, potens.'
 	};
@@ -295,7 +305,7 @@ function generateLogSimplifyProblem(lvl: number): Omit<LogProblem, 'id'> {
 
 // ── Log Equations (enhanced: use log laws before definition) ──
 
-function generateLogEquationProblem(lvl: number): Omit<LogProblem, 'id'> {
+function generateLogEquationProblem(lvl: number): Draft {
 	const base = pickBase();
 	const log = logCmd(base);
 	let q = '', structuredSteps: StepEntry[] = [];
@@ -424,8 +434,7 @@ function generateLogEquationProblem(lvl: number): Omit<LogProblem, 'id'> {
 		level: lvl,
 		type: base,
 		q,
-		a: `$$ ${lastStep.latex} $$`,
-		steps: structuredSteps.map(s => `$$${s.latex}$$`).join('\n'),
+		a: lastStep.latex,
 		structuredSteps,
 		hint: 'Bruk logaritmesetningane først, så definisjonen: log_b(x) = y ⟺ x = b^y'
 	};
@@ -433,7 +442,7 @@ function generateLogEquationProblem(lvl: number): Omit<LogProblem, 'id'> {
 
 // ── Exponential Equations ──
 
-function generateExpEquationProblem(lvl: number): Omit<LogProblem, 'id'> {
+function generateExpEquationProblem(lvl: number): Draft {
 	const base = pickBase();
 	const log = logCmd(base);
 	let q = '', structuredSteps: StepEntry[] = [];
@@ -499,8 +508,7 @@ function generateExpEquationProblem(lvl: number): Omit<LogProblem, 'id'> {
 		level: lvl,
 		type: base,
 		q,
-		a: `$$ ${lastStep.latex} $$`,
-		steps: structuredSteps.map(s => `$$${s.latex}$$`).join('\n'),
+		a: lastStep.latex,
 		structuredSteps,
 		hint: 'Ta logaritmen på begge sider for å få ned eksponenten.'
 	};
@@ -511,7 +519,7 @@ function generateExpEquationProblem(lvl: number): Omit<LogProblem, 'id'> {
 export function generateSingleLogProblem(
 	topic: LogTopicId,
 	lvl: number
-): Omit<LogProblem, 'id'> | null {
+): Draft | null {
 	switch (topic) {
 		case 'log_product':
 			return generateLogProductProblem(lvl);
@@ -528,29 +536,31 @@ export function generateSingleLogProblem(
 	}
 }
 
-export function generateLogProblemBank(): LogProblem[] {
-	let id = 5000; // Offset from derivative IDs (1000–2000 range)
+export const MODULE_ID = 'logarithm';
+
+/** Variants generated per (topic x level). */
+const VARIANTS = 8;
+
+export function generateLogProblemBank(): Problem[] {
 	const topics: LogTopicId[] = [
 		'log_product', 'log_quotient', 'log_power',
 		'log_simplify', 'log_equation', 'exp_equation'
 	];
 	const levels = [1, 2, 3, 4, 5];
-	const bank: LogProblem[] = [];
+	const bank: Problem[] = [];
 
 	for (const topic of topics) {
 		for (const lvl of levels) {
-			// 8 problems per (topic × level) — same density as derivative module
-			for (let i = 0; i < 8; i++) {
+			for (let variant = 0; variant < VARIANTS; variant++) {
+				const id = `${MODULE_ID}:${topic}:${lvl}:${variant}`;
+				// Seed before generating so this id always yields this problem.
+				rng = rngFor(id);
 				const prob = generateSingleLogProblem(topic, lvl);
-				if (prob) {
-					bank.push({ ...prob, id: id++ });
-				}
+				if (prob) bank.push({ ...prob, id, moduleId: MODULE_ID });
 			}
 		}
 	}
 
+	rng = Math.random;
 	return bank;
 }
-
-// Re-export types
-export type { LogProblem, LogTopicId } from './types';

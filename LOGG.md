@@ -2,6 +2,41 @@
 
 ---
 
+## Stage 5 – Lærebok og Treningsrom (v0.6.0)
+**Dato:** 2026-09-15
+
+Appen er delt i to på app-nivå: **Lærebok** for kuratert teori og gjennomgåtte døme, og
+**Treningsrom** for den genererte oppgåvebanken. Framsida er redusert til éin knapp,
+«Start økta», og modusvala (Smart Miks / Fokus / Rettleia) er borte. Stillasbygging er
+ikkje lenger ein eigen stad: kvart kort i økta får eit fading-nivå valt per konsept, så
+eit ferskt emne kjem som eit døme-kort inne i økta.
+
+Vi vurderte først to spor per emne, men det ville låst treninga inne i kvar modul og
+hindra veksling mellom emne — som er heile poenget med interleaving. App-nivå vann.
+
+`registry.ts` er no ein ekte `TopicModule`-kontrakt. Integrasjon blir ei mappe pluss ei
+linje. Konsept-IDar vert utleidde frå banken, og ein test låser at kvart konsept faktisk
+har oppgåver bak seg.
+
+**Kva gjekk bra:** Læringsmotoren tolte ombygginga godt — `spaced-repetition.ts` og
+`guidance-fading.ts` var allereie modulnøytrale og trong nesten ingen endring. Å
+konvertere innhaldet til nynorsk ved å importere og re-serialisere, i staden for regex
+over LaTeX, gjekk feilfritt.
+
+**Det som overraska:** Fleire ting var skrivne, testa og fråkopla. `selectFadingLevel()`
+vart aldri kalla utanom testane. Veljaren var derivasjonsforma, så logaritmeruta brukte
+han ikkje. Sju av tolv derivasjonskonsept kunne aldri oppstå. Oppgåve-IDar dreiv mellom
+lastingar medan framgang vart lagra på id. Alle 15 sjølvforklaringsspørsmåla hadde
+fasiten øvst. Den gamle testsuiten såg ingen av desse, fordi han bygde ein syntetisk
+bank med nettopp dei kombinasjonane generatoren ikkje kan lage.
+
+**Potensielle utfordringar:** Produkt- og brøkregelen genererer framleis berre
+polynomvariantar, så dei er eitt konsept kvar der kjerneregelen har tre. Å utvide dei
+er innhaldsarbeid, ikkje arkitektur. MathJax vert lasta frå CDN, og kan ikkje
+verifiserast i eit sandkassemiljø der CDN-en er blokkert.
+
+---
+
 ## Stage 4 – Multi-modul-arkitektur + logaritmar (v0.5.0)
 **Dato:** 2026-03-21, 22:50 CET
 

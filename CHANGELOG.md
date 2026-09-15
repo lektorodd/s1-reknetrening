@@ -7,6 +7,69 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-09-15
+
+A restructure around one idea: keep instruction and drill in separate places, and give
+the student a single button instead of a mode menu.
+
+### Added
+- **Lærebok** (`/laer/`) — all curated theory and worked examples, deep-linkable per
+  topic (`/laer/derivasjon/chain/`). Previously navigation lived in component state, so
+  a refresh always dropped the student back on a dashboard.
+- **Treningsrom** (`/tren/`) — one adaptive session, interleaved across every module.
+- **Framgang** (`/framgang/`) — registry-driven progress: streak, success rate,
+  per-concept confidence grouped by module, seven-day history, review schedule.
+- **Vel sjølv** (`/velg/`) — manual topic and level escape hatch.
+- `TopicModule` contract (`modules/types.ts`) and a real `registry.ts`. Adding a topic
+  is now a folder plus one registry line.
+- Deterministic problem ids (`derivative:chain:3:5`) with a seeded RNG (`modules/rng.ts`).
+- `engine/session.ts` — builds a session and attaches a per-concept fading level.
+- 21 new tests (68 total), covering the generators, the registry, the math convention,
+  the session builder and storage migration.
+
+### Changed
+- **Nynorsk only.** The English and Spanish tables, the language picker and
+  `src/lib/i18n/` are gone; content records hold plain strings.
+- `selectFadingLevel()` is now actually called. Both guided views previously walked a
+  fixed `[0,1,2,3,4]` array, so the adaptive scaffolding was written, tested and
+  disconnected.
+- `problem-selector.ts` is module-neutral. It imported the derivative `Problem` type,
+  hardcoded `['chain','product','quotient']` and split concept ids on `_`; the logarithm
+  route therefore bypassed it entirely with a random shuffle.
+- Concept ids are derived from the generated bank instead of hand-declared: 11 real
+  concepts replace 18 declared ones, 7 of which no generator could produce.
+- All LaTeX fields store bare LaTeX; views supply the delimiters. The two modules
+  previously disagreed, which is why no single card component could render both.
+- Storage namespace `derivasjon_v3_` → `mattetrening_v1_`, with a one-way migration.
+- Renamed to Mattetrening; `app.html` now declares `lang="nn"`.
+
+### Fixed
+- Problem ids were manual offsets (`1000`, `5000`) and the bank was regenerated with
+  fresh random coefficients on every mount, while progress was stored **by id** — so
+  every rating pointed at a different problem after a reload.
+- Fading level 3 revealed *more* steps than level 2 on short problems
+  (`ceil(0.4 × 3) = 2` against `3 − 2 = 1`); the ladder is now monotonic.
+- The 60/30/10 split degenerated to 60/40/**0** at the default session size, so students
+  stopped meeting new concepts. `splitBudget()` now reserves the remainder.
+- Self-explanation prompts always had the correct option first — answerable without
+  reading. `SessionCard` shuffles them with an RNG seeded by the problem id.
+- A new student received a session of nothing but study cards; worked examples are now
+  capped per session (`MAX_WORKED_EXAMPLES`).
+- Orphaned concepts are pruned from the student model instead of lingering forever.
+- Stats hardcoded `chain/product/quotient × poly/root/exp/log`, so logarithm concepts
+  were invisible or rendered as `log_product × undefined`.
+- Derivative step labels were hardcoded English ('Identify', 'Differentiate g'); they
+  are nynorsk in the generator now, which also removes the two hand-maintained
+  translation tables that lived inside the card components.
+
+### Removed
+- `src/routes/logaritmer/+page.svelte` (1259 lines) and `src/routes/derivasjon/+page.svelte`,
+  both replaced by the shared module-driven routes.
+- 13 components, including the `FadedProblemCard` / `LogFadedProblemCard` fork and
+  `ProblemCard` — one `SessionCard` covers fading levels 0-4 for every module.
+- `src/lib/i18n/` (559 lines), `src/lib/stores/`, the per-module `types.ts` files, four
+  unused barrel files, and ~190 lines of unused CSS.
+
 ## [0.5.0] - 2026-03-21
 
 ### Added

@@ -1,85 +1,82 @@
-// Module registry — lists available topic modules and their metadata
-// Each module registers itself here so the app can discover it
+// Module registry — the single place the rest of the app learns about topics.
+//
+// Everything downstream (the session builder, the selector, the Lærebok, the
+// progress page) reads modules through here. Adding a topic is: write a folder
+// that exports a TopicModule, then add it to MODULE_REGISTRY.
 
-import type { Lang } from '$lib/i18n';
+import type { Problem, TopicModule } from './types';
+import { derivativeModule } from './derivative';
+import { logarithmModule } from './logarithm';
 
-// ── Types ──
+export type { Problem, TopicModule, TopicMeta, StepEntry, TheoryEntry, SelfExplanation, WorkedStep } from './types';
 
-export interface TopicModuleMeta {
-	id: string;              // 'derivative' | 'logarithm' | ...
-	icon: string;            // '∂' | 'log' | ...
-	color: string;           // accent color for module cards
-	route: string;           // '/derivasjon' | '/logaritmer' | ...
-	conceptIds: string[];    // all concept IDs this module uses
-	name: Record<Lang, string>;
-	description: Record<Lang, string>;
+export const MODULE_REGISTRY: TopicModule[] = [derivativeModule, logarithmModule];
+
+export function getModule(id: string): TopicModule | undefined {
+	return MODULE_REGISTRY.find((m) => m.id === id);
 }
 
-// ── Derivative Module ──
-
-const derivativeModule: TopicModuleMeta = {
-	id: 'derivative',
-	icon: '∂',
-	color: '#3F51B5',  // Indigo (matches current design)
-	route: '/derivasjon/',
-	conceptIds: [
-		'chain_poly', 'chain_root', 'chain_exp', 'chain_log',
-		'product_poly', 'product_root', 'product_exp', 'product_log',
-		'quotient_poly', 'quotient_root', 'quotient_exp', 'quotient_log'
-	],
-	name: {
-		nn: 'Derivasjon',
-		en: 'Derivatives',
-		es: 'Derivadas'
-	},
-	description: {
-		nn: 'Kjerne-, produkt- og brøkregelen med ulike funksjonstypar.',
-		en: 'Chain, product and quotient rules with various function types.',
-		es: 'Reglas de cadena, producto y cociente con varios tipos de funciones.'
-	}
-};
-
-// ── Logarithm Module ──
-
-const logarithmModule: TopicModuleMeta = {
-	id: 'logarithm',
-	icon: 'log',
-	color: '#0D9488',  // Teal
-	route: '/logaritmer/',
-	conceptIds: [
-		'log_product', 'log_quotient', 'log_power',
-		'log_simplify', 'log_equation', 'exp_equation'
-	],
-	name: {
-		nn: 'Logaritmar',
-		en: 'Logarithms',
-		es: 'Logaritmos'
-	},
-	description: {
-		nn: 'Dei tre setningane, forenkling, og log-/eksponentiallikningar.',
-		en: 'The three laws, simplification, and log/exponential equations.',
-		es: 'Las tres leyes, simplificación, y ecuaciones logarítmicas/exponenciales.'
-	}
-};
-
-// ── Registry ──
-
-export const MODULE_REGISTRY: TopicModuleMeta[] = [
-	derivativeModule,
-	logarithmModule
-];
-
-/** Get a module by ID */
-export function getModule(id: string): TopicModuleMeta | undefined {
-	return MODULE_REGISTRY.find(m => m.id === id);
+export function getModuleBySlug(slug: string): TopicModule | undefined {
+	return MODULE_REGISTRY.find((m) => m.slug === slug);
 }
 
-/** Get all concept IDs across all modules */
+// ── Bank ──
+
+let bankCache: Problem[] | null = null;
+
+/** Every problem from every module. Built once; ids are deterministic. */
+export function getFullBank(): Problem[] {
+	if (!bankCache) bankCache = MODULE_REGISTRY.flatMap((m) => m.generateBank());
+	return bankCache;
+}
+
+export function getProblemById(id: string): Problem | undefined {
+	return getFullBank().find((p) => p.id === id);
+}
+
+// ── Concepts ──
+
+let conceptCache: Map<string, string> | null = null;
+
+/**
+ * Concept id -> module id, derived from what the generators actually produce.
+ *
+ * Deriving rather than declaring is deliberate: the old hand-written list
+ * claimed 12 derivative concepts while the generator could only produce 5, so
+ * 7 concepts sat in every student model forever at confidence 0.5.
+ */
+function conceptMap(): Map<string, string> {
+	if (!conceptCache) {
+		conceptCache = new Map();
+		for (const mod of MODULE_REGISTRY) {
+			for (const p of mod.generateBank()) {
+				conceptCache.set(mod.conceptIdOf(p), mod.id);
+			}
+		}
+	}
+	return conceptCache;
+}
+
 export function getAllConceptIds(): string[] {
-	return MODULE_REGISTRY.flatMap(m => m.conceptIds);
+	return [...conceptMap().keys()];
 }
 
-/** Get concept IDs for a specific module */
 export function getModuleConceptIds(moduleId: string): string[] {
-	return getModule(moduleId)?.conceptIds ?? [];
+	return [...conceptMap().entries()].filter(([, m]) => m === moduleId).map(([c]) => c);
+}
+
+export function getModuleForConcept(conceptId: string): TopicModule | undefined {
+	const moduleId = conceptMap().get(conceptId);
+	return moduleId ? getModule(moduleId) : undefined;
+}
+
+/** Display name for a concept, resolved through its owning module. */
+export function conceptName(conceptId: string): string {
+	return getModuleForConcept(conceptId)?.conceptName(conceptId) ?? conceptId;
+}
+
+/** Which module a problem belongs to, and the concept it trains. */
+export function conceptIdOf(problem: Problem): string {
+	const mod = getModule(problem.moduleId);
+	return mod ? mod.conceptIdOf(problem) : problem.topic;
 }
