@@ -34,6 +34,12 @@ aksene ligg i same modulen. Ein ting til å merka seg for seinare: i alle tre
 derivasjonsemna løyser «Tenk høgt» same uttrykket som «Gjennomgått døme», heilt fram til
 svaret. Logaritmeemna gjer det ikkje. Det er innhald, ikkje kode.
 
+Dobbelten i derivasjonsteorien er òg retta no: «Tenk høgt» brukar eit anna uttrykk enn
+stegtabellen i alle tre emna, og helst ein annan funksjonsfamilie, så sida dekkjer rot og
+logaritme i tillegg til polynom. Brøkregelen viste same brøken tre stader og er verst
+råka. Alle nye deriverte er sjekka numerisk mot ein sentraldifferanse før dei vart skrivne
+inn — handrekning som ingen kontrollerer er ikkje verdt risikoen i fagstoff elevar les.
+
 **Potensielle utfordringar:** fading er no brukt éin stad. Om elevane sjeldan opnar stigen,
 er spørsmålet om han bør lenkast tydelegare frå kort dei vurderte til «Trong øving» — men
 det krev observasjon, ikkje gjetting.

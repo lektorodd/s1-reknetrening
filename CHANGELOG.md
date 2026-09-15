@@ -23,6 +23,15 @@ A session varies difficulty; the fading ladder varies support and belongs to the
   level, or leave it alone and let the engine choose. Replaces the separate `/velg/` page.
 
 ### Changed
+- Derivative theory no longer shows the same expression twice. "Tenk høgt" narrated the
+  exact problem "Gjennomgått døme" then solved again, answer included, in all three
+  topics — and the quotient rule showed `x/(x+1)` a third time in its `example` line.
+  Each section now uses a different expression, and a different function family where it
+  helps: the chain rule reasons about a root, the product rule about `x·ln x`. Every new
+  derivative was checked numerically against a central difference before being written.
+- `ruleText` means the same thing in both modules. In the logarithm module it was an
+  explanatory sentence; in the derivative module it was a fragment of the formula
+  (`"g'(u) · u'(x)"`) printed as bare text directly beneath the formula containing it.
 - **A training session is the plain problem bank again.** Cards are ordinary problems:
   question, optional hint, "Vis løysing" showing the whole solution, self-assessment.
   No partially-filled solutions, no hidden steps. Previously the session drew faded and
