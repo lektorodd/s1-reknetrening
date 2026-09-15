@@ -23,4 +23,11 @@ export {
 	LADDER_LEVEL,
 	type LadderRung
 } from './ladder';
-export { buildSession, SESSION_LENGTH, type Session, type SessionCard } from './session';
+export {
+	buildSession,
+	filterBank,
+	SESSION_LENGTH,
+	type BankFilter,
+	type Session,
+	type SessionCard
+} from './session';

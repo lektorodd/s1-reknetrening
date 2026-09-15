@@ -161,12 +161,13 @@
 		color: var(--color-text);
 	}
 
-	/* An inset formula field: the sunk surface, never the page's cream. */
+	/* An inset formula field: soft, and clearly not the page's cream. The sunk
+	   tone is reserved for small inline things like kbd and code. */
 	.step-math {
 		padding: var(--space-3) var(--space-4);
-		border: 1px solid var(--color-line-strong);
+		border: 1px solid var(--color-line);
 		border-radius: var(--radius-sm);
-		background: var(--color-sunk);
+		background: var(--color-surface);
 		text-align: center;
 		overflow-x: auto;
 	}

@@ -2,6 +2,41 @@
 
 ---
 
+## Stage 7c – Fag som eiga inndeling i Tren (v0.8.2)
+**Dato:** 2026-09-15
+
+Filteret i Treningsrommet listar emna flatt: «Kjerneregelen · Produktregelen ·
+Brøkregelen · Produktsetninga · Kvotientsetninga …». Ein elev som ikkje alt veit kva fag
+kvart namn høyrer til, har ingen sjanse. Resten av appen — Lærebok, Framgang — grupperer
+etter modul. Tren var den einaste staden som ikkje gjorde det.
+
+Økta blandar framleis fag. Det er heile poenget med interleaving, og det er ikkje
+*utvalet* som var problemet, berre kor tydeleg appen seier kva du ser på. Difor fekk
+kortet òg modulnamnet: farge på venstrekanten er ikkje nok når to fag byter på.
+
+Filtertilstanden var éin streng, `"derivative:chain"`. Den forma kan ikkje uttrykkja
+«heile derivasjon», så ho vart to felt, og filtreringa flytta ut av sida og inn i
+`filterBank()` der ho kan testast.
+
+**To fargefeil i same slengen.** Brukaren peika på ei lyseblå linje og ein for mørk
+oppgåveboks. Begge var mine:
+
+`--color-primary-50` er ein tint til å liggja *bak tekst* — knappe-hover, merkelappar.
+Eg hadde brukt han som flate: framdriftssporet i Tren, hjelpe-prikkane i stigen,
+søylespora på Framgang. Ved start er framdriftsfyllet null breitt, så det einaste ein ser
+er sporet: ein blå strek tvers over sida, utan meining. Spor er varme no.
+
+Oppgåveboksen sette eg til `--color-sunk` førre runde, for å retta at han lånte
+sidebotnen sin krem. Rett diagnose, for hard kur: `--sunk` ber `kbd` og `code`, ikkje ein
+slab på 700px. Eit hakk mjukare, med tynn ramme, gjer same jobben.
+
+**Målt før eg rørte noko:** boksen såg uforholdsmessig høg ut, og eg skulle til å kutta
+polstringa. `getBoundingClientRect()` på `.question` og på MathJax-containeren inni viste
+at polstringa var 21px og resten var MathJax sine eigne `margin: 1em 0` på display-matte.
+Hadde eg kutta polstringa, ville boksen vore like høg og teksten klemt mot ramma.
+
+---
+
 ## Stage 7b – Drakta mot rett kjelde (v0.8.1)
 **Dato:** 2026-09-15
 

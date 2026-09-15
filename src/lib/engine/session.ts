@@ -29,6 +29,33 @@ export interface Session {
 	startedAt: number;
 }
 
+/** What the student has narrowed the bank to. Any field null means "all". */
+export interface BankFilter {
+	moduleId?: string | null;
+	topic?: string | null;
+	level?: number | null;
+}
+
+/**
+ * Narrow the bank to a subject, a topic within it, and/or a difficulty.
+ *
+ * A filter that matches nothing falls back to the whole bank: an empty session
+ * is a dead end, and the student would have no way to tell why.
+ */
+export function filterBank(bank: Problem[], filter: BankFilter = {}): Problem[] {
+	const { moduleId = null, topic = null, level = null } = filter;
+	if (moduleId === null && topic === null && level === null) return bank;
+
+	const subset = bank.filter(
+		(p) =>
+			(moduleId === null || p.moduleId === moduleId) &&
+			(topic === null || p.topic === topic) &&
+			(level === null || p.level === level)
+	);
+
+	return subset.length > 0 ? subset : bank;
+}
+
 /**
  * Build a session.
  *

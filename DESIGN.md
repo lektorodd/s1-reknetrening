@@ -37,10 +37,12 @@ Fire nivå, og skilnaden mellom dei ber arbeidet:
 | `--color-ground` | `#F6F1E6` | sidebotn, med rutenett |
 | `--color-surface` | `#FCFAF4` | mjuke panel og boksar |
 | `--color-raised` | `#FFFFFF` | kort som ligg over |
-| `--color-sunk` | `#EFE9DC` | **innfelte felt** — formelfelt, oppgåveboks, kode |
+| `--color-sunk` | `#EFE9DC` | **små** innfelte ting — `kbd`, `code` |
 
 Eit innfelt felt på eit kort skal aldri låna sidebotnen sin krem. Gjer det det, ser feltet
-malplassert ut.
+malplassert ut. Men storleiken avgjer kor djupt det skal ligga: ein oppgåveboks eller eit
+formelfelt tek eit **hakk** ned frå kortet sitt — `--color-surface` på eit kvitt kort — med
+`--color-line`-ramme. `--sunk` på ei stor flate blir tung og mørk.
 
 ## Palett
 
@@ -59,6 +61,13 @@ malplassert ut.
 
 Kvar aksent har ein pale variant til boksbotn (`--color-*-light`). Alle er målte med
 `#1F2933` oppå: 12,7–13,1:1.
+
+### Tint er ikkje flate
+
+`--color-primary-50` og `-100` ligg **bak tekst** — knappe-hover, merkelappar. Dei er
+ikkje spor, skinner eller søylebotnar: temaet har ingen lyseblå flate, og ein tom
+framdriftsstripe i lyseblå les som ein strek utan meining. Spor er varme
+(`--color-line`, `--color-line-strong`); blå ber det som er **fylt**.
 
 ### Kontrast
 
@@ -118,7 +127,10 @@ Sirkelglyfen som opnar ein titla boks heiter `.badge-mark`.
 | Hint på eit oppgåvekort | gul venstrekant, pale gul botn |
 | «Din tur — N steg att» | stipla krem-kant |
 | Rett / galt i refleksjonsspørsmål | grøn / raud |
-| Oppgåvekort i Tren | modulen sin farge på venstrekanten |
+| Oppgåvekort i Tren | modulen sin farge på venstrekanten, og modulnamnet i same farge |
+
+Farge åleine seier ikkje kva faget heiter. Der ei liste eller ei økt blandar fag — Tren sitt
+filter, oppgåvekortet — skal namnet stå, med fargen som støtte.
 
 ## Modulfargar
 
@@ -130,6 +142,13 @@ framgangssida:
 | Derivasjon | `#2B6CB0` blå |
 | Logaritmar | `#276749` grøn |
 | Integrasjon (når han kjem) | `#805AD5` violett |
+
+## Display-matte
+
+MathJax gir `mjx-container[display="true"]` sine eigne `margin: 1em 0`. Ein boks som alt
+har polstring får då dobbel luft, og ser dobbelt så høg ut som han er. Temaet trimmar
+marginen til `0.25em`. Ser ein boks for høg ut, mål før du kuttar polstringa — det er
+som regel ikkje ho.
 
 ## Mørk modus — ikkje implementert, men nedskriven
 
