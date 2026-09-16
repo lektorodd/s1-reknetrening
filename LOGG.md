@@ -2,6 +2,73 @@
 
 ---
 
+## Stage 8 – Integrasjon, og kurs som eiga akse (v0.9.0)
+**Dato:** 2026-09-16
+
+Brukaren kom med kunnskapsgrunnlaget for integrasjon og éin klar premiss: det er S2-stoff,
+så det bør kunna haldast utanfor det andre. «Irriterande med logaritmeoppgåver når ein
+terper delvis int.»
+
+Filteret frå v0.8.2 kunne alt avgrensa til eitt fag, men valet vart gløymt ved kvar økt, og
+appen hadde ikkje noko omgrep om at integrasjon høyrer til eit anna kurs. Difor to ting i
+same endring: modulen, og kurs som akse over faga — med valet lagra.
+
+### Generering bakvegen
+
+Det viktigaste grepet, og det som gjer modulen til å stole på: **generatoren integrerer
+aldri.** Den antideriverte blir vald først, og integranden følgjer av henne, utleidd frå dei
+same parametrane. Då kan oppgåve og fasit ikkje koma i utakt — det er ikkje to utrekningar
+som må stemme overeins, det er éi.
+
+For derivasjon spelar dette mindre rolle, fordi den vegen er mekanisk. For integrasjon er
+det heile skilnaden.
+
+### Matematikken før LaTeX-en
+
+Eg skreiv ikkje ein einaste LaTeX-streng før alle 109 familieformlane var sjekka numerisk:
+sentraldifferanse på $F$, samanlikna med $f$ i fleire punkt innanfor definisjonsmengda.
+Same kontroll som kunnskapsgrunnlaget sjølv køyrde med sympy.
+
+Grunnen er ikkje ryddigheit. Ein feil antiderivert er den eine feilen i denne appen ein
+elev ikkje kan fanga: dei får sjå ei løysing, og har ingen grunn til å tvile på henne. Alt
+anna — ein stygg parentes, ein dublett — ser dei sjølve.
+
+Kontrollen ligg att som test, så han gjeld neste gong òg.
+
+### Kva verifiseringa faktisk fann
+
+Tre ting, og det er verdt å skilja dei:
+
+**Ein ekte designfeil.** Integrasjonskonsepta lever på *eitt* nivå kvar —
+`substitution_definite` finst berre på nivå 4, `parts_combined` berre på 5. Det er ærleg
+for faget, men `fallbackSelection` fall tilbake til heile konseptet når ingenting låg
+innanfor nivåtaket, så ein fersk elev fekk nivå-5-integral i første økt. Derivasjon og
+logaritmar har konsept som spenner fleire nivå, så dette hadde aldri bite før.
+
+Fallback-en finst av ein grunn: eit smalna filter skal ikkje gi tom økt. Fiksen skil dei to
+tilfella — taket biter per konsept når *banken* har noko lett, og slepper berre når han
+ikkje har det. Den eksisterande testen `cold-start prefers easy levels` fanga det, med 2,52
+mot 2,5. Ein terskel eg kunne ha slakka; det ville skjult ein reell feil.
+
+**To malfeil.** `e^{-x}(-(x) - )` — eit heilt konstantledd forsvann, fordi hjelparen som
+droppar ein koeffisient på 1 vart brukt der 1-talet *var* leddet. Og `-(2x-3)` skrive
+`-2x-3`, som er eit anna polynom. Begge kom av at eg attbrukte ein hjelpar utanfor det han
+var laga for.
+
+**Ein kvalitetsfeil.** Same oppgåve tre gonger på eitt nivå. Re-seeding på ein salta id ved
+kollisjon tok det frå 20+ til 1, utan å røre determinismen: id-en er framleis kanonisk.
+
+**Lærdomen:** ein test som feilar på 2,52 mot 2,5 ser ut som ein terskel som må justerast.
+Han var det ikkje. Sjå på kvifor talet flytta seg før du flyttar grensa.
+
+### Ein farge eg hadde lova bort
+
+DESIGN.md hadde reservert violett `#805AD5` til integrasjon, skrive før modulen fanst. Det
+gjekk ikkje: violett tyder gjennomgått døme overalt elles i appen. Modulen fekk rust
+`#9C4221`, og DESIGN.md fekk grunngjevinga.
+
+---
+
 ## Stage 7c – Fag som eiga inndeling i Tren (v0.8.2)
 **Dato:** 2026-09-15
 

@@ -100,6 +100,15 @@ function fallbackSelection(model: StudentModel, bank: Problem[], count: number):
 
 	// Round-robin across concepts, so a module with more concepts does not
 	// crowd out a smaller one.
+	// Whether the cap means anything for this bank at all. If the caller narrowed
+	// it — the topic filter picking level 5, say — nothing is within the cap, and
+	// insisting would return an empty session rather than the thing asked for.
+	// But when the bank *does* hold easy problems, the cap has to bite per
+	// concept: integration's concepts each live at a single level, so a concept
+	// with nothing easy is not a reason to hand a brand-new student a level 5
+	// integral — it is a reason to pick a different concept.
+	const bankHasEasy = bank.some((p) => p.level <= maxLevel);
+
 	const order = shuffled(conceptIds);
 	let guard = 0;
 	while (selected.length < count && guard++ < count * conceptIds.length) {
@@ -110,11 +119,8 @@ function fallbackSelection(model: StudentModel, bank: Problem[], count: number):
 			if (Math.random() > weight / 5) continue;
 
 			const free = (index.get(conceptId) ?? []).filter((p) => !used.has(p.id));
-			// The level cap is a preference, not a filter. When the caller has
-			// narrowed the bank — the topic filter picking level 5, say — capping
-			// hard would return an empty session rather than the thing asked for.
 			const withinLevel = free.filter((p) => p.level <= maxLevel);
-			const candidates = withinLevel.length > 0 ? withinLevel : free;
+			const candidates = bankHasEasy ? withinLevel : free;
 			if (candidates.length === 0) continue;
 			const pick = candidates[Math.floor(Math.random() * candidates.length)];
 			selected.push(pick);

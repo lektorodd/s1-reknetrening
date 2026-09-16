@@ -15,6 +15,7 @@ const TOPIC_NAMES: Record<string, string> = {
 export const logarithmModule: TopicModule = {
 	id: MODULE_ID,
 	slug: 'logaritmar',
+	course: 'S1',
 	icon: 'log',
 	color: '#276749',
 	name: 'Logaritmar',

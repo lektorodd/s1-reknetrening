@@ -137,11 +137,26 @@ filter, oppgåvekortet — skal namnet stå, med fargen som støtte.
 Kvar modul har ein aksent i `registry.ts`, brukt på modulkort, venstrekantar og
 framgangssida:
 
-| Modul | Farge |
-|---|---|
-| Derivasjon | `#2B6CB0` blå |
-| Logaritmar | `#276749` grøn |
-| Integrasjon (når han kjem) | `#805AD5` violett |
+| Modul | Kurs | Farge |
+|---|---|---|
+| Derivasjon | S1 | `#2B6CB0` blå |
+| Logaritmar | S1 | `#276749` grøn |
+| Integrasjon | S2 | `#9C4221` rust |
+
+Integrasjon var sett opp med violett `#805AD5` her før modulen fanst. Det gjekk ikkje:
+violett tyder alt **gjennomgått døme** overalt i appen — stigens venstrekant,
+stegetikettane i ei løysing, regelboksen med `Σ`-merket. Ein violett modulfarge ville lese
+som «dette er eit døme», ikkje som «dette er faget». Rust er klar av både blå og grøn, og
+av violetten.
+
+## Kurs er den øvste aksen
+
+Modulane høyrer til eit kurs, og ei økt blandar aldri kurs. Filterpanelet i Treningsrommet
+er difor tredelt: **kurs → fag → emne**, med nivå under. Vel du S2, viser panelet berre S2
+sine fag. Valet blir lagra, så ein S2-elev slepp å velja på nytt kvar gong.
+
+Lærebok held alle kursa, med kursoverskrift over fagkorta — der slår du opp, og ein
+S2-elev treng framleis S1-regelen kvar metode speglar.
 
 ## Display-matte
 

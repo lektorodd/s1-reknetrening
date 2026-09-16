@@ -4,16 +4,30 @@
 // progress page) reads modules through here. Adding a topic is: write a folder
 // that exports a TopicModule, then add it to MODULE_REGISTRY.
 
-import type { Problem, TopicModule } from './types';
+import type { Course, Problem, TopicModule } from './types';
 import { derivativeModule } from './derivative';
 import { logarithmModule } from './logarithm';
+import { integralModule } from './integral';
 
-export type { Problem, TopicModule, TopicMeta, StepEntry, TheoryEntry, SelfExplanation, WorkedStep } from './types';
+export type { Course, Problem, TopicModule, TopicMeta, StepEntry, TheoryEntry, SelfExplanation, WorkedStep } from './types';
 
-export const MODULE_REGISTRY: TopicModule[] = [derivativeModule, logarithmModule];
+export const MODULE_REGISTRY: TopicModule[] = [derivativeModule, logarithmModule, integralModule];
+
+/** Courses the app covers, in the order a student meets them. */
+export const COURSES: Course[] = ['S1', 'S2'];
 
 export function getModule(id: string): TopicModule | undefined {
 	return MODULE_REGISTRY.find((m) => m.id === id);
+}
+
+/**
+ * The modules belonging to one course.
+ *
+ * Derived from the registry rather than declared, for the same reason concept
+ * ids are: a second list is a list that goes out of date.
+ */
+export function modulesForCourse(course: Course): TopicModule[] {
+	return MODULE_REGISTRY.filter((m) => m.course === course);
 }
 
 export function getModuleBySlug(slug: string): TopicModule | undefined {

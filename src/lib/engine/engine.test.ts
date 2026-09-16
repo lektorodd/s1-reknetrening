@@ -26,11 +26,13 @@ import { fadeSteps } from '$lib/engine/guidance-fading';
 import { buildSession, filterBank, SESSION_LENGTH } from '$lib/engine/session';
 import { buildLadder, LADDER_LEVEL, LADDER_RUNGS } from '$lib/engine/ladder';
 import {
+	COURSES,
 	MODULE_REGISTRY,
 	conceptIdOf,
 	getAllConceptIds,
 	getFullBank,
-	getModuleBySlug
+	getModuleBySlug,
+	modulesForCourse
 } from '$lib/modules/registry';
 import type { Problem, StepEntry } from '$lib/modules/types';
 
@@ -668,11 +670,47 @@ describe('Bank filter', () => {
 		expect(subset.every((p) => p.moduleId === 'logarithm' && p.level === 4)).toBe(true);
 	});
 
-	it('falls back to the whole bank rather than yielding an empty session', () => {
-		// A topic from one subject with another subject's id matches nothing.
-		const bank = getFullBank();
-		const subset = filterBank(bank, { moduleId: 'logarithm', topic: 'chain' });
-		expect(subset).toBe(bank);
+	it('widens one step at a time instead of jumping to the whole bank', () => {
+		// A topic from one subject asked for under another matches nothing, so the
+		// topic is dropped — but the subject the student chose is kept.
+		const subset = filterBank(getFullBank(), { moduleId: 'logarithm', topic: 'chain' });
+		expect(subset.length).toBeGreaterThan(0);
+		expect(subset.every((p) => p.moduleId === 'logarithm')).toBe(true);
+	});
+
+	it('drops the level before the topic', () => {
+		const subset = filterBank(getFullBank(), { moduleId: 'derivative', topic: 'chain', level: 99 });
+		expect(subset.length).toBeGreaterThan(0);
+		expect(subset.every((p) => p.topic === 'chain')).toBe(true);
+	});
+});
+
+describe('Course filter', () => {
+	it('narrows to one course', () => {
+		const s2 = filterBank(getFullBank(), { course: 'S2' });
+		expect(s2.length).toBeGreaterThan(0);
+		const s2Modules = new Set(modulesForCourse('S2').map((m) => m.id));
+		expect(s2.every((p) => s2Modules.has(p.moduleId))).toBe(true);
+	});
+
+	it('never crosses into another course when widening', () => {
+		// This is the whole point of the axis: asking for S2 and being handed a
+		// logarithm problem is the noise the course split exists to remove.
+		const subset = filterBank(getFullBank(), { course: 'S2', topic: 'finst-ikkje', level: 99 });
+		expect(subset.length).toBeGreaterThan(0);
+		const s2Modules = new Set(modulesForCourse('S2').map((m) => m.id));
+		expect(subset.every((p) => s2Modules.has(p.moduleId))).toBe(true);
+	});
+
+	it('every module declares a course the registry knows', () => {
+		for (const mod of MODULE_REGISTRY) {
+			expect(COURSES).toContain(mod.course);
+		}
+	});
+
+	it('assigns every module to exactly one course, covering the registry', () => {
+		const grouped = COURSES.flatMap((c) => modulesForCourse(c));
+		expect(grouped).toHaveLength(MODULE_REGISTRY.length);
 	});
 });
 
