@@ -1,27 +1,21 @@
 <script lang="ts">
 	import type { TheoryEntry } from '$lib/modules/types';
-	import { typesetElement } from '$lib/utils/mathjax';
+	import Tex from './Tex.svelte';
 
 	interface Props {
 		entry: TheoryEntry;
 	}
 
 	let { entry }: Props = $props();
-	let container = $state<HTMLElement | null>(null);
-
-	$effect(() => {
-		void entry.title;
-		if (container) typesetElement(container);
-	});
 </script>
 
-<article bind:this={container}>
+<article>
 	<h1>{entry.title}</h1>
 	<p class="intro">{entry.intro}</p>
 
 	<section class="formula-block">
 		<h2><span class="badge-mark" aria-hidden="true">Σ</span> Regelen</h2>
-		<div class="formula">{`\\[${entry.formula}\\]`}</div>
+		<div class="formula"><Tex tex={entry.formula} /></div>
 		<p class="rule-text">{entry.ruleText}</p>
 		<p class="example">{entry.example}</p>
 	</section>
@@ -42,7 +36,7 @@
 			{#each entry.workedSteps as step, i (i)}
 				<li>
 					<p class="explanation">{step.explanation}</p>
-					<div class="step-math">{`\\[${step.latex}\\]`}</div>
+					<div class="step-math"><Tex tex={step.latex} /></div>
 				</li>
 			{/each}
 		</ol>

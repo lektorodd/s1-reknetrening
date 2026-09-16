@@ -2,8 +2,8 @@
 	import type { LadderRung } from '$lib/engine/ladder';
 	import type { SelfExplanation } from '$lib/modules/types';
 	import { fadeSteps } from '$lib/engine/guidance-fading';
-	import { rungLabel, rungPrompt, levelName } from '$lib/content/strings';
-	import { typesetElement } from '$lib/utils/mathjax';
+	import { rungLabel, rungShort, rungPrompt, levelName } from '$lib/content/strings';
+	import Tex from './Tex.svelte';
 	import { rngFor } from '$lib/modules/rng';
 
 	interface Props {
@@ -26,7 +26,6 @@
 	let chosenRung = $state(0);
 	let revealed = $state(false);
 	let chosen = $state<number | null>(null);
-	let container = $state<HTMLElement | null>(null);
 
 	const levelIndex = $derived(
 		Math.min(chosenLevel ?? 1, ladders.length - 1)
@@ -58,13 +57,6 @@
 		return { q, order };
 	});
 
-	$effect(() => {
-		void levelIndex;
-		void position;
-		void revealed;
-		if (container) typesetElement(container);
-	});
-
 	function reset() {
 		revealed = false;
 		chosen = null;
@@ -81,7 +73,7 @@
 	}
 </script>
 
-<div class="ladder" bind:this={container}>
+<div class="ladder">
 	<div class="axes">
 		<div class="axis">
 			<span class="axis-label">Vanskegrad</span>
@@ -105,30 +97,30 @@
 			<nav class="rungs" aria-label="Kor mykje hjelp">
 				{#each rungs as r, i (r.problem.id)}
 					<button
-						class="dot"
+						class="rung"
 						class:active={i === position}
-						class:done={i < position}
 						aria-current={i === position ? 'step' : undefined}
 						aria-label={rungLabel(r.rung)}
 						title={rungLabel(r.rung)}
 						onclick={() => go(i)}
-					></button>
+					>
+						{rungShort(r.rung)}
+					</button>
 				{/each}
 			</nav>
 		</div>
 	</div>
 
-	<p class="rung-name">{rungLabel(current.rung)}</p>
 	<p class="prompt">{rungPrompt(faded.prompt)}</p>
 
-	<div class="question">{`\\[${current.problem.q}\\]`}</div>
+	<div class="question"><Tex tex={current.problem.q} /></div>
 
 	{#if faded.shown.length > 0}
 		<ol class="steps">
 			{#each faded.shown as step, i (i)}
 				<li>
 					<span class="step-label">{step.label}</span>
-					<div class="step-math">{`\\[${step.latex}\\]`}</div>
+					<div class="step-math"><Tex tex={step.latex} /></div>
 				</li>
 			{/each}
 		</ol>
@@ -145,7 +137,7 @@
 			{#each faded.hidden as step, i (i)}
 				<li>
 					<span class="step-label">{step.label}</span>
-					<div class="step-math">{`\\[${step.latex}\\]`}</div>
+					<div class="step-math"><Tex tex={step.latex} /></div>
 				</li>
 			{/each}
 		</ol>
@@ -204,11 +196,14 @@
 		background: var(--color-surface);
 	}
 
+	/* Tops aligned, so the two axis labels sit on one line. The controls below
+	   them are different heights, and flex-end pushed the shorter axis's label
+	   down. */
 	.axes {
 		display: flex;
 		flex-wrap: wrap;
 		gap: var(--space-5);
-		align-items: flex-end;
+		align-items: flex-start;
 	}
 
 	.axis {
@@ -219,7 +214,7 @@
 
 	.axis:last-child {
 		flex: 1;
-		min-width: 9rem;
+		min-width: 16rem;
 	}
 
 	.axis-label {
@@ -235,8 +230,8 @@
 	}
 
 	.level {
-		width: 1.9rem;
-		height: 1.9rem;
+		width: 2.4rem;
+		height: 2.4rem;
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-full);
 		background: var(--color-surface);
@@ -258,37 +253,36 @@
 
 	.rungs {
 		display: flex;
+		flex-wrap: wrap;
 		gap: var(--space-2);
 	}
 
-	/* The track is a warm rail; blue is kept for the rungs actually taken. */
-	.dot {
-		flex: 1;
-		height: 6px;
-		padding: 0;
-		border: 0;
-		border-radius: var(--radius-full);
-		background: var(--color-line-strong);
+	/* Words, not a meter. The bars they replaced were 6px tall — you had to aim —
+	   and the filled one sat furthest right, where there is the least help, so
+	   more colour read as less help. A named button says what it is, and there is
+	   no fill left to point the wrong way. Violet, because which rung you are on
+	   is worked-example material, like the rest of this card. */
+	.rung {
+		padding: var(--space-2) var(--space-3);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+		background: var(--color-surface);
+		font: inherit;
+		font-size: var(--font-size-sm);
+		color: var(--color-text-strong);
 		cursor: pointer;
-		transition: background var(--transition-fast);
+		white-space: nowrap;
+		transition: border-color var(--transition-fast), background var(--transition-fast);
 	}
 
-	.dot.done {
-		background: var(--color-primary);
-		opacity: 0.45;
+	.rung:hover {
+		border-color: var(--color-example);
 	}
 
-	.dot.active {
-		background: var(--color-primary);
-	}
-
-	.rung-name {
-		margin: 0;
-		font-size: var(--font-size-xs);
-		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.04em;
-		color: var(--color-example);
+	.rung.active {
+		border-color: var(--color-example);
+		background: var(--color-example);
+		color: var(--color-text-inverse);
 	}
 
 	.prompt {

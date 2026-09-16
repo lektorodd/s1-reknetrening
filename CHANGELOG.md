@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.2] - 2026-09-16
+
+### Fixed
+- **Læreboka viste matte frå førre emne.** Navigerte du frå Variabelskifte til Delvis
+  integrasjon, bytte tittelen, men formelen og heile det gjennomgåtte dømet stod att frå
+  kjerneregelen. Ein elev som las «Delvis integrasjon» fekk sjå feil regel. Det same gjorde
+  at vanskegrad-knappane og hjelp-stega på stigen ikkje endra oppgåva.
+
+  Årsaka er den same alle stader: MathJax byter ut tekstnoden `\[...\]` med sin eigen
+  container, og etter det står Svelte sin reaktive tekstnode utanfor dokumentet, så ein ny
+  verdi har ingen stad å bli skriven. Kortet i Tren slapp unna berre fordi sida pakkar han
+  i `{#key}`. All matte går no gjennom **`Tex.svelte`**, som set `textContent` sjølv før
+  han typesettar — sju stader i tre komponentar, no éin.
+
+  Målt med MathJax servert lokalt: vanskegrad 1–5 gir 5 av 5 ulike oppgåver (var 1 av 5),
+  hjelp-stega likeins, og formelen i Læreboka byter med emnet.
+
+### Changed
+- **Hjelp-aksen på stigen er fem knappar med ord** — Døme · Siste steg · To siste · Starten
+  · Sjølv — i staden for fem strekar. Strekane var 126 × 6 px, under halvparten av dei
+  24 × 24 ei treffflate treng; knappane er 72 × 44. Og den fylte streken låg lengst til
+  høgre, der det er minst hjelp, så meir farge tydde mindre hjelp. Ord ber meininga no, så
+  det finst ikkje noko fyll som kan peika feil veg.
+- Hjelp er violett og vanskegrad blå, så dei to aksane ikkje ser like ut. Nivåsirklane er
+  2,4rem i staden for 1,9rem, og lina som gjentok namnet på steget er borte — knappen seier
+  det.
+
 ## [0.9.1] - 2026-09-16
 
 Tre ting brukaren peika på i løysingsstega, og alle tre viste seg å ha ei anna årsak enn

@@ -2,6 +2,71 @@
 
 ---
 
+## Stage 8c – Ein knapp som ikkje verka, og ein lærebok som løgg (v0.9.2)
+**Dato:** 2026-09-16
+
+Brukaren melde fire ting om stigen. Den første — «knappane til venstre endrar ikkje
+oppgåva» — såg ut som ein liten reaktivitetsfeil i ein komponent. Han var det ikkje.
+
+### Målinga som opna det
+
+Same side, same klikk, to nettlesarar: éin med MathJax, éin utan.
+
+```
+utan MathJax    nivå 1: \int -\frac{3}{3x-2}\,dx     nivå 5: \int \frac{x}{\sqrt{x+3}}\,dx
+med  MathJax    nivå 1: ∫ ln x / x dx              nivå 5: ∫ ln x / x dx
+```
+
+Svelte gjorde altså jobben sin heile tida. Det var skjermen som ikkje følgde etter.
+
+MathJax byter ut tekstnoden `\[...\]` med sin eigen `<mjx-container>`. Etter det peikar
+Svelte sin reaktive tekstnode på noko som ikkje står i dokumentet lenger, og ein ny verdi
+har ingen stad å bli skriven. `$effect`-en kalla `typesetElement` på nytt, men teksten han
+skulle setja var borte.
+
+Kortet i Tren slapp unna — ikkje fordi det var betre skrive, men fordi `tren/+page.svelte`
+tilfeldigvis pakkar det i `{#key current.problem.id}`, som byggjer DOM-en på nytt.
+
+### Det eg fann då eg leita vidare
+
+Eg kunne ha stoppa ved stigen. I staden spurde eg kvar elles matte blir rendra reaktivt, og
+prøvde å navigera mellom to emne i Læreboka:
+
+```
+start          tittel "Variabelskifte"      formel ∫g(u(x))·u'(x)dx …
+etter klikk    tittel "Delvis integrasjon"  formel ∫g(u(x))·u'(x)dx …
+```
+
+Tittelen er vanleg tekst og bytte. Formelen og heile det gjennomgåtte dømet er MathJax og
+stod att. **Ein elev som las «Delvis integrasjon» fekk sjå kjerneregelen.** Det er feil
+fagleg innhald, og det er mykje verre enn knappen brukaren faktisk melde.
+
+Sju stader i tre komponentar hadde same feilen. Alle går no gjennom `Tex.svelte`, som set
+`textContent` sjølv før han typesettar — det er nettopp steget Svelte ikkje får gjort etter
+at MathJax har teke noden.
+
+**Lærdomen:** ei melding om ein knapp er ikkje ei melding om ein knapp. Spør kvar elles same
+mekanismen gjeld før du fiksar staden du vart peika på.
+
+### Og ein liten ein
+
+Komponenten heitte `Math` i fem minutt. `Math.min` og `Math.floor` slutta å kompilera i
+komponenten som importerte han, fordi namnet skyggar for det globale objektet. Han heiter
+`Tex` no.
+
+### Hjelp-aksen
+
+Dei tre andre punkta var same kontroll: fem strekar på 126 × 6 px — under halvparten av dei
+24 × 24 ei treffflate treng — med den fylte streken lengst til høgre, der det er *minst*
+hjelp. «Meir farge → mindre hjelp. Kontraintuitivt», som brukaren skreiv, og han har rett:
+ein målar som fyller seg opp skal tyda meir av noko.
+
+Løysinga var ikkje å snu målaren, men å bli kvitt han. Fem knappar med ord på — Døme,
+Siste steg, To siste, Starten, Sjølv — er 72 × 44 px og treng ingen metafor i det heile.
+Lina under som gjentok namnet på steget kunne gå same vegen.
+
+---
+
 ## Stage 8b – Tre ting som såg ut som éin feil (v0.9.1)
 **Dato:** 2026-09-16
 
