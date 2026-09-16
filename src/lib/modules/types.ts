@@ -71,6 +71,15 @@ export interface TopicMeta {
 }
 
 /**
+ * Which course a module belongs to.
+ *
+ * A session never mixes courses. Integration is S2 material, and drawing a
+ * logarithm problem in the middle of drilling integration by parts is noise —
+ * the two are not alternatives to each other the way the S1 rules are.
+ */
+export type Course = 'S1' | 'S2';
+
+/**
  * The contract every topic module implements.
  *
  * Adding a topic means adding a folder that exports one of these and listing it
@@ -80,6 +89,7 @@ export interface TopicModule {
 	id: string;
 	/** URL segment used in the Lærebok, e.g. 'derivasjon'. */
 	slug: string;
+	course: Course;
 	icon: string;
 	color: string;
 	name: string;

@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-09-16
+
+Integrasjon kjem inn, og med han eit kurs-skilje: S2-stoff blandar seg ikkje inn i ei
+S1-økt. Å terpe delvis integrasjon og få ei logaritmelikning i neste kort er støy — dei to
+er ikkje alternativ til kvarandre slik S1-reglane er.
+
+### Added
+- **Integrasjonsmodulen** (S2): variabelskifte, delvis integrasjon, delbrøkoppspalting og
+  blanda metodar, fem nivå kvar, 160 oppgåver. Kvar metode blir introdusert som ein
+  derivasjonsregel lesen baklengs — det er ikkje berre ein metafor, delvis integrasjon
+  *er* produktregelen integrert på begge sider.
+- **Kurs som øvste akse.** `TopicModule` har `course: 'S1' | 'S2'`, og filterpanelet er
+  tredelt: kurs → fag → emne. Vel du S2, viser panelet berre integrasjon.
+- **Filteret blir hugsa** under `tren_filter`, så valet står mellom økter. Standard for ein
+  ny elev er S1, det appen var.
+- `filterBank({ course })`, og eit «blanda»-emne der metodevalet er sjølve ferdigheita:
+  grunnregel-oppgåver og eit variabelskifte forkledd som delbrøk ligg innimellom, så
+  modusen ikkje i seg sjølv røper at ein metode trengst.
+- **Numerisk kontroll av kvar antiderivert som test.** Alle familieformlane blir sjekka
+  med sentraldifferanse: $F' = f$ i fleire punkt. Ein feil fasit er den eine feilen ein
+  elev ikkje kan fanga — appen viser dei ei løysing, og dei har ingen grunn til å tvile.
+
+### Changed
+- Fallback-en i `filterBank` utvidar eitt steg om gongen — slepp nivået, så emnet, så
+  faget — og **forlèt aldri kurset**. Før fall han rett til heile banken, som med kurs ville
+  bety at ei S2-økt stilt gav logaritmeoppgåver: akkurat feilen skiljet skal fjerne.
+- Lærebok grupperer fagkorta under kursoverskrifter.
+
+### Fixed
+- **Nivåtaket i kaldstarten var ikkje eit tak.** Integrasjonskonsepta lever på eitt nivå
+  kvar, og veljaren fall tilbake til heile konseptet når ingenting låg innanfor taket — så
+  ein fersk elev fekk nivå-5-integral i første økt. Taket biter no per konsept når banken
+  har noko lett, og slepper berre når han ikkje har det.
+- Eit konstantledd forsvann ut av svaret når koeffisienten var 1: `e^{-x}(-(x) - )`.
+- `-(2x-3)` vart skrive `-2x-3`. Negering av ein sum utan parentes er eit anna polynom.
+- Same oppgåve kunne dukke opp tre gonger på eitt nivå. Generatoren re-seedar no på ein
+  salta id ved kollisjon; id-en er framleis kanonisk, så determinismen held.
+
 ## [0.8.2] - 2026-09-15
 
 Treningsrommet seier no kva fag ein oppgåve høyrer til. Filteret listar emna under

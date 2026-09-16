@@ -7,13 +7,32 @@
 	import { loadStudentModel, saveStudentModel, type StudentModel } from '$lib/engine/student-model';
 	import { updateAfterAttempt } from '$lib/engine/spaced-repetition';
 	import { getFullBank } from '$lib/modules/registry';
+	import type { Course } from '$lib/modules/types';
+	import { load, save } from '$lib/utils/storage';
 
 	let model = $state<StudentModel | null>(null);
 	let session = $state<Session | null>(null);
 	let position = $state(0);
 	let correctCount = $state(0);
 
-	/** All null means "let the engine choose", which is the default. */
+	interface StoredFilter {
+		course: Course | null;
+		moduleId: string | null;
+		topic: string | null;
+		level: number | null;
+	}
+
+	const FILTER_KEY = 'tren_filter';
+
+	/**
+	 * S1 is the default course, which is what the app was before integration.
+	 * An S2 student picks S2 once and it stays picked — the filter is saved, so
+	 * drilling integration by parts never turns into a logarithm problem the next
+	 * time the page loads.
+	 */
+	const DEFAULT_FILTER: StoredFilter = { course: 'S1', moduleId: null, topic: null, level: null };
+
+	let course = $state<Course | null>(DEFAULT_FILTER.course);
 	let moduleId = $state<string | null>(null);
 	let topic = $state<string | null>(null);
 	let level = $state<number | null>(null);
@@ -27,6 +46,13 @@
 		// Warm the bank before the first card so MathJax has content to typeset.
 		getFullBank();
 		model = loadStudentModel();
+
+		const stored = load<StoredFilter>(FILTER_KEY, DEFAULT_FILTER);
+		course = stored.course;
+		moduleId = stored.moduleId;
+		topic = stored.topic;
+		level = stored.level;
+
 		start();
 	});
 
@@ -35,20 +61,23 @@
 		session = buildSession(
 			model,
 			SESSION_LENGTH,
-			filterBank(getFullBank(), { moduleId, topic, level })
+			filterBank(getFullBank(), { course, moduleId, topic, level })
 		);
 		position = 0;
 		correctCount = 0;
 	}
 
 	function changeFilter(
+		nextCourse: Course | null,
 		nextModule: string | null,
 		nextTopic: string | null,
 		nextLevel: number | null
 	) {
+		course = nextCourse;
 		moduleId = nextModule;
 		topic = nextTopic;
 		level = nextLevel;
+		save<StoredFilter>(FILTER_KEY, { course, moduleId, topic, level });
 		start();
 	}
 
@@ -66,7 +95,7 @@
 
 <svelte:head><title>Tren – Mattetrening</title></svelte:head>
 
-<TopicFilter {moduleId} {topic} {level} onChange={changeFilter} />
+<TopicFilter {course} {moduleId} {topic} {level} onChange={changeFilter} />
 
 {#if !session}
 	<p class="loading">Set saman økta…</p>

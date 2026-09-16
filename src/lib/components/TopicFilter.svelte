@@ -1,26 +1,37 @@
 <script lang="ts">
-	import { MODULE_REGISTRY } from '$lib/modules/registry';
+	import { COURSES, MODULE_REGISTRY, modulesForCourse } from '$lib/modules/registry';
+	import type { Course } from '$lib/modules/types';
 	import { LEVEL_NAMES } from '$lib/content/strings';
 
 	interface Props {
+		/** null = every course. A session never mixes courses unless this is null. */
+		course: Course | null;
 		/** null = every subject. */
 		moduleId: string | null;
 		/** null = every topic within the chosen subject. */
 		topic: string | null;
 		/** 1-5, or null for every level. */
 		level: number | null;
-		onChange: (moduleId: string | null, topic: string | null, level: number | null) => void;
+		onChange: (
+			course: Course | null,
+			moduleId: string | null,
+			topic: string | null,
+			level: number | null
+		) => void;
 	}
 
-	let { moduleId, topic, level, onChange }: Props = $props();
+	let { course, moduleId, topic, level, onChange }: Props = $props();
 
 	let open = $state(false);
 
+	/** Only the chosen course's subjects are offered; all of them when none is. */
+	const subjects = $derived(course === null ? MODULE_REGISTRY : modulesForCourse(course));
+
 	const label = $derived.by(() => {
-		const parts: string[] = [];
+		const parts: string[] = [course ?? 'Alle kurs'];
 		const mod = moduleId ? MODULE_REGISTRY.find((m) => m.id === moduleId) : null;
 
-		if (!mod) parts.push('Alle fag');
+		if (!mod) parts.push('alle fag');
 		else {
 			parts.push(mod.name);
 			parts.push(topic ? (mod.topics.find((t) => t.id === topic)?.name ?? topic) : 'alle emne');
@@ -29,6 +40,15 @@
 		parts.push(level ? `nivå ${level}` : 'alle nivå');
 		return parts.join(' · ');
 	});
+
+	/**
+	 * Changing course clears the subject and topic below it: keeping "Derivasjon"
+	 * selected while showing S2 would mean a label that names a subject the panel
+	 * no longer offers.
+	 */
+	function chooseCourse(next: Course | null) {
+		onChange(next, null, null, level);
+	}
 </script>
 
 <div class="filter">
@@ -39,27 +59,32 @@
 
 	{#if open}
 		<div class="panel">
-			<div class="all-subjects">
-				<button
-					class="chip"
-					class:selected={moduleId === null}
-					onclick={() => onChange(null, null, level)}
-				>
-					Alle fag
-				</button>
-			</div>
+			<section class="course-section">
+				<h3>Kurs</h3>
+				<div class="chips">
+					<button class="chip" class:selected={course === null} onclick={() => chooseCourse(null)}>
+						Alle kurs
+					</button>
+					{#each COURSES as c (c)}
+						<button class="chip" class:selected={course === c} onclick={() => chooseCourse(c)}>
+							{c}
+						</button>
+					{/each}
+				</div>
+			</section>
 
-			{#each MODULE_REGISTRY as mod (mod.id)}
+			{#each subjects as mod (mod.id)}
 				<section class="subject" style="--accent: {mod.color}">
 					<h3>
 						<span class="icon" aria-hidden="true">{mod.icon}</span>
 						{mod.name}
+						{#if course === null}<span class="course-tag">{mod.course}</span>{/if}
 					</h3>
 					<div class="chips">
 						<button
 							class="chip"
 							class:selected={moduleId === mod.id && topic === null}
-							onclick={() => onChange(mod.id, null, level)}
+							onclick={() => onChange(course, mod.id, null, level)}
 						>
 							Alle
 						</button>
@@ -67,7 +92,7 @@
 							<button
 								class="chip"
 								class:selected={moduleId === mod.id && topic === t.id}
-								onclick={() => onChange(mod.id, t.id, level)}
+								onclick={() => onChange(course, mod.id, t.id, level)}
 							>
 								{t.name}
 							</button>
@@ -82,7 +107,7 @@
 					<button
 						class="chip"
 						class:selected={level === null}
-						onclick={() => onChange(moduleId, topic, null)}
+						onclick={() => onChange(course, moduleId, topic, null)}
 					>
 						Alle
 					</button>
@@ -90,7 +115,7 @@
 						<button
 							class="chip"
 							class:selected={level === l}
-							onclick={() => onChange(moduleId, topic, l)}
+							onclick={() => onChange(course, moduleId, topic, l)}
 						>
 							{l}. {LEVEL_NAMES[l]}
 						</button>
@@ -137,9 +162,27 @@
 		background: var(--color-raised);
 	}
 
-	.all-subjects {
+	/* Course is the top axis: choosing S2 leaves only S2's subjects below. */
+	.course-section {
 		padding-bottom: var(--space-4);
 		border-bottom: 1px solid var(--color-line);
+	}
+
+	.course-section h3 {
+		margin: 0 0 var(--space-2);
+		font-size: var(--font-size-xs);
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		color: var(--color-text-muted);
+	}
+
+	/* Only shown under "Alle kurs", where a subject name alone is ambiguous. */
+	.course-tag {
+		padding: 0 var(--space-1);
+		border: 1px solid var(--color-line-strong);
+		border-radius: var(--radius-sm);
+		font-size: var(--font-size-xs);
+		letter-spacing: 0;
 	}
 
 	/* One block per subject, so a topic name is never orphaned from its subject. */

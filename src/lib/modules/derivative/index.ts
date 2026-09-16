@@ -19,6 +19,7 @@ const TYPE_NAMES: Record<string, string> = {
 export const derivativeModule: TopicModule = {
 	id: MODULE_ID,
 	slug: 'derivasjon',
+	course: 'S1',
 	icon: '∂',
 	color: '#2B6CB0',
 	name: 'Derivasjon',

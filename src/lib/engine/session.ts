@@ -9,8 +9,8 @@
 // difficulty — the bank's five levels per topic — which is what the original
 // skills practice varied too.
 
-import type { Problem } from '$lib/modules/types';
-import { conceptIdOf, getFullBank } from '$lib/modules/registry';
+import type { Course, Problem } from '$lib/modules/types';
+import { conceptIdOf, getFullBank, modulesForCourse } from '$lib/modules/registry';
 import type { StudentModel } from './student-model';
 import { selectNextProblems } from './problem-selector';
 
@@ -31,29 +31,49 @@ export interface Session {
 
 /** What the student has narrowed the bank to. Any field null means "all". */
 export interface BankFilter {
+	course?: Course | null;
 	moduleId?: string | null;
 	topic?: string | null;
 	level?: number | null;
 }
 
 /**
- * Narrow the bank to a subject, a topic within it, and/or a difficulty.
+ * Narrow the bank to a course, a subject within it, a topic, and/or a difficulty.
  *
- * A filter that matches nothing falls back to the whole bank: an empty session
- * is a dead end, and the student would have no way to tell why.
+ * A filter that matches nothing widens one step at a time — drop the level,
+ * then the topic, then the subject — rather than jumping straight to the whole
+ * bank. An empty session is a dead end the student cannot diagnose, but so is
+ * one that silently crosses into another course: asking for S2 and being handed
+ * logarithm problems is exactly the noise the course axis exists to remove.
+ * Only a course with no problems at all falls back past the course itself.
  */
 export function filterBank(bank: Problem[], filter: BankFilter = {}): Problem[] {
-	const { moduleId = null, topic = null, level = null } = filter;
-	if (moduleId === null && topic === null && level === null) return bank;
+	const { course = null, moduleId = null, topic = null, level = null } = filter;
+	if (course === null && moduleId === null && topic === null && level === null) return bank;
 
-	const subset = bank.filter(
-		(p) =>
-			(moduleId === null || p.moduleId === moduleId) &&
-			(topic === null || p.topic === topic) &&
-			(level === null || p.level === level)
-	);
+	const courseModules = course === null ? null : new Set(modulesForCourse(course).map((m) => m.id));
 
-	return subset.length > 0 ? subset : bank;
+	const match = (p: Problem, m: string | null, t: string | null, l: number | null) =>
+		(courseModules === null || courseModules.has(p.moduleId)) &&
+		(m === null || p.moduleId === m) &&
+		(t === null || p.topic === t) &&
+		(l === null || p.level === l);
+
+	// Widest-to-narrowest, so the first non-empty result is the closest the bank
+	// can come to what was asked for.
+	const attempts: [string | null, string | null, number | null][] = [
+		[moduleId, topic, level],
+		[moduleId, topic, null],
+		[moduleId, null, null],
+		[null, null, null]
+	];
+
+	for (const [m, t, l] of attempts) {
+		const subset = bank.filter((p) => match(p, m, t, l));
+		if (subset.length > 0) return subset;
+	}
+
+	return bank;
 }
 
 /**
