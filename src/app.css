@@ -309,9 +309,36 @@ a:hover {
 
 /* Display maths always sits in a box that already has padding. MathJax's own
    1em margins stack on top of that, which is what made the question box look
-   twice as tall as it is. */
+   twice as tall as it is. !important is needed: MathJax injects its own
+   stylesheet at runtime, after ours. */
 mjx-container[display='true'] {
   margin: 0.25em 0 !important;
+}
+
+/* A solution step is the exception. `.step-math` scrolls horizontally for long
+   formulas, which makes it a block formatting context — and a BFC does not let
+   a child's margin collapse out of it, so even 0.25em pushes the content past
+   the box and raises a vertical scrollbar on every step with a fraction. The
+   gap between steps comes from the list's own `gap` instead.
+
+   Left, not centred: a solution is read downwards, each line under its own
+   label. The question box stays centred — that one is the focal point. */
+.step-math mjx-container[display='true'] {
+  margin: 0 !important;
+  /* MathJax's own stylesheet centres display maths, and it loads after ours. */
+  text-align: left !important;
+}
+
+/* MathJax emits a MathML copy for screen readers. It is absolutely positioned
+   and clipped, so it is invisible — but `clip` only stops it being painted, not
+   from having a height, and that height counts as scrollable overflow inside
+   the container. That is what put a vertical scrollbar on every solution step:
+   not the formula, the accessibility node behind it. The standard
+   visually-hidden box keeps it in the accessibility tree without taking space. */
+mjx-assistive-mml {
+  height: 1px !important;
+  width: 1px !important;
+  overflow: hidden !important;
 }
 
 /* ── Scrollbar ── */

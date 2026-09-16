@@ -128,7 +128,7 @@
 			{#each faded.shown as step, i (i)}
 				<li>
 					<span class="step-label">{step.label}</span>
-					<span class="step-math">{`\\(${step.latex}\\)`}</span>
+					<div class="step-math">{`\\[${step.latex}\\]`}</div>
 				</li>
 			{/each}
 		</ol>
@@ -145,7 +145,7 @@
 			{#each faded.hidden as step, i (i)}
 				<li>
 					<span class="step-label">{step.label}</span>
-					<span class="step-math">{`\\(${step.latex}\\)`}</span>
+					<div class="step-math">{`\\[${step.latex}\\]`}</div>
 				</li>
 			{/each}
 		</ol>
@@ -311,7 +311,7 @@
 		padding-left: var(--space-5);
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-3);
+		gap: var(--space-4);
 	}
 
 	.steps li {
@@ -334,9 +334,18 @@
 		color: var(--color-example);
 	}
 
+	/* Display maths, not inline. Inline maths lives inside a text line, and a
+	   fraction is taller than the line — with `overflow-x: auto` the other axis
+	   computes to `auto` too (CSS forbids one axis scrolling while the other is
+	   visible), so every step with a fraction grew its own vertical scrollbar.
+	   A display container is a block that sets its own height, so there is
+	   nothing to overflow. Horizontal scrolling stays: a long formula still
+	   needs it. */
 	.step-math {
+		padding: var(--space-2) 0;
 		overflow-x: auto;
 	}
+
 
 	.your-turn {
 		margin: 0;

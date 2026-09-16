@@ -160,10 +160,43 @@ S2-elev treng framleis S1-regelen kvar metode speglar.
 
 ## Display-matte
 
+All matte som står på eiga line er **display-matte** (`\[...\]`), aldri inline. Inline
+matte lever inne i ei tekstlinje, blir mindre enn omgjevnadene og sit ujamnt; ein
+løysingssteg er ei line for seg.
+
 MathJax gir `mjx-container[display="true"]` sine eigne `margin: 1em 0`. Ein boks som alt
 har polstring får då dobbel luft, og ser dobbelt så høg ut som han er. Temaet trimmar
-marginen til `0.25em`. Ser ein boks for høg ut, mål før du kuttar polstringa — det er
-som regel ikkje ho.
+marginen til `0.25em`, og til `0` inne i `.step-math`, der lista sin `gap` gir lufta.
+Ser ein boks for høg ut, mål før du kuttar polstringa — det er som regel ikkje ho.
+
+### Rullefelt du ikkje bad om
+
+`.step-math` rullar vassrett for lange formlar. CSS tillet ikkje at éin akse rullar mens
+den andre er `visible`, så `overflow-y` blir `auto` òg — og då blir kvar piksel som stikk
+ut til eit loddrett rullefelt.
+
+To ting stakk ut, og ingen av dei var formelen:
+
+1. **`mjx-assistive-mml`**, MathML-kopien MathJax lagar for skjermlesarar. Han er absolutt
+   posisjonert og klippa, men `clip` hindrar berre måling, ikkje høgd. Temaet gir han den
+   vanlege «visually hidden»-boksen på 1×1px, så han blir verande for skjermlesaren utan
+   å ta plass.
+2. **Nokre piksel overheng** frå høg matte. `.step-math` har `--space-2` loddrett
+   polstring for å ta dei.
+
+Måler du dette: `scrollHeight > clientHeight` er svaret. `offsetWidth - clientWidth` er
+det ikkje — Chromium brukar overlay-rullefelt som tek null breidde.
+
+## Steg-etikettar
+
+`.step-label` er ein **merkelapp**, ikkje ei setning: liten, feit, versalar, sperra.
+
+- To til fire ord.
+- **Aldri LaTeX.** MathJax rendrar matte inni han, versalane gjeld ikkje for matten, og
+  «$\ln x$ skal deriverast» kjem ut som ein kursiv «ln x» limt til «SKAL DERIVERAST».
+- Forklaringa høyrer heime i `hint`, eller i Læreboka sin `thinkAloud` og `workedSteps`.
+
+Ein test i `engine.test.ts` handhevar begge for heile registeret.
 
 ## Mørk modus — ikkje implementert, men nedskriven
 
