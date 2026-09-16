@@ -714,6 +714,26 @@ describe('Course filter', () => {
 	});
 });
 
+describe('Step labels', () => {
+	const labels = MODULE_REGISTRY.flatMap((mod) =>
+		mod.generateBank().flatMap((p) => p.structuredSteps.map((s) => ({ id: p.id, label: s.label })))
+	);
+
+	it('never carries LaTeX', () => {
+		// `.step-label` is a tag: small, bold, uppercase. Maths inside it renders as
+		// maths and ignores the uppercasing, so "$\\ln x$ skal deriverast" came out
+		// as an italic "ln x" glued to "SKAL DERIVERAST". Prose belongs in the hint,
+		// and the reasoning belongs in the Lærebok.
+		const offenders = labels.filter((l) => /\$|\\[a-zA-Z]/.test(l.label));
+		expect(offenders.map((l) => `${l.id}: ${l.label}`)).toEqual([]);
+	});
+
+	it('stays short enough to read as a tag', () => {
+		const tooLong = labels.filter((l) => l.label.length > 40);
+		expect(tooLong.map((l) => `${l.id}: ${l.label}`)).toEqual([]);
+	});
+});
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // LADDER
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

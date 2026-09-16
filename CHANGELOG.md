@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-09-16
+
+Tre ting brukaren peika på i løysingsstega, og alle tre viste seg å ha ei anna årsak enn
+det såg ut som.
+
+### Fixed
+- **Rullefelt i kvart einaste steg.** `.step-math` rullar vassrett for lange formlar, og
+  CSS tillet ikkje at éin akse rullar mens den andre er `visible` — så `overflow-y` blir
+  `auto`, og alt som stikk ut blir eit loddrett rullefelt. Det som stakk ut var ikkje
+  formelen, men `mjx-assistive-mml`: MathML-kopien MathJax lagar for skjermlesarar, som er
+  klippa men beheld full høgd. Han får no den vanlege 1×1px-boksen, og stega litt meir
+  polstring til resten. Målt: **48 av 85 steg kunne rulla før, 0 av 82 no.**
+- **Inline matte i stega.** Stega brukte `\(...\)`, som blir mindre enn omgjevnadene og
+  sit ujamnt. Dei er display-matte no, som i Læreboka, og venstrestilte så løysinga blir
+  lesen nedover med kvar line under sin eigen etikett.
+- **«LN X» øvst i eit steg.** `.step-label` er ein merkelapp — liten, feit, versalar — og
+  eg hadde skrive fulle setningar med LaTeX i. MathJax rendra matten inni merkelappen, så
+  «$\ln x$ skal deriverast — vi kan ikkje integrere han direkte» kom ut som ein kursiv
+  «ln x» limt til resten i versalar. Alle 192 etikettane i integrasjonsmodulen er korte
+  merkelappar no, som i dei andre modulane.
+
+### Added
+- Ein test som handhevar etikettforma for **heile registeret**: ingen `StepEntry.label`
+  kan innehalde LaTeX, og ingen kan vere over 40 teikn.
+
 ## [0.9.0] - 2026-09-16
 
 Integrasjon kjem inn, og med han eit kurs-skilje: S2-stoff blandar seg ikkje inn i ei

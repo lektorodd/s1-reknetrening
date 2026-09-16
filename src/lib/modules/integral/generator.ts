@@ -277,11 +277,11 @@ function subExact(): Draft {
 		return draft('substitution', 2, 'exact',
 			INTEGRAL(`\\frac{2x${plus(p)}}{${u}}`),
 			[
-				{ label: 'Teljaren er den deriverte av nemnaren', latex: `u = ${u}, \\quad u' = 2x${plus(p)}` },
+				{ label: 'Teljaren er nemnarens derivert', latex: `u = ${u}, \\quad u' = 2x${plus(p)}` },
 				{ label: 'Deriver og løys for dx', latex: `dx = \\frac{du}{2x${plus(p)}}` },
 				{ label: 'Set inn og forkort', latex: `\\int \\frac{2x${plus(p)}}{u}\\cdot\\frac{du}{2x${plus(p)}} = \\int \\frac{1}{u}\\,du` },
 				{ label: 'Integrer med omsyn på u', latex: `\\ln|u|` },
-				{ label: 'Set tilbake. Nemnaren har ingen reelle nullpunkt, så han er alltid positiv', latex: `\\ln(${u}) + C` }
+				{ label: 'Set tilbake', latex: `\\ln(${u}) + C` }
 			],
 			'Sjekk om teljaren er den deriverte av nemnaren. Då er dette ikkje delbrøk.');
 	}
@@ -308,7 +308,7 @@ function subExact(): Draft {
 			{ label: 'Deriver og løys for dx', latex: `\\frac{du}{dx} = e^{x} \\Rightarrow dx = \\frac{du}{e^{x}}` },
 			{ label: 'Set inn og forkort', latex: `\\int \\frac{e^{x}}{u}\\cdot\\frac{du}{e^{x}} = \\int \\frac{1}{u}\\,du` },
 			{ label: 'Integrer med omsyn på u', latex: `\\ln|u|` },
-			{ label: `Set tilbake. $e^{x}+${c}$ er alltid positiv`, latex: `\\ln(e^{x}+${c}) + C` }
+			{ label: 'Set tilbake', latex: `\\ln(e^{x}+${c}) + C` }
 		],
 		'Nemnaren er kjernen, og den deriverte står i teljaren.');
 }
@@ -326,7 +326,7 @@ function subScaled(): Draft {
 			[
 				{ label: 'Vel kjernen', latex: `u = ${u}` },
 				{ label: 'Deriver og løys for dx', latex: `\\frac{du}{dx} = 2x \\Rightarrow dx = \\frac{du}{2x}` },
-				{ label: 'Set inn og forkort. Det står $x$, ikkje $2x$, så det blir ein halv att', latex: `\\int x\\,${powU(n)}\\,\\frac{du}{2x} = \\frac{1}{2}\\int ${powU(n)}\\,du` },
+				{ label: 'Set inn og forkort', latex: `\\int x\\,${powU(n)}\\,\\frac{du}{2x} = \\frac{1}{2}\\int ${powU(n)}\\,du` },
 				{ label: 'Integrer med omsyn på u', latex: over(`${powU(n + 1)}`, 2 * (n + 1)) },
 				{ label: 'Set tilbake', latex: `${over(`(${u})^{${n + 1}}`, 2 * (n + 1))} + C` }
 			],
@@ -356,11 +356,11 @@ function subScaled(): Draft {
 		return draft('substitution', 3, 'scaled',
 			INTEGRAL(`\\frac{x}{${u}}`),
 			[
-				{ label: 'Teljaren liknar den deriverte av nemnaren', latex: `u = ${u}, \\quad u' = 2x` },
+				{ label: 'Sjekk teljar mot nemnar', latex: `u = ${u}, \\quad u' = 2x` },
 				{ label: 'Deriver og løys for dx', latex: `dx = \\frac{du}{2x}` },
 				{ label: 'Set inn og forkort', latex: `\\int \\frac{x}{u}\\cdot\\frac{du}{2x} = \\frac{1}{2}\\int \\frac{1}{u}\\,du` },
 				{ label: 'Integrer med omsyn på u', latex: `\\frac{1}{2}\\ln|u|` },
-				{ label: `Set tilbake. $${u}$ er alltid positiv`, latex: `\\frac{1}{2}\\ln(${u}) + C` }
+				{ label: 'Set tilbake', latex: `\\frac{1}{2}\\ln(${u}) + C` }
 			],
 			'Dette er eit variabelskifte, ikkje ein delbrøk. Kva er $(x^2+c)\'$?');
 	}
@@ -402,7 +402,7 @@ function subDefinite(): Draft {
 			DEFINITE('0', `${m}`, `x\\sqrt{1+${a}x^{2}}`),
 			[
 				{ label: 'Vel kjernen', latex: `u = 1+${a}x^{2}, \\quad dx = \\frac{du}{${2 * a}x}` },
-				{ label: 'Byt grensene: dei er verdiar av $x$, og $u$ har andre verdiar i endepunkta', latex: `x: 0 \\to ${m} \\quad\\Rightarrow\\quad u: 1 \\to ${top}` },
+				{ label: 'Byt grensene', latex: `x: 0 \\to ${m} \\quad\\Rightarrow\\quad u: 1 \\to ${top}` },
 				{ label: 'Set inn og forkort', latex: `\\int_{1}^{${top}} x\\sqrt{u}\\,\\frac{du}{${2 * a}x} = ${coef(1, 2 * a, '')}\\int_{1}^{${top}} u^{1/2}\\,du` },
 				{ label: 'Integrer', latex: `${coef(1, 2 * a, '')}\\left[\\frac{2}{3}u^{3/2}\\right]_{1}^{${top}}` },
 				{ label: 'Rekn ut', latex: frac(rise, 3 * a) }
@@ -474,8 +474,8 @@ function subRewrite(): Draft {
 		return draft('substitution', 5, 'rewrite',
 			INTEGRAL(`\\frac{x}{\\sqrt{x+${b}}}`),
 			[
-				{ label: `Vel kjernen. Her er $u' = 1$, så $x$ forsvinn ikkje av seg sjølv`, latex: `u = x+${b}, \\quad dx = du` },
-				{ label: 'Uttrykk den ekstra $x$-en med $u$', latex: `x = u-${b}` },
+				{ label: 'Vel kjernen', latex: `u = x+${b}, \\quad dx = du` },
+				{ label: 'Uttrykk x med u', latex: `x = u-${b}` },
 				{ label: 'Set inn og del opp brøken', latex: `\\int \\frac{u-${b}}{\\sqrt{u}}\\,du = \\int \\left(u^{1/2} - ${b}u^{-1/2}\\right)du` },
 				{ label: 'Integrer', latex: `\\frac{2}{3}u^{3/2} - ${2 * b}u^{1/2}` },
 				{ label: 'Set tilbake', latex: `\\frac{2}{3}(x+${b})^{3/2} - ${2 * b}\\sqrt{x+${b}} + C` }
@@ -490,7 +490,7 @@ function subRewrite(): Draft {
 			INTEGRAL(`x(x-${b})^{${n}}`),
 			[
 				{ label: 'Vel kjernen', latex: `u = x-${b}, \\quad dx = du` },
-				{ label: 'Uttrykk $x$ med $u$', latex: `x = u+${b}` },
+				{ label: 'Uttrykk x med u', latex: `x = u+${b}` },
 				{ label: 'Set inn og gong ut', latex: `\\int (u+${b})${powU(n)}\\,du = \\int \\left(${powU(n + 1)} + ${b}${powU(n)}\\right)du` },
 				{ label: 'Integrer', latex: `${over(`u^{${n + 2}}`, n + 2)} + ${coef(b, n + 1, `${powU(n + 1)}`)}` },
 				{ label: 'Set tilbake', latex: `${over(`(x-${b})^{${n + 2}}`, n + 2)} + ${coef(b, n + 1, `(x-${b})^{${n + 1}}`)} + C` }
@@ -505,7 +505,7 @@ function subRewrite(): Draft {
 		[
 			{ label: 'Vel kjernen', latex: `u = ${u}, \\quad dx = \\frac{du}{2x}` },
 			{ label: 'Set inn og forkort', latex: `\\int x\\ln u\\,\\frac{du}{2x} = \\frac{1}{2}\\int \\ln u\\,du` },
-			{ label: 'Bruk $\\int \\ln u\\,du = u\\ln u - u$ (delvis integrasjon)', latex: `\\frac{1}{2}\\left(u\\ln u - u\\right)` },
+			{ label: 'Delvis integrasjon på u', latex: `\\frac{1}{2}\\left(u\\ln u - u\\right)` },
 			{ label: 'Set tilbake', latex: `\\frac{1}{2}\\left((${u})\\ln(${u}) - (${u})\\right) + C` }
 		],
 		'To metodar i serie: variabelskifte først, så delvis integrasjon på $\\int \\ln u\\,du$.');
@@ -537,8 +537,8 @@ function partsExp(): Draft {
 	return draft('parts', 1, 'exp',
 		INTEGRAL(`${poly}${E}`),
 		[
-			{ label: 'Vel roller: deriver polynomet, integrer eksponentialfunksjonen', latex: `v = ${lin(a, b)},\\ v' = ${a}, \\quad u' = ${E},\\ u = ${coef(1, k, E)}` },
-			{ label: 'Set inn i $uv - \\int uv\'$', latex: `${coef(1, k, `(${lin(a, b)})${E}`)} - \\int ${coef(a, k, E)}\\,dx` },
+			{ label: 'Vel roller', latex: `v = ${lin(a, b)},\\ v' = ${a}, \\quad u' = ${E},\\ u = ${coef(1, k, E)}` },
+			{ label: 'Set inn i formelen', latex: `${coef(1, k, `(${lin(a, b)})${E}`)} - \\int ${coef(a, k, E)}\\,dx` },
 			{ label: 'Integrer det nye integralet', latex: `${coef(1, k, `(${lin(a, b)})${E}`)} ${plusFrac(-a, k * k, E)}` },
 			{
 				label: 'Skriv saman',
@@ -563,7 +563,7 @@ function partsLog(): Draft {
 	return draft('parts', 2, 'log',
 		INTEGRAL(`${poly}\\ln x`),
 		[
-			{ label: '$\\ln x$ skal deriverast — vi kan ikkje integrere han direkte', latex: `v = \\ln x,\\ v' = \\frac{1}{x}, \\quad u' = ${poly},\\ u = ${coef(A, n + 1, `x^{${n + 1}}`)}` },
+			{ label: 'Vel roller', latex: `v = \\ln x,\\ v' = \\frac{1}{x}, \\quad u' = ${poly},\\ u = ${coef(A, n + 1, `x^{${n + 1}}`)}` },
 			{ label: 'Set inn i formelen', latex: `${coef(A, n + 1, `x^{${n + 1}}`)}\\ln x - \\int ${coef(A, n + 1, `x^{${n + 1}}`)}\\cdot\\frac{1}{x}\\,dx` },
 			{ label: 'Forkort i det nye integralet', latex: `${coef(A, n + 1, `x^{${n + 1}}`)}\\ln x - ${coef(A, n + 1, '')}\\int ${powX(n)}\\,dx` },
 			{ label: 'Integrer', latex: `${coef(A, n + 1, `x^{${n + 1}}`)}\\ln x - ${coef(A, (n + 1) * (n + 1), `x^{${n + 1}}`)} + C` }
@@ -581,7 +581,7 @@ function partsFrac(): Draft {
 		return draft('parts', 3, 'frac',
 			INTEGRAL(`\\frac{\\ln x}{x^{${m}}}`),
 			[
-				{ label: 'Skriv om til ein potens, og deriver $\\ln x$', latex: `v = \\ln x,\\ v' = \\frac{1}{x}, \\quad u' = x^{${n}},\\ u = ${coef(1, n + 1, powX(n + 1))}` },
+				{ label: 'Vel roller', latex: `v = \\ln x,\\ v' = \\frac{1}{x}, \\quad u' = x^{${n}},\\ u = ${coef(1, n + 1, powX(n + 1))}` },
 				{ label: 'Set inn i formelen', latex: `${coef(1, n + 1, powX(n + 1))}\\ln x - ${coef(1, n + 1, '')}\\int x^{${n}}\\,dx` },
 				{ label: 'Integrer', latex: `${coef(1, n + 1, powX(n + 1))}\\ln x ${plusFrac(-1, (n + 1) * (n + 1), powX(n + 1))} + C` },
 				{ label: 'Skriv med brøk', latex: `-\\frac{\\ln x}{${times(m - 1, powX(m - 1))}} - \\frac{1}{${times((m - 1) * (m - 1), powX(m - 1))}} + C` }
@@ -593,7 +593,7 @@ function partsFrac(): Draft {
 		return draft('parts', 3, 'frac',
 			INTEGRAL(`\\sqrt{x}\\ln x`),
 			[
-				{ label: 'Skriv rota som potens, og deriver $\\ln x$', latex: `v = \\ln x,\\ v' = \\frac{1}{x}, \\quad u' = x^{1/2},\\ u = \\frac{2}{3}x^{3/2}` },
+				{ label: 'Vel roller', latex: `v = \\ln x,\\ v' = \\frac{1}{x}, \\quad u' = x^{1/2},\\ u = \\frac{2}{3}x^{3/2}` },
 				{ label: 'Set inn i formelen', latex: `\\frac{2}{3}x^{3/2}\\ln x - \\frac{2}{3}\\int x^{1/2}\\,dx` },
 				{ label: 'Integrer', latex: `\\frac{2}{3}x^{3/2}\\ln x - \\frac{2}{3}\\cdot\\frac{2}{3}x^{3/2}` },
 				{ label: 'Forenkle', latex: `\\frac{2}{3}x^{3/2}\\ln x - \\frac{4}{9}x^{3/2} + C` }
@@ -608,7 +608,7 @@ function partsFrac(): Draft {
 		return draft('parts', 3, 'frac',
 			INTEGRAL(`x${E}`),
 			[
-				{ label: 'Deriver $x$, integrer eksponentialfunksjonen', latex: `v = x,\\ v' = 1, \\quad u' = ${E},\\ u = ${times(k, E)}` },
+				{ label: 'Vel roller', latex: `v = x,\\ v' = 1, \\quad u' = ${E},\\ u = ${times(k, E)}` },
 				{ label: 'Set inn i formelen', latex: `${times(k, `x${E}`)} - \\int ${times(k, E)}\\,dx` },
 				{ label: 'Integrer det nye integralet', latex: `${times(k, `x${E}`)} ${plusFrac(-(k * k), 1, E)}` },
 				{ label: 'Faktoriser', latex: `${times(k, E)}\\left(x${plus(-k)}\\right) + C` }
@@ -621,7 +621,7 @@ function partsFrac(): Draft {
 		[
 			{ label: 'Vel roller', latex: `v = \\ln x,\\ v' = \\frac{1}{x}, \\quad u' = x,\\ u = \\frac{1}{2}x^{2}` },
 			{ label: 'Finn den antideriverte', latex: `\\frac{1}{2}x^{2}\\ln x - \\frac{1}{4}x^{2}` },
-			{ label: 'Set inn grensene. Merk $\\ln e = 1$ og $\\ln 1 = 0$', latex: `\\left(\\frac{e^{2}}{2} - \\frac{e^{2}}{4}\\right) - \\left(0 - \\frac{1}{4}\\right)` },
+			{ label: 'Set inn grensene', latex: `\\left(\\frac{e^{2}}{2} - \\frac{e^{2}}{4}\\right) - \\left(0 - \\frac{1}{4}\\right)` },
 			{ label: 'Forenkle', latex: `\\frac{e^{2}+1}{4}` }
 		],
 		'Finn den antideriverte først, og set inn grensene heilt til slutt.');
@@ -639,7 +639,7 @@ function partsTwice(): Draft {
 		return draft('parts', 4, 'twice',
 			INTEGRAL(`${poly}${E}`),
 			[
-				{ label: 'Runde 1: $x^2$ må deriverast to gonger før han blir ein konstant', latex: `v = ${poly},\\ v' = ${2 * A}x, \\quad u' = ${E},\\ u = ${coef(1, k, E)}` },
+				{ label: 'Runde 1', latex: `v = ${poly},\\ v' = ${2 * A}x, \\quad u' = ${E},\\ u = ${coef(1, k, E)}` },
 				{ label: 'Set inn', latex: `${coef(A, k, `x^{2}${E}`)} - ${coef(2 * A, k, '')}\\int x${E}\\,dx` },
 				{ label: 'Runde 2 på det nye integralet', latex: `\\int x${E}\\,dx = ${coef(1, k, `x${E}`)} ${plusFrac(-1, k * k, E)}` },
 				{ label: 'Set inn og rydd', latex: `${coef(A, k, `x^{2}${E}`)} ${plusFrac(-2 * A, k * k, `x${E}`)} ${plusFrac(2 * A, k * k * k, E)} + C` },
@@ -651,9 +651,9 @@ function partsTwice(): Draft {
 	return draft('parts', 4, 'twice',
 		INTEGRAL(`(\\ln x)^{2}`),
 		[
-			{ label: 'Gong med 1, og deriver $(\\ln x)^2$', latex: `v = (\\ln x)^{2},\\ v' = \\frac{2\\ln x}{x}, \\quad u' = 1,\\ u = x` },
+			{ label: 'Gong med 1', latex: `v = (\\ln x)^{2},\\ v' = \\frac{2\\ln x}{x}, \\quad u' = 1,\\ u = x` },
 			{ label: 'Set inn og forkort', latex: `x(\\ln x)^{2} - 2\\int \\ln x\\,dx` },
-			{ label: 'Runde 2: $\\int \\ln x\\,dx = x\\ln x - x$', latex: `x(\\ln x)^{2} - 2(x\\ln x - x)` },
+			{ label: 'Runde 2', latex: `x(\\ln x)^{2} - 2(x\\ln x - x)` },
 			{ label: 'Rydd', latex: `x(\\ln x)^{2} - 2x\\ln x + 2x + C` }
 		],
 		'«Gong med 1»-trikset, to gonger.');
@@ -669,8 +669,8 @@ function partsCombined(): Draft {
 		return draft('parts', 5, 'combined',
 			INTEGRAL(`x^{3}${E}`),
 			[
-				{ label: 'Tre rundar: $x^3$ må deriverast tre gonger før han blir ein konstant', latex: `v = x^{3}, \\quad u' = ${E}` },
-				{ label: 'Tabellmetoden: deriver den eine kolonnen ned til 0, integrer den andre like mange gonger', latex: `x^{3},\\ 3x^{2},\\ 6x,\\ 6 \\quad\\text{mot}\\quad ${coef(1, k, E)},\\ ${coef(1, k * k, E)},\\ \\ldots` },
+				{ label: 'Tre rundar', latex: `v = x^{3}, \\quad u' = ${E}` },
+				{ label: 'Tabellmetoden', latex: `x^{3},\\ 3x^{2},\\ 6x,\\ 6 \\quad\\text{mot}\\quad ${coef(1, k, E)},\\ ${coef(1, k * k, E)},\\ \\ldots` },
 				{ label: 'Gong diagonalt, med vekslande forteikn', latex: `${E}\\left(${coef(1, k, 'x^{3}')} ${plusFrac(-3, k * k, 'x^{2}')} ${plusFrac(6, k * k * k, 'x')} ${plusFrac(-6, k * k * k * k, '')}\\right) + C` }
 			],
 			'Tre rundar. Prøv tabellmetoden: deriver den eine til 0, integrer den andre.');
@@ -682,9 +682,9 @@ function partsCombined(): Draft {
 		return draft('parts', 5, 'combined',
 			INTEGRAL(`x^{3}e^{${inner}}`),
 			[
-				{ label: `Skriv som $x^{2}\\cdot xe^{${inner}}$ — den siste faktoren er eit variabelskifte`, latex: `v = x^{2}, \\quad u' = xe^{${inner}},\\ u = ${coef(1, 2 * a, `e^{${inner}}`)}` },
+				{ label: 'Skriv om til eit produkt', latex: `v = x^{2}, \\quad u' = xe^{${inner}},\\ u = ${coef(1, 2 * a, `e^{${inner}}`)}` },
 				{ label: 'Set inn i formelen', latex: `${coef(1, 2 * a, `x^{2}e^{${inner}}`)} - \\int ${coef(1, a, `xe^{${inner}}`)}\\,dx` },
-				{ label: 'Det nye integralet er same variabelskifte', latex: `\\int xe^{${inner}}\\,dx = ${coef(1, 2 * a, `e^{${inner}}`)}` },
+				{ label: 'Same variabelskifte att', latex: `\\int xe^{${inner}}\\,dx = ${coef(1, 2 * a, `e^{${inner}}`)}` },
 				{ label: 'Set inn og faktoriser', latex: `e^{${inner}}\\left(${coef(1, 2 * a, 'x^{2}')} ${plusFrac(-1, 2 * a * a, '')}\\right) + C` }
 			],
 			'To metodar i serie. Kva del av integranden er den deriverte av kjernen?');
@@ -700,7 +700,7 @@ function partsCombined(): Draft {
 				{ label: 'Gong med 1', latex: `\\int 1\\cdot\\ln(${u})\\,dx` },
 				{ label: 'Vel roller', latex: `v = \\ln(${u}),\\ v' = \\frac{${a}}{${u}}, \\quad u' = 1,\\ u = x` },
 				{ label: 'Set inn i formelen', latex: `x\\ln(${u}) - ${a}\\int \\frac{x}{${u}}\\,dx` },
-				{ label: `Del brøken, så han blir integrerbar: $\\frac{${a}x}{${u}} = 1 - \\frac{${b}}{${u}}$`, latex: `x\\ln(${u}) - \\int \\left(1 - \\frac{${b}}{${u}}\\right)dx` },
+				{ label: 'Del opp brøken', latex: `x\\ln(${u}) - \\int \\left(1 - \\frac{${b}}{${u}}\\right)dx` },
 				{ label: 'Integrer og rydd', latex: `${coef(1, a, `(${u})\\ln(${u})`)} - x + C` }
 			],
 			'«Gong med 1», og så ein brøk som må delast opp før han kan integrerast.');
@@ -710,9 +710,9 @@ function partsCombined(): Draft {
 	return draft('parts', 5, 'combined',
 		INTEGRAL(`\\left(x^{${n}} + ${times(n, powX(n - 1))}\\right)e^{x}`),
 		[
-			{ label: 'Sjå etter produktregelen baklengs før du reknar', latex: `\\left(x^{${n}}e^{x}\\right)' = ${times(n, powX(n - 1))}e^{x} + x^{${n}}e^{x}` },
+			{ label: 'Produktregelen baklengs', latex: `\\left(x^{${n}}e^{x}\\right)' = ${times(n, powX(n - 1))}e^{x} + x^{${n}}e^{x}` },
 			{ label: 'Det er nøyaktig integranden', latex: `\\left(x^{${n}}e^{x}\\right)' = \\left(x^{${n}}+${times(n, powX(n - 1))}\\right)e^{x}` },
-			{ label: 'Så den antideriverte kan lesast direkte', latex: `x^{${n}}e^{x} + C` }
+			{ label: 'Les av den antideriverte', latex: `x^{${n}}e^{x} + C` }
 		],
 		'Den som ser at dette er ein derivert, slepp å rekne. Kva er $(x^n e^x)\'$?');
 }
@@ -750,9 +750,9 @@ function partialDistinct(): Draft {
 	return draft('partial', 1, 'distinct',
 		INTEGRAL(signedOver(k, `${factor(a)}${factor(b)}`)),
 		[
-			{ label: 'Nemnaren er ferdig faktorisert, og teljaren har lågare grad', latex: `\\frac{${k}}{${factor(a)}${factor(b)}} = \\frac{A}{x${plus(-a)}} + \\frac{B}{x${plus(-b)}}` },
+			{ label: 'Set opp delbrøkane', latex: `\\frac{${k}}{${factor(a)}${factor(b)}} = \\frac{A}{x${plus(-a)}} + \\frac{B}{x${plus(-b)}}` },
 			{ label: 'Gong med fellesnemnaren', latex: `${k} = A(x${plus(-b)}) + B(x${plus(-a)})` },
-			{ label: `Set inn $x = ${a}$ og $x = ${b}$`, latex: `A = ${m}, \\quad B = ${-m}` },
+			{ label: 'Set inn nullpunkta', latex: `A = ${m}, \\quad B = ${-m}` },
 			{ label: 'Integrer kvar delbrøk', latex: `${lnTerm(m, a, true)} ${lnTerm(-m, b)} + C` }
 		],
 		'Dekk til éin faktor og set inn nullpunktet hans. Då forsvinn alle ledd utanom eitt.');
@@ -777,10 +777,10 @@ function partialFactor(): Draft {
 	return draft('partial', 2, 'factor',
 		INTEGRAL(`\\frac{${numerator}}{${Q}}`),
 		[
-			{ label: 'Er teljaren den deriverte av nemnaren? Nei — og graden er lågare, så ingen divisjon', latex: `(${Q})' = 2x${plus(-(r1 + r2))}` },
+			{ label: 'Sjekk teljar mot nemnar', latex: `(${Q})' = 2x${plus(-(r1 + r2))}` },
 			{ label: 'Faktoriser nemnaren', latex: `${Q} = ${factor(r1)}${factor(r2)}` },
 			{ label: 'Set opp delbrøkane', latex: `\\frac{${numerator}}{${factor(r1)}${factor(r2)}} = \\frac{A}{x${plus(-r1)}} + \\frac{B}{x${plus(-r2)}}` },
-			{ label: 'Gong med fellesnemnaren og set inn nullpunkta', latex: `A = ${A}, \\quad B = ${B}` },
+			{ label: 'Gong med fellesnemnaren', latex: `A = ${A}, \\quad B = ${B}` },
 			{ label: 'Integrer kvar delbrøk', latex: `${lnTerm(A, r1, true)} ${lnTerm(B, r2)} + C` }
 		],
 		'Faktoriser nemnaren først. To ulike faktorar gir to delbrøkar med konstant teljar.');
@@ -797,7 +797,7 @@ function partialDivision(): Draft {
 		return draft('partial', 3, 'division',
 			INTEGRAL(`\\frac{x^{2}${plus(c)}}{x^{2}-${d * d}}`),
 			[
-				{ label: 'Same grad i teljar og nemnar, så divider først', latex: `x^{2}${plus(c)} = (x^{2}-${d * d}) + ${rest}` },
+				{ label: 'Divider først', latex: `x^{2}${plus(c)} = (x^{2}-${d * d}) + ${rest}` },
 				{ label: 'Skriv om', latex: `\\frac{x^{2}${plus(c)}}{x^{2}-${d * d}} = 1 + \\frac{${rest}}{x^{2}-${d * d}}` },
 				{ label: 'Faktoriser og spalt resten', latex: `\\frac{${rest}}{${factor(d)}${factor(-d)}} = ${coef(rest, 2 * d, '')}\\left(\\frac{1}{x-${d}} - \\frac{1}{x+${d}}\\right)` },
 				{ label: 'Integrer ledd for ledd', latex: `x + ${coef(rest, 2 * d, '')}\\left(\\ln|x-${d}| - \\ln|x+${d}|\\right) + C` }
@@ -819,7 +819,7 @@ function partialDivision(): Draft {
 				{ label: 'Faktoriser nemnaren', latex: `${Q} = (${lin(a, b)})(x${plus(c)})` },
 				{ label: 'Set opp delbrøkane', latex: `\\frac{1}{(${lin(a, b)})(x${plus(c)})} = \\frac{A}{${lin(a, b)}} + \\frac{B}{x${plus(c)}}` },
 				{ label: 'Set inn nullpunkta', latex: `A = ${frac(a, den)}, \\quad B = ${frac(1, -den)}` },
-				{ label: `Integrer. Merk: $\\int\\frac{dx}{${lin(a, b)}} = \\frac{1}{${a}}\\ln|${lin(a, b)}|$, ikkje $\\ln|${lin(a, b)}|$ — faktoren er $${a}x${plus(b)}$, ikkje $x${plus(b)}$`, latex: `${coef(1, den, '')}\\left(\\ln|${lin(a, b)}| - \\ln|x${plus(c)}|\\right) + C` }
+				{ label: 'Integrer', latex: `${coef(1, den, '')}\\left(\\ln|${lin(a, b)}| - \\ln|x${plus(c)}|\\right) + C` }
 			],
 			'Faktoren er $ax+b$, ikkje $x+b$. Deriver svaret ditt og sjå om faktoren stemmer.');
 	}
@@ -830,7 +830,7 @@ function partialDivision(): Draft {
 	return draft('partial', 3, 'division',
 		DEFINITE(`${lo}`, `${hi}`, `\\frac{1}{x^{2}-${d * d}}`),
 		[
-			{ label: `Spalt. Intervallet $[${lo},${hi}]$ inneheld ingen nullpunkt i nemnaren`, latex: `\\frac{1}{x^{2}-${d * d}} = ${coef(1, 2 * d, '')}\\left(\\frac{1}{x-${d}} - \\frac{1}{x+${d}}\\right)` },
+			{ label: 'Spalt', latex: `\\frac{1}{x^{2}-${d * d}} = ${coef(1, 2 * d, '')}\\left(\\frac{1}{x-${d}} - \\frac{1}{x+${d}}\\right)` },
 			{ label: 'Finn den antideriverte', latex: `${coef(1, 2 * d, '')}\\Big[\\ln|x-${d}| - \\ln|x+${d}|\\Big]_{${lo}}^{${hi}}` },
 			{ label: 'Set inn grensene', latex: `${coef(1, 2 * d, '')}\\left(\\ln\\frac{${hi - d}}{${hi + d}} - \\ln\\frac{${lo - d}}{${lo + d}}\\right)` },
 			{ label: 'Forenkle med logaritmesetningane', latex: `${coef(1, 2 * d, '')}\\ln${frac((hi - d) * (lo + d), (hi + d) * (lo - d))}` }
@@ -864,9 +864,9 @@ function partialTriple(): Draft {
 		return draft('partial', 4, 'triple',
 			INTEGRAL(`\\frac{${numerator}}{${Q}}`),
 			[
-				{ label: 'Nemnaren har tre ulike faktorar, så tre delbrøkar', latex: `\\frac{${numerator}}{${Q}} = \\frac{A}{x${plus(-r1)}} + \\frac{B}{x${plus(-r2)}} + \\frac{C}{x${plus(-r3)}}` },
-				{ label: 'Dekkjemetoden: dekk til éin faktor og set inn nullpunktet hans', latex: `A = ${A}, \\quad B = ${B}, \\quad C = ${C}` },
-				{ label: 'Kontroll: koeffisienten til $x^{2}$ i teljaren skal vere $A+B+C$', latex: `A+B+C = ${p2}` },
+				{ label: 'Tre delbrøkar', latex: `\\frac{${numerator}}{${Q}} = \\frac{A}{x${plus(-r1)}} + \\frac{B}{x${plus(-r2)}} + \\frac{C}{x${plus(-r3)}}` },
+				{ label: 'Dekkjemetoden', latex: `A = ${A}, \\quad B = ${B}, \\quad C = ${C}` },
+				{ label: 'Kontroll', latex: `A+B+C = ${p2}` },
 				{ label: 'Integrer kvar delbrøk', latex: `${lnTerm(A, r1, true)} ${lnTerm(B, r2)} ${lnTerm(C, r3)} + C` }
 			],
 			'Tre førstegradsfaktorar gir tre delbrøkar med konstant teljar.');
@@ -881,9 +881,9 @@ function partialTriple(): Draft {
 	return draft('partial', 4, 'triple',
 		INTEGRAL(`\\frac{${numerator}}{${factor(r)}^{2}}`),
 		[
-			{ label: 'Dobbel faktor, så begge potensane må med', latex: `\\frac{${numerator}}{(x${plus(-r)})^{2}} = \\frac{A}{x${plus(-r)}} + \\frac{B}{(x${plus(-r)})^{2}}` },
-			{ label: `Skriv teljaren om: $${numerator} = ${p}(x${plus(-r)}) ${B >= 0 ? '+' : '-'} ${Math.abs(B)}$`, latex: `A = ${p}, \\quad B = ${B}` },
-			{ label: 'Integrer. Merk at $\\int\\frac{dx}{(x-r)^{2}} = -\\frac{1}{x-r}$', latex: `${lnTerm(p, r, true)} ${B > 0 ? '-' : '+'} \\frac{${Math.abs(B)}}{x${plus(-r)}} + C` }
+			{ label: 'Begge potensane med', latex: `\\frac{${numerator}}{(x${plus(-r)})^{2}} = \\frac{A}{x${plus(-r)}} + \\frac{B}{(x${plus(-r)})^{2}}` },
+			{ label: 'Skriv teljaren om', latex: `A = ${p}, \\quad B = ${B}` },
+			{ label: 'Integrer begge ledda', latex: `${lnTerm(p, r, true)} ${B > 0 ? '-' : '+'} \\frac{${Math.abs(B)}}{x${plus(-r)}} + C` }
 		],
 		'Utan leddet med $(x-r)^2$ i nemnaren kan summen aldri få $(x-r)^2$ i fellesnemnaren.');
 }
@@ -904,11 +904,11 @@ function partialRepeated(): Draft {
 		return draft('partial', 5, 'repeated',
 			INTEGRAL(`\\frac{${numerator}}{x^{2}(x+${e})}`),
 			[
-				{ label: '$x$ er ein dobbel faktor, så tre delbrøkar', latex: `\\frac{${numerator}}{x^{2}(x+${e})} = \\frac{A}{x} + \\frac{B}{x^{2}} + \\frac{C}{x+${e}}` },
+				{ label: 'Tre delbrøkar', latex: `\\frac{${numerator}}{x^{2}(x+${e})} = \\frac{A}{x} + \\frac{B}{x^{2}} + \\frac{C}{x+${e}}` },
 				{ label: 'Gong med fellesnemnaren', latex: `${numerator} = Ax(x+${e}) + B(x+${e}) + Cx^{2}` },
-				{ label: `Set inn $x=0$ og $x=-${e}$`, latex: `B = ${B}, \\quad C = ${C}` },
-				{ label: 'Samanlikn $x^2$-ledda for å finne $A$', latex: `0 = A + C \\Rightarrow A = ${A}` },
-				{ label: 'Integrer. Merk at $\\int\\frac{B}{x^{2}}dx = -\\frac{B}{x}$', latex: `${lnTerm(A, 0, true)} - \\frac{${B}}{x} ${lnTerm(C, -e)} + C` }
+				{ label: 'Set inn nullpunkta', latex: `B = ${B}, \\quad C = ${C}` },
+				{ label: 'Samanlikn koeffisientane', latex: `0 = A + C \\Rightarrow A = ${A}` },
+				{ label: 'Integrer kvar delbrøk', latex: `${lnTerm(A, 0, true)} - \\frac{${B}}{x} ${lnTerm(C, -e)} + C` }
 			],
 			'Dekkjemetoden gir berre $B$ og $C$ her. $A$ må du finne ved å samanlikne koeffisientar.');
 	}
@@ -926,12 +926,12 @@ function partialRepeated(): Draft {
 	return draft('partial', 5, 'repeated',
 		INTEGRAL(`\\frac{${numerator}}{${Q}}`),
 		[
-			{ label: 'Sjekk teljaren mot den deriverte av nemnaren før du spaltar', latex: `(${Q})' = 2x${plus(p)}` },
+			{ label: 'Sjekk teljar mot nemnar', latex: `(${Q})' = 2x${plus(p)}` },
 			{
 				label: halved ? 'Teljaren er nøyaktig halvparten av han' : 'Teljaren er nøyaktig han',
 				latex: halved ? `${numerator} = \\frac{1}{2}\\left(2x${plus(p)}\\right)` : `${numerator} = (${Q})'`
 			},
-			{ label: 'Så dette er eit variabelskifte, ikkje ein delbrøk', latex: `u = ${Q}, \\quad ${scale}\\int\\frac{1}{u}\\,du` },
+			{ label: 'Altså variabelskifte', latex: `u = ${Q}, \\quad ${scale}\\int\\frac{1}{u}\\,du` },
 			{ label: 'Integrer', latex: `${scale}\\ln|${Q}| + C` }
 		],
 		'Delbrøk gir rett svar her, men det finst ein mykje kortare veg. Kva er $(\\text{nemnar})\'$?');
@@ -954,7 +954,7 @@ function basicRule(level: number, type: string): Draft {
 		return draft('mixed', level, type,
 			INTEGRAL(`\\frac{${a}x^{2}${plus(b)}}{x}`),
 			[
-				{ label: 'Éitt ledd i nemnaren, så del opp brøken', latex: `\\frac{${a}x^{2}${plus(b)}}{x} = ${times(a, 'x')} ${b > 0 ? '+' : '-'} \\frac{${Math.abs(b)}}{x}` },
+				{ label: 'Del opp brøken', latex: `\\frac{${a}x^{2}${plus(b)}}{x} = ${times(a, 'x')} ${b > 0 ? '+' : '-'} \\frac{${Math.abs(b)}}{x}` },
 				{ label: 'No er begge ledda grunnreglar', latex: `\\int ${times(a, 'x')}\\,dx ${b > 0 ? '+' : '-'} ${Math.abs(b)}\\int\\frac{1}{x}\\,dx` },
 				{ label: 'Integrer', latex: `${coef(a, 2, 'x^{2}')} ${b > 0 ? '+' : '-'} ${Math.abs(b) === 1 ? '' : Math.abs(b)}\\ln|x| + C` }
 			],

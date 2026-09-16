@@ -2,6 +2,62 @@
 
 ---
 
+## Stage 8b – Tre ting som såg ut som éin feil (v0.9.1)
+**Dato:** 2026-09-16
+
+Brukaren sende eit skjermbilete av eit delvis-integrasjon-kort med tre merknader:
+rullefelt i alle boksane, inline matte som såg rar ut, og «LN X» øvst som såg VELDIG rar
+ut. Alle tre var reelle. Ingen av dei hadde den årsaka eg trudde.
+
+### Etiketten: min feil, ikkje stilen sin
+
+`.step-label` er ein merkelapp — liten, feit, versalar, sperra. Derivasjon og logaritmar
+gir han to til fire ord og null LaTeX. Eg hadde skrive fulle setningar med `$...$` i, 30
+av 192 av dei. MathJax rendrar matten inni merkelappen, versalane gjeld ikkje for matte,
+og ut kom «ln x» i kursiv limt til «SKAL DERIVERAST».
+
+Enkel diagnose, og eg burde sett han då eg skreiv dei. Alle 192 er korte merkelappar no,
+og ein test handhevar det for heile registeret — så det gjeld neste modul òg.
+
+### Rullefeltet: eg tok feil to gonger før eg målte rett
+
+Første hypotese: `overflow-x: auto` tvingar `overflow-y` til `auto` (det stemmer), og
+inline matte er høgare enn tekstlinja, så brøkar renn over. Plausibelt, og
+skjermbiletet passa — rullefelt nøyaktig på dei stega som hadde brøk.
+
+Så bygde eg fire simuleringar av inline matte med ulik `vertical-align`. **Ingen av dei
+gav rullefelt.** Hypotesen min feila sin eigen test.
+
+Det som løyste det var å slutta å gjetta og skaffa MathJax. CDN-en er blokkert av
+egress-proxyen, men `npm install --no-save mathjax@3` går gjennom registeret, og
+Playwright sin `page.route` kan servera fila i staden for den blokkerte URL-en. Då hadde
+eg ekte rendra matte å måla på, for første gong i heile dette arbeidet.
+
+Med det på plass: bygg den gamle versjonen frå git stash, server han på ein annan port,
+og mål begge sider av same oppgåve. Gammal: 33/35, 34/36 — renn over på alle fire stega.
+
+Og då eg spurde *kva* som stakk ut, var svaret ikkje formelen i det heile:
+**`mjx-assistive-mml`**, MathML-kopien MathJax lagar for skjermlesarar. Han er absolutt
+posisjonert og klippa med `clip`, men `clip` hindrar berre måling — han beheld full høgd,
+og den høgda tel som overflyt inne i containeren. Ein tilgjengelegheitsnode bak formelen
+var det som teikna rullefeltet.
+
+### Eit måletriks som løygde
+
+Eg sveipte sju emne og fekk «0 rullefelt» — på **begge** versjonar. Målet mitt var
+`offsetWidth - clientWidth`, altså kor brei rullefeltet er. Chromium brukar
+overlay-rullefelt som tek null breidde. Målet kunne ikkje sjå det det leita etter.
+
+`scrollHeight > clientHeight` er det rette spørsmålet: *kan* elementet rulla. Med det:
+48 av 85 steg før, 6 av 81 etter, og 0 av 82 etter litt meir polstring.
+
+**Lærdomen, tredje gong i dette prosjektet:** ei måling som gir det svaret du håpar på, er
+ikkje det same som ei måling som stiller rett spørsmål. Førre gong var det
+`getComputedStyle` som sa at rutenettet var der mens skjermbiletet viste at det ikkje var
+det. Denne gongen var det eit rullefelt utan breidde.
+
+---
+
 ## Stage 8 – Integrasjon, og kurs som eiga akse (v0.9.0)
 **Dato:** 2026-09-16
 
