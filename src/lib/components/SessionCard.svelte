@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { SessionCard } from '$lib/engine/session';
 	import { getModule } from '$lib/modules/registry';
-	import { typesetElement } from '$lib/utils/mathjax';
+	import Tex from './Tex.svelte';
 	import { base } from '$app/paths';
 
 	interface Props {
@@ -15,7 +15,6 @@
 
 	let revealed = $state(false);
 	let hintShown = $state(false);
-	let container = $state<HTMLElement | null>(null);
 
 	const mod = $derived(getModule(card.problem.moduleId));
 	const topicName = $derived(
@@ -24,14 +23,6 @@
 	const theoryHref = $derived(mod ? `${base}/laer/${mod.slug}/${card.problem.topic}/` : null);
 	/** The card's left edge carries the module's colour. */
 	const accent = $derived(mod?.color ?? 'var(--color-primary)');
-
-	// Re-typeset whenever the card or what it shows changes.
-	$effect(() => {
-		void card.problem.id;
-		void revealed;
-		void hintShown;
-		if (container) typesetElement(container);
-	});
 
 	// A new card resets everything.
 	$effect(() => {
@@ -45,7 +36,7 @@
 	}
 </script>
 
-<article class="card session-card" style="--accent: {accent}" bind:this={container}>
+<article class="card session-card" style="--accent: {accent}">
 	<header>
 		{#if mod}
 			<span class="badge module">{mod.name}</span>
@@ -57,7 +48,7 @@
 		<span class="counter">{index + 1} av {total}</span>
 	</header>
 
-	<div class="question">{`\\[${card.problem.q}\\]`}</div>
+	<div class="question"><Tex tex={card.problem.q} /></div>
 
 	{#if hintShown}
 		<p class="hint">💡 {card.problem.hint}</p>
@@ -68,7 +59,7 @@
 			{#each card.problem.structuredSteps as step, i (i)}
 				<li>
 					<span class="step-label">{step.label}</span>
-					<div class="step-math">{`\\[${step.latex}\\]`}</div>
+					<div class="step-math"><Tex tex={step.latex} /></div>
 				</li>
 			{/each}
 		</ol>

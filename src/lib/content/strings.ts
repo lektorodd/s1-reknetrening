@@ -22,6 +22,26 @@ export const RUNG_LABELS: Record<number, string> = {
 	4: 'På eiga hand'
 };
 
+/**
+ * The same rungs, short enough to sit on a button.
+ *
+ * The help axis used to be five thin bars — 126x6px, under half the 24x24 a
+ * touch target needs — with the filled one furthest right, where there is the
+ * *least* help. Words carry the meaning instead, so there is no fill left to
+ * point the wrong way.
+ */
+export const RUNG_SHORT: Record<number, string> = {
+	0: 'Døme',
+	1: 'Siste steg',
+	2: 'To siste',
+	3: 'Starten',
+	4: 'Sjølv'
+};
+
+export function rungShort(rung: number): string {
+	return RUNG_SHORT[rung] ?? RUNG_SHORT[4];
+}
+
 export function rungPrompt(key: string): string {
 	return RUNG_PROMPTS[key] ?? RUNG_PROMPTS.fading_independent;
 }

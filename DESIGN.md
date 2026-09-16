@@ -187,6 +187,32 @@ To ting stakk ut, og ingen av dei var formelen:
 Måler du dette: `scrollHeight > clientHeight` er svaret. `offsetWidth - clientWidth` er
 det ikkje — Chromium brukar overlay-rullefelt som tek null breidde.
 
+## All matte går gjennom `Tex`
+
+`src/lib/components/Tex.svelte` er den einaste staden appen skriv LaTeX inn i DOM-en.
+
+Grunnen er ikkje ryddigheit. **Reaktiv matte verkar ikkje utan han.** MathJax byter ut
+tekstnoden `\[...\]` med sin eigen `<mjx-container>`, og etter det står Svelte sin
+reaktive tekstnode utanfor dokumentet — ein ny verdi har ingen stad å bli skriven. Skjermen
+held fram med å visa den første formelen han typesette. Det var slik Læreboka kom til å
+visa kjerneregelen under overskrifta «Delvis integrasjon».
+
+`Tex` set `textContent` sjølv før han typesettar, som kastar containeren ut og legg
+råteksten tilbake. Skriv du `{`\\[${...}\\]`}` rett i ein komponent, får du feilen igjen.
+
+Komponenten heiter `Tex` og ikkje `Math`, fordi `Math` skyggar for det globale
+`Math`-objektet i komponenten som importerer han.
+
+## To aksar på stigen
+
+Vanskegrad er **blå sirklar med tal**. Hjelp er **violette knappar med ord**:
+Døme · Siste steg · To siste · Starten · Sjølv.
+
+Dei skal ikkje sjå like ut — det er to ulike ting. Og hjelp-aksen har ord av ein grunn: han
+var fem strekar på 126 × 6 px, under halvparten av dei 24 × 24 ei treffflate treng, og den
+fylte streken låg lengst til høgre, der det er *minst* hjelp. Meir farge tydde mindre hjelp.
+Ord ber meininga, og då finst det ikkje noko fyll som kan peika feil veg.
+
 ## Steg-etikettar
 
 `.step-label` er ein **merkelapp**, ikkje ei setning: liten, feit, versalar, sperra.
