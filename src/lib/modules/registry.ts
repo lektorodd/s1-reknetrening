@@ -84,6 +84,28 @@ export function getModuleForConcept(conceptId: string): TopicModule | undefined 
 	return moduleId ? getModule(moduleId) : undefined;
 }
 
+/** Every concept belonging to one course, for per-course counts. */
+export function conceptIdsForCourse(course: Course): string[] {
+	return modulesForCourse(course).flatMap((m) => getModuleConceptIds(m.id));
+}
+
+let topicCache: Map<string, string> | null = null;
+
+/**
+ * The topic a concept belongs to, for linking a concept to its Lærebok page and
+ * to practice. Derived from the bank like every other concept fact.
+ */
+export function conceptTopic(conceptId: string): string | undefined {
+	if (!topicCache) {
+		topicCache = new Map();
+		for (const p of getFullBank()) {
+			const id = conceptIdOf(p);
+			if (!topicCache.has(id)) topicCache.set(id, p.topic);
+		}
+	}
+	return topicCache.get(conceptId);
+}
+
 let topLevelCache: Map<string, number> | null = null;
 
 /** The highest difficulty the bank holds for a concept (5 if unknown). */

@@ -33,16 +33,22 @@ import {
 	buildSession,
 	DEFAULT_FILTER,
 	filterBank,
+	filterFromQuery,
 	parseFilter,
+	practicePath,
 	restoreSession,
 	SESSION_LENGTH,
-	storeSession
+	setCourse,
+	storeSession,
+	theoryPath
 } from '$lib/engine/session';
 import { buildLadder, LADDER_LEVEL, LADDER_RUNGS, rungsFor } from '$lib/engine/ladder';
 import {
 	COURSES,
 	MODULE_REGISTRY,
 	conceptIdOf,
+	conceptIdsForCourse,
+	conceptTopic,
 	getAllConceptIds,
 	getFullBank,
 	getModuleBySlug,
@@ -1151,5 +1157,90 @@ describe('Resuming a session', () => {
 		for (const junk of [null, 'x', { cards: [] }, { cards: 'x', position: 0 }]) {
 			expect(restoreSession(junk, filter)).toBeNull();
 		}
+	});
+});
+
+describe('Links into practice and the Lærebok', () => {
+	const q = (s: string) => new URLSearchParams(s);
+
+	it('reads a subject and topic from the address, and takes the course from the subject', () => {
+		// «Øv på dette» on the integration by parts page used to open an S1 session.
+		expect(filterFromQuery(q('fag=integral&emne=parts'))).toEqual({
+			course: 'S2',
+			moduleId: 'integral',
+			topic: 'parts',
+			level: null
+		});
+		expect(filterFromQuery(q('fag=logarithm&niva=3'))).toEqual({
+			course: 'S1',
+			moduleId: 'logarithm',
+			topic: null,
+			level: 3
+		});
+		expect(filterFromQuery(q('kurs=S2'))).toEqual({ course: 'S2', moduleId: null, topic: null, level: null });
+	});
+
+	it('ignores an address that asks for nothing the bank has', () => {
+		expect(filterFromQuery(q(''))).toBeNull();
+		expect(filterFromQuery(q('fag=borte&emne=parts'))).toBeNull();
+		expect(filterFromQuery(q('kurs=S9'))).toBeNull();
+		// An unknown topic within a real subject keeps the subject.
+		expect(filterFromQuery(q('fag=integral&emne=borte'))?.topic).toBeNull();
+	});
+
+	it('round-trips the links it builds', () => {
+		for (const mod of MODULE_REGISTRY) {
+			for (const t of mod.topics) {
+				const path = practicePath(mod.id, t.id);
+				const f = filterFromQuery(new URL(path, 'http://x').searchParams);
+				expect(f, path).toEqual({ course: mod.course, moduleId: mod.id, topic: t.id, level: null });
+			}
+		}
+	});
+
+	it('points every concept at a real topic and Lærebok page', () => {
+		for (const id of getAllConceptIds()) {
+			const topic = conceptTopic(id);
+			expect(topic, id).toBeDefined();
+			const mod = MODULE_REGISTRY.find((m) => m.topics.some((t) => t.id === topic));
+			expect(mod, id).toBeDefined();
+			expect(theoryPath(mod!.id, topic!)).toBe(`/laer/${mod!.slug}/${topic}/`);
+		}
+	});
+
+	it('clears subject, topic and level when the course changes', () => {
+		const f = { course: 'S1' as const, moduleId: 'logarithm', topic: 'log_power', level: 2 };
+		expect(setCourse(f, 'S2')).toEqual({ course: 'S2', moduleId: null, topic: null, level: null });
+		expect(setCourse(f, 'S1')).toBe(f);
+	});
+});
+
+describe('Counts per course', () => {
+	it('splits the concepts between the courses with nothing left over', () => {
+		const all = COURSES.flatMap((c) => conceptIdsForCourse(c));
+		expect(new Set(all).size).toBe(getAllConceptIds().length);
+	});
+
+	it('counts only the chosen course as due', () => {
+		// An S1 student was told about S2 concepts waiting for review.
+		const model = createStudentModel();
+		const s2 = conceptIdsForCourse('S2')[0];
+		model.concepts[s2].lastSeen = Date.now() - 3 * DAY;
+		model.concepts[s2].currentInterval = 1;
+		expect(getDueCount(model)).toBe(1);
+		expect(getDueCount(model, conceptIdsForCourse('S1'))).toBe(0);
+		expect(getDueCount(model, conceptIdsForCourse('S2'))).toBe(1);
+		expect(getReviewBuckets(model, conceptIdsForCourse('S1')).dueNow).toHaveLength(0);
+	});
+});
+
+describe('Resuming a session: what was missed', () => {
+	const filter = { ...DEFAULT_FILTER };
+	it('keeps the concepts rated "Trong øving", and reads old sessions without them', () => {
+		const s = buildSession(createStudentModel(), SESSION_LENGTH, filterBank(getFullBank(), filter));
+		const stored = JSON.parse(JSON.stringify(storeSession(s, filter, 2, 1, ['log_power'])));
+		expect(restoreSession(stored, filter, s.startedAt)!.missed).toEqual(['log_power']);
+		delete stored.missed;
+		expect(restoreSession(stored, filter, s.startedAt)!.missed).toEqual([]);
 	});
 });

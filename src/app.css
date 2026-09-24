@@ -39,8 +39,10 @@
      dropped running text to 4.48:1 against cream in an earlier pass. */
   --color-text: #1F2933;
   --color-text-strong: #15202B;
-  --color-text-secondary: #6B6F77;
-  --color-text-muted: #6B6F77;
+  /* 5.4:1 on the ground, at least 5:1 on every light surface. #6B6F77 was
+     4.48:1 on the ground — just under the 4.5 body text needs. */
+  --color-text-secondary: #5E626A;
+  --color-text-muted: #5E626A;
   --color-text-inverse: #FFFFFF;
 
   /* Accents. Each owns a meaning, the same one it has in itslearning. */
@@ -52,10 +54,15 @@
   --color-success-light: #E6F0EA;
   --color-warning: #B7791F;
   --color-warning-light: #FAF1DE;
+  /* Amber is for edges and fills; as text on its own light tint it reached only
+     3.2:1. This darker amber is the text colour (5.3:1). */
+  --color-warning-text: #8A5A12;
   --color-error: #C53030;
   --color-error-light: #FBEAEA;
   --color-example: #805AD5;
   --color-example-light: #F1EBFB;
+  /* Violet text on the violet tint: 5.5:1, where the accent itself gave 4.2. */
+  --color-example-text: #6B46C1;
   --color-info: #2B6CB0;
   --color-mint: #98D3B4;
   --color-mint-soft: #9FD8BD;
@@ -339,6 +346,33 @@ mjx-assistive-mml {
   height: 1px !important;
   width: 1px !important;
   overflow: hidden !important;
+}
+
+/* Text for screen readers only: a heading a sighted student does not need, a
+   live announcement of which card this is. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Some students get motion-sick, or just find movement distracting. Respect the
+   system setting: nothing slides or fades, things simply appear. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* ── Scrollbar ── */

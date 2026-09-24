@@ -39,6 +39,8 @@ export function load({ params }) {
 		entry,
 		ladders,
 		prompts: mod.selfExplanations[params.emne] ?? [],
+		moduleId: mod.id,
+		topicId: params.emne,
 		moduleName: mod.name,
 		moduleSlug: mod.slug,
 		moduleColor: mod.color,

@@ -19,6 +19,7 @@ import {
 	modulesForCourse
 } from '$lib/modules/registry';
 import { localISO, type StudentModel } from './student-model';
+import { load, save } from '$lib/utils/storage';
 import { selectNextProblems } from './problem-selector';
 
 /** How many problems one session holds — short enough to finish in a sitting. */
@@ -141,6 +142,66 @@ export function parseFilter(stored: unknown): TrenFilter {
 	return { course, moduleId, topic, level };
 }
 
+const FILTER_KEY = 'tren_filter';
+
+/** The filter the student last chose — the course on the front page included. */
+export function loadFilter(): TrenFilter {
+	return parseFilter(load<unknown>(FILTER_KEY, DEFAULT_FILTER));
+}
+
+export function saveFilter(filter: TrenFilter): void {
+	save<TrenFilter>(FILTER_KEY, filter);
+}
+
+/**
+ * The filter for another course: subject, topic and level are cleared, since
+ * they belong to the course being left.
+ */
+export function setCourse(filter: TrenFilter, course: Course | null): TrenFilter {
+	if (filter.course === course) return filter;
+	return { course, moduleId: null, topic: null, level: null };
+}
+
+/**
+ * A filter asked for in the address, as links into practice carry it:
+ * `/tren/?fag=integral&emne=parts`, optionally with `niva=3` or `kurs=S2`.
+ *
+ * The course follows from the subject when one is given, so a link from the S2
+ * Lærebok never lands in an S1 session. Null when the address asks for nothing
+ * the bank knows — the stored filter then stands.
+ */
+export function filterFromQuery(params: URLSearchParams): TrenFilter | null {
+	const fag = params.get('fag');
+	const kurs = params.get('kurs');
+	if (fag === null && kurs === null) return null;
+
+	const mod = fag !== null ? getModule(fag) : undefined;
+	if (fag !== null && !mod) return null;
+	const niva = params.get('niva');
+	const parsed = parseFilter({
+		course: mod ? mod.course : kurs,
+		moduleId: mod?.id ?? null,
+		topic: params.get('emne'),
+		level: niva === null ? null : Number(niva)
+	});
+	// A course that was asked for but not recognised is not a request at all.
+	if (!mod && parsed.course !== kurs) return null;
+	return parsed;
+}
+
+/** Path into practice on one subject, and optionally one topic of it. */
+export function practicePath(moduleId: string, topic?: string | null): string {
+	const q = new URLSearchParams({ fag: moduleId });
+	if (topic) q.set('emne', topic);
+	return `/tren/?${q}`;
+}
+
+/** Path to the Lærebok page for one topic. */
+export function theoryPath(moduleId: string, topic: string): string | null {
+	const mod = getModule(moduleId);
+	return mod ? `/laer/${mod.slug}/${topic}/` : null;
+}
+
 const sameFilter = (a: TrenFilter, b: TrenFilter) =>
 	a.course === b.course && a.moduleId === b.moduleId && a.topic === b.topic && a.level === b.level;
 
@@ -153,20 +214,24 @@ export interface StoredSession {
 	position: number;
 	/** Of those, how many the student got right. */
 	correct: number;
+	/** Concepts rated "Trong øving" so far, for the end-of-session pointers. */
+	missed?: string[];
 }
 
 export function storeSession(
 	session: Session,
 	filter: TrenFilter,
 	position: number,
-	correct: number
+	correct: number,
+	missed: string[] = []
 ): StoredSession {
 	return {
 		filter,
 		cards: session.cards.map((c) => ({ id: c.problem.id, isNew: c.isNewConcept })),
 		startedAt: session.startedAt,
 		position,
-		correct
+		correct,
+		missed
 	};
 }
 
@@ -182,7 +247,7 @@ export function restoreSession(
 	stored: unknown,
 	filter: TrenFilter,
 	now: number = Date.now()
-): { session: Session; position: number; correct: number } | null {
+): { session: Session; position: number; correct: number; missed: string[] } | null {
 	if (typeof stored !== 'object' || stored === null) return null;
 	const s = stored as Partial<StoredSession>;
 	if (!Array.isArray(s.cards) || s.cards.length === 0) return null;
@@ -200,5 +265,7 @@ export function restoreSession(
 		cards.push({ problem, conceptId: conceptIdOf(problem), isNewConcept: c.isNew === true });
 	}
 	const correct = Math.max(0, Math.min(s.correct, s.position));
-	return { session: { cards, startedAt: s.startedAt }, position: s.position, correct };
+	// Sessions stored before this field existed simply have nothing missed yet.
+	const missed = Array.isArray(s.missed) ? s.missed.filter((m): m is string => typeof m === 'string') : [];
+	return { session: { cards, startedAt: s.startedAt }, position: s.position, correct, missed };
 }

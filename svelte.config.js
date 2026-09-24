@@ -6,6 +6,10 @@ const config = {
 		adapter: adapter({
 			pages: 'build',
 			assets: 'build',
+			// Served for any address the build has no page for, so a mistyped or
+			// outdated link gets the app's own Nynorsk error page instead of the
+			// host's.
+			fallback: '404.html',
 			precompress: true
 		}),
 		prerender: {

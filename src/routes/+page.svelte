@@ -9,14 +9,29 @@
 		todayISO,
 		type StudentModel
 	} from '$lib/engine/student-model';
+	import { DEFAULT_FILTER, loadFilter, saveFilter, setCourse, type TrenFilter } from '$lib/engine/session';
+	import { conceptIdsForCourse } from '$lib/modules/registry';
+	import type { Course } from '$lib/modules/types';
+	import CourseSwitch from '$lib/components/CourseSwitch.svelte';
 
 	let model = $state<StudentModel | null>(null);
+	let filter = $state<TrenFilter>({ ...DEFAULT_FILTER });
 
 	onMount(() => {
 		model = loadStudentModel();
+		filter = loadFilter();
 	});
 
-	const dueCount = $derived(model ? getDueCount(model) : 0);
+	function chooseCourse(course: Course) {
+		filter = setCourse(filter, course);
+		saveFilter(filter);
+	}
+
+	// Only the chosen course's concepts: an S1 student was told about S2
+	// concepts waiting for review that no S1 session would ever show them.
+	const dueCount = $derived(
+		model ? getDueCount(model, filter.course ? conceptIdsForCourse(filter.course) : undefined) : 0
+	);
 	const streak = $derived(model ? currentStreak(model) : 0);
 	const attempts = $derived(model?.totalAttempts ?? 0);
 	const successRate = $derived(model ? getSuccessRate(model) : 0);
@@ -25,7 +40,7 @@
 	const headline = $derived.by(() => {
 		if (attempts === 0) return 'Klar for første økt?';
 		if (trainedToday) return 'Du har trena i dag.';
-		if (dueCount > 0) return `${dueCount} ${dueCount === 1 ? 'emne' : 'emne'} ventar på repetisjon.`;
+		if (dueCount > 0) return `${dueCount} emne ventar på repetisjon.`;
 		return 'Klar for ei ny økt?';
 	});
 </script>
@@ -36,6 +51,10 @@
 	<p class="eyebrow">Dagens økt</p>
 	<h1>{headline}</h1>
 	<p class="lede">Ti oppgåver, blanda på tvers av emne og tilpassa nivået ditt.</p>
+
+	<div class="course">
+		<CourseSwitch course={filter.course} onChange={chooseCourse} />
+	</div>
 
 	<a class="btn btn-primary btn-lg start" href={`${base}/tren/`}>
 		{trainedToday ? 'Tren meir' : 'Start økta'}
@@ -95,6 +114,10 @@
 		margin: 0 auto var(--space-8);
 		max-width: 28rem;
 		color: var(--color-text-secondary);
+	}
+
+	.course {
+		margin: 0 0 var(--space-5);
 	}
 
 	.start {

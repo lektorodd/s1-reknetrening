@@ -4,6 +4,7 @@
 	import Tex from './Tex.svelte';
 	import TexProse from './TexProse.svelte';
 	import { base } from '$app/paths';
+	import { onMount, tick } from 'svelte';
 
 	interface Props {
 		card: SessionCard;
@@ -16,6 +17,31 @@
 
 	let revealed = $state(false);
 	let hintShown = $state(false);
+
+	// Keyboard and screen-reader focus. The buttons a student presses vanish —
+	// «Vis løysing» is replaced by the ratings, and a rating replaces the whole
+	// card — and focus used to vanish with them, back to the top of the page.
+	// Instead it moves to what just appeared.
+	let questionEl = $state<HTMLElement | null>(null);
+	let hintEl = $state<HTMLElement | null>(null);
+	let stepsEl = $state<HTMLElement | null>(null);
+
+	onMount(() => {
+		// Not on the first card: arriving on the page should not jump focus.
+		if (index > 0) questionEl?.focus();
+	});
+
+	async function showHint() {
+		hintShown = true;
+		await tick();
+		hintEl?.focus();
+	}
+
+	async function reveal() {
+		revealed = true;
+		await tick();
+		stepsEl?.focus();
+	}
 
 	const mod = $derived(getModule(card.problem.moduleId));
 	const topicName = $derived(
@@ -49,14 +75,24 @@
 		<span class="counter">{index + 1} av {total}</span>
 	</header>
 
-	<div class="question"><Tex tex={card.problem.q} /></div>
+	<!-- A labelled group, so a screen reader announces "Oppgåve N" and then reads
+	     the maths; a bare aria-label on a div can replace its content instead. -->
+	<div
+		class="question"
+		role="group"
+		tabindex="-1"
+		bind:this={questionEl}
+		aria-label="Oppgåve {index + 1}"
+	>
+		<Tex tex={card.problem.q} />
+	</div>
 
 	{#if hintShown}
-		<p class="hint">💡 <TexProse text={card.problem.hint} /></p>
+		<p class="hint" tabindex="-1" bind:this={hintEl}>💡 <TexProse text={card.problem.hint} /></p>
 	{/if}
 
 	{#if revealed}
-		<ol class="steps">
+		<ol class="steps" tabindex="-1" bind:this={stepsEl} aria-label="Løysing">
 			{#each card.problem.structuredSteps as step, i (i)}
 				<li>
 					<span class="step-label">{step.label}</span>
@@ -69,9 +105,9 @@
 	<div class="actions">
 		{#if !revealed}
 			{#if !hintShown}
-				<button class="btn btn-ghost" onclick={() => (hintShown = true)}>💡 Hint</button>
+				<button class="btn btn-ghost" onclick={showHint}>💡 Hint</button>
 			{/if}
-			<button class="btn btn-primary" onclick={() => (revealed = true)}>Vis løysing</button>
+			<button class="btn btn-primary" onclick={reveal}>Vis løysing</button>
 		{:else}
 			<button class="btn btn-secondary" onclick={() => rate(false)}>Trong øving</button>
 			<button class="btn btn-primary" onclick={() => rate(true)}>Fekk det til</button>
@@ -118,7 +154,7 @@
 
 	.badge.new {
 		background: var(--color-warning-light);
-		color: var(--color-warning);
+		color: var(--color-warning-text);
 	}
 
 	.counter {

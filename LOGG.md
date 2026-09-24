@@ -2,6 +2,52 @@
 
 ---
 
+## Stage 9c – Elevvegen (v0.11.0)
+**Dato:** 2026-09-24
+
+Fase 3 handla mindre om å leggja til ting enn om å kopla saman det som alt fanst.
+Gjennomgangen fann fleire blindvegar. Ingen av dei var store, men saman gjorde dei appen
+vanskelegare å bruka:
+
+- Læreboka sende eleven til eit tilfeldig kort.
+- Framgang lenkja ikkje vidare nokon stad.
+- Slutten av økta sa berre «kom att i morgon».
+- Kurset låg gøymt tre trykk inne.
+
+### Éin kjelde for kurset
+
+Det lagra Tren-filteret var alt kjelda til kva kurs eleven øvde på. Framsida og
+Framgang les og skriv no det same filteret (`loadFilter`/`saveFilter`), i staden for
+å få ein eigen innstilling. Då kan dei tre sidene aldri visa ulike kurs.
+
+### Lenkjer inn i øvinga
+
+`/tren/?fag=integral&emne=parts` blir lese i `afterNavigate`, og ikkje berre ved
+oppstart. Det er naudsynt fordi «Øv meir» på slutten av økta er ein navigasjon frå
+`/tren/` til `/tren/`, og då blir ikkje sida montert på nytt. Etterpå ryddar Tren
+adressa, så ein reload held fram med økta i staden for å starta ei ny.
+
+### Målt i nettlesaren
+
+A/B mot førre bygg:
+
+| | Gamal | Ny |
+|---|---|---|
+| «Øv på dette» frå Delvis integrasjon | `S1 · alle fag`, ni ulike emne | `S2 · Integrasjon · Delvis integrasjon`, berre det emnet |
+| Slutten av økta | ingen vidare veg | dei konsepta eleven bomma på, med «Øv meir» og «Les» |
+| Fokus etter «Fekk det til» | `body` | spørsmålet på det nye kortet |
+| Filterbyte midt i økta | byter utan å spørja | spør først |
+| Framgang for ein S1-elev på mobil | 3650 px, 20 rader «Ikkje prøvd», 0 lenkjer | 1955 px, 9 rader, 18 lenkjer |
+| Ukjend adresse | vertsserveren si side | «Fann ikkje sida» |
+| Blokkert lagring | ingenting | melding |
+
+Feilsida er testa gjennom ein liten server som fell tilbake på `404.html`, slik
+GitHub Pages gjer. Chromium loggar «Unable to preload CSS» på den sida. Begge
+stilarka blir likevel lasta med status 200 og brukte, så meldinga er ufarleg og kjem av
+SPA-fallbacken.
+
+---
+
 ## Stage 9b – Motoren, målt med simulerte elevar (v0.10.0)
 **Dato:** 2026-09-24
 

@@ -91,7 +91,7 @@
 					<button
 						class="level"
 						class:active={i === levelIndex}
-						aria-current={i === levelIndex ? 'true' : undefined}
+						aria-pressed={i === levelIndex}
 						title={levelName(l.level)}
 						onclick={() => setLevel(i)}
 					>

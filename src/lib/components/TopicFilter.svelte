@@ -62,11 +62,21 @@
 			<section class="course-section">
 				<h3>Kurs</h3>
 				<div class="chips">
-					<button class="chip" class:selected={course === null} onclick={() => chooseCourse(null)}>
+					<button
+						class="chip"
+						class:selected={course === null}
+						aria-pressed={course === null}
+						onclick={() => chooseCourse(null)}
+					>
 						Alle kurs
 					</button>
 					{#each COURSES as c (c)}
-						<button class="chip" class:selected={course === c} onclick={() => chooseCourse(c)}>
+						<button
+							class="chip"
+							class:selected={course === c}
+							aria-pressed={course === c}
+							onclick={() => chooseCourse(c)}
+						>
 							{c}
 						</button>
 					{/each}
@@ -84,6 +94,7 @@
 						<button
 							class="chip"
 							class:selected={moduleId === mod.id && topic === null}
+							aria-pressed={moduleId === mod.id && topic === null}
 							onclick={() => onChange(course, mod.id, null, level)}
 						>
 							Alle
@@ -92,6 +103,7 @@
 							<button
 								class="chip"
 								class:selected={moduleId === mod.id && topic === t.id}
+								aria-pressed={moduleId === mod.id && topic === t.id}
 								onclick={() => onChange(course, mod.id, t.id, level)}
 							>
 								{t.name}
@@ -107,6 +119,7 @@
 					<button
 						class="chip"
 						class:selected={level === null}
+						aria-pressed={level === null}
 						onclick={() => onChange(course, moduleId, topic, null)}
 					>
 						Alle
@@ -115,6 +128,7 @@
 						<button
 							class="chip"
 							class:selected={level === l}
+							aria-pressed={level === l}
 							onclick={() => onChange(course, moduleId, topic, l)}
 						>
 							{l}. {LEVEL_NAMES[l]}
