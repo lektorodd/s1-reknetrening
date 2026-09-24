@@ -3,11 +3,14 @@
 
 import type { ConceptKnowledge, StudentModel } from './student-model';
 import {
-	daysSinceSeen,
+	daysUntilDue,
 	effectiveInterval,
 	getOrCreateTodaySession,
 	MAX_INTERVAL_DAYS,
-	updateStreak
+	MAX_LEVEL,
+	MIN_LEVEL,
+	updateStreak,
+	workingLevel
 } from './student-model';
 
 // ── Scheduling ──
@@ -15,14 +18,19 @@ import {
 /** Check whether a concept is due for review */
 export function isDue(concept: ConceptKnowledge): boolean {
 	if (concept.lastSeen === 0) return false; // never seen → "new", not "due"
-	return daysSinceSeen(concept) >= effectiveInterval(concept);
+	return daysUntilDue(concept) <= 0;
 }
 
-/** Urgency score: higher = more urgent to review */
+/**
+ * Urgency score: higher = more urgent to review. Zero unless due.
+ *
+ * A concept due today scores by how shaky it is; each day overdue adds to that.
+ */
 export function urgency(concept: ConceptKnowledge): number {
 	if (concept.lastSeen === 0) return 0;
-	const overdue = Math.max(0, daysSinceSeen(concept) - effectiveInterval(concept));
-	return overdue * (1 - concept.confidence);
+	const left = daysUntilDue(concept);
+	if (left > 0) return 0;
+	return (1 - left) * (1 - concept.confidence);
 }
 
 // ── Update after attempt ──
@@ -31,6 +39,27 @@ export interface AttemptResult {
 	conceptId: string;
 	correct: boolean;
 	hintUsed: boolean;
+	/**
+	 * Difficulty of the problem answered. Required: without it every rating
+	 * would count as if at the working level, and the staircase could not tell a
+	 * hard success from an easy one.
+	 */
+	level: number;
+}
+
+/**
+ * How much one self-rating says, as the likelihood of that rating from a student
+ * who has the concept.
+ *
+ * A correct answer used to count the same at every level, so one "Fekk det til"
+ * on a level 1 problem took confidence from 0.5 to 0.85 and the concept read as
+ * mastered. Now a harder problem is stronger evidence, and a correct answer
+ * with the hint open is worth half as much.
+ */
+export function evidence(correct: boolean, level: number, hintUsed: boolean): number {
+	if (!correct) return 0.25;
+	const strength = 0.6 + 0.05 * Math.min(MAX_LEVEL, Math.max(MIN_LEVEL, level)); // 0.65 … 0.85
+	return hintUsed ? 0.5 + (strength - 0.5) / 2 : strength;
 }
 
 /**
@@ -48,13 +77,35 @@ export function updateAfterAttempt(
 	// coming round again before it was due (later in the same session, say)?
 	const firstTime = concept.lastSeen === 0;
 	const wasDue = firstTime || isDue(concept);
+	const work = workingLevel(concept);
+	const level = result.level;
 
 	// ── 1. Bayesian confidence update ──
 	const prior = concept.confidence;
-	const likelihood = result.correct ? 0.85 : 0.15;
+	const likelihood = evidence(result.correct, level, result.hintUsed);
 	const posterior = (prior * likelihood) /
 		((prior * likelihood) + ((1 - prior) * (1 - likelihood)));
 	concept.confidence = clamp(posterior, 0.01, 0.99);
+
+	// ── 1b. Working level ──
+	// Two up, one down: a step up after the second unaided correct answer in a
+	// row at or above it. After a miss, one step down — or to the level that was
+	// missed, if that is lower still. A correct answer with the hint open, or on
+	// an easier problem, leaves it where it is.
+	concept.workLevel = work;
+	if (result.correct) {
+		if (!result.hintUsed && level >= work) {
+			if (concept.climb >= 1) {
+				concept.workLevel = Math.min(MAX_LEVEL, level + 1);
+				concept.climb = 0;
+			} else {
+				concept.climb = 1;
+			}
+		}
+	} else {
+		concept.workLevel = Math.max(MIN_LEVEL, Math.min(work - 1, level));
+		concept.climb = 0;
+	}
 
 	// ── 2. FSRS-inspired interval scheduling ──
 	//
@@ -68,7 +119,9 @@ export function updateAfterAttempt(
 	if (result.correct) {
 		if (firstTime || concept.currentInterval === 0) {
 			concept.currentInterval = 1; // first review: 1 day
-		} else if (wasDue) {
+		} else if (wasDue && !result.hintUsed) {
+			// Only an unaided answer pushes the next review further out; with the
+			// hint open the concept comes back on the same schedule.
 			concept.currentInterval = Math.min(
 				MAX_INTERVAL_DAYS,
 				Math.max(1, Math.round(effectiveInterval(concept) * ease))
@@ -78,8 +131,8 @@ export function updateAfterAttempt(
 				concept.easeFactor = Math.min(ease + 0.05, 2.5);
 			}
 		} else {
-			// Early repeat: keep the schedule, but normalise a stored value that is
-			// out of range (an old model with an exploded interval, say).
+			// Early repeat or hinted: keep the schedule, but normalise a stored value
+			// that is out of range (an old model with an exploded interval, say).
 			concept.currentInterval = effectiveInterval(concept);
 		}
 	} else {

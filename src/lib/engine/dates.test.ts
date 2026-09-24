@@ -14,10 +14,13 @@ process.env.TZ = 'Europe/Oslo';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
 	createStudentModel,
+	currentStreak,
+	getDueCount,
 	localISO,
 	todayISO,
 	updateStreak
 } from '$lib/engine/student-model';
+import { isDue, updateAfterAttempt } from '$lib/engine/spaced-repetition';
 
 afterEach(() => {
 	vi.useRealTimers();
@@ -84,5 +87,57 @@ describe('Local dates', () => {
 			if (new Set(weekDates()).size !== 7) bad++;
 		}
 		expect(bad).toBe(0);
+	});
+});
+
+describe('Due by calendar day', () => {
+	it('makes a concept practised in the evening due the next afternoon', () => {
+		// Counted in hours, 20:00 plus one day was 20:00 the next day, and a
+		// student who trains after school found nothing to review.
+		vi.useFakeTimers();
+		const model = createStudentModel();
+		vi.setSystemTime(new Date(2026, 8, 21, 20, 0));
+		updateAfterAttempt(model, { conceptId: 'log_power', correct: true, hintUsed: false, level: 1 });
+		expect(model.concepts['log_power'].currentInterval).toBe(1);
+
+		vi.setSystemTime(new Date(2026, 8, 21, 23, 59));
+		expect(isDue(model.concepts['log_power'])).toBe(false);
+		vi.setSystemTime(new Date(2026, 8, 22, 15, 0));
+		expect(isDue(model.concepts['log_power'])).toBe(true);
+		expect(getDueCount(model)).toBe(1);
+	});
+
+	it('counts the day across the autumn clock change as one day', () => {
+		vi.useFakeTimers();
+		const model = createStudentModel();
+		// Saturday 24 October 2026, 23:30; the clocks go back that night.
+		vi.setSystemTime(new Date(2026, 9, 24, 23, 30));
+		updateAfterAttempt(model, { conceptId: 'log_power', correct: true, hintUsed: false, level: 1 });
+		// Sunday 00:30 — a 25-hour day has started, and it is still just one day.
+		vi.setSystemTime(new Date(2026, 9, 25, 0, 30));
+		expect(isDue(model.concepts['log_power'])).toBe(true);
+	});
+});
+
+describe('The streak shown', () => {
+	it('is the stored streak while it is still alive', () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date(2026, 8, 21, 18, 0));
+		const model = createStudentModel();
+		model.streakDays = 6;
+		model.lastActiveDate = '2026-09-20';
+		expect(currentStreak(model)).toBe(6);
+		model.lastActiveDate = '2026-09-21';
+		expect(currentStreak(model)).toBe(6);
+	});
+
+	it('is zero once a whole day has been missed', () => {
+		// The home page used to show last month's streak to a returning student.
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date(2026, 8, 21, 18, 0));
+		const model = createStudentModel();
+		model.streakDays = 6;
+		model.lastActiveDate = '2026-09-19';
+		expect(currentStreak(model)).toBe(0);
 	});
 });

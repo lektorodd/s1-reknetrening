@@ -3,34 +3,33 @@
 	import { base } from '$app/paths';
 	import SessionCard from '$lib/components/SessionCard.svelte';
 	import TopicFilter from '$lib/components/TopicFilter.svelte';
-	import { buildSession, filterBank, SESSION_LENGTH, type Session } from '$lib/engine/session';
+	import {
+		buildSession,
+		DEFAULT_FILTER,
+		filterBank,
+		parseFilter,
+		restoreSession,
+		SESSION_LENGTH,
+		storeSession,
+		type Session,
+		type TrenFilter
+	} from '$lib/engine/session';
 	import { loadStudentModel, saveStudentModel, type StudentModel } from '$lib/engine/student-model';
 	import { updateAfterAttempt } from '$lib/engine/spaced-repetition';
 	import { getFullBank } from '$lib/modules/registry';
 	import type { Course } from '$lib/modules/types';
-	import { load, save } from '$lib/utils/storage';
+	import { load, remove, save } from '$lib/utils/storage';
 
 	let model = $state<StudentModel | null>(null);
 	let session = $state<Session | null>(null);
 	let position = $state(0);
 	let correctCount = $state(0);
 
-	interface StoredFilter {
-		course: Course | null;
-		moduleId: string | null;
-		topic: string | null;
-		level: number | null;
-	}
-
+	// The filter is saved, so drilling integration by parts never turns into a
+	// logarithm problem the next time the page loads. The session in progress is
+	// saved too, after every card, so a reload carries on where it left off.
 	const FILTER_KEY = 'tren_filter';
-
-	/**
-	 * S1 is the default course, which is what the app was before integration.
-	 * An S2 student picks S2 once and it stays picked — the filter is saved, so
-	 * drilling integration by parts never turns into a logarithm problem the next
-	 * time the page loads.
-	 */
-	const DEFAULT_FILTER: StoredFilter = { course: 'S1', moduleId: null, topic: null, level: null };
+	const SESSION_KEY = 'tren_session';
 
 	let course = $state<Course | null>(DEFAULT_FILTER.course);
 	let moduleId = $state<string | null>(null);
@@ -47,24 +46,37 @@
 		getFullBank();
 		model = loadStudentModel();
 
-		const stored = load<StoredFilter>(FILTER_KEY, DEFAULT_FILTER);
+		const stored = parseFilter(load<unknown>(FILTER_KEY, DEFAULT_FILTER));
 		course = stored.course;
 		moduleId = stored.moduleId;
 		topic = stored.topic;
 		level = stored.level;
 
-		start();
+		const resumed = restoreSession(load<unknown>(SESSION_KEY, null), filter());
+		if (resumed) {
+			session = resumed.session;
+			position = resumed.position;
+			correctCount = resumed.correct;
+		} else {
+			start();
+		}
 	});
+
+	const filter = (): TrenFilter => ({ course, moduleId, topic, level });
+
+	/** Write the session's progress, or clear it once it is finished. */
+	function persist() {
+		if (!session) return;
+		if (position >= session.cards.length) remove(SESSION_KEY);
+		else save(SESSION_KEY, storeSession(session, filter(), position, correctCount));
+	}
 
 	function start() {
 		if (!model) return;
-		session = buildSession(
-			model,
-			SESSION_LENGTH,
-			filterBank(getFullBank(), { course, moduleId, topic, level })
-		);
+		session = buildSession(model, SESSION_LENGTH, filterBank(getFullBank(), filter()));
 		position = 0;
 		correctCount = 0;
+		persist();
 	}
 
 	function changeFilter(
@@ -77,7 +89,7 @@
 		moduleId = nextModule;
 		topic = nextTopic;
 		level = nextLevel;
-		save<StoredFilter>(FILTER_KEY, { course, moduleId, topic, level });
+		save<TrenFilter>(FILTER_KEY, filter());
 		start();
 	}
 
@@ -85,11 +97,17 @@
 		const card = current;
 		if (!card || !model) return;
 
-		updateAfterAttempt(model, { conceptId: card.conceptId, correct, hintUsed });
+		updateAfterAttempt(model, {
+			conceptId: card.conceptId,
+			correct,
+			hintUsed,
+			level: card.problem.level
+		});
 		saveStudentModel(model);
 
 		if (correct) correctCount++;
 		position++;
+		persist();
 	}
 </script>
 

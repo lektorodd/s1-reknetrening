@@ -10,8 +10,15 @@
 // skills practice varied too.
 
 import type { Course, Problem } from '$lib/modules/types';
-import { conceptIdOf, getFullBank, modulesForCourse } from '$lib/modules/registry';
-import type { StudentModel } from './student-model';
+import {
+	COURSES,
+	conceptIdOf,
+	getFullBank,
+	getModule,
+	getProblemById,
+	modulesForCourse
+} from '$lib/modules/registry';
+import { localISO, type StudentModel } from './student-model';
 import { selectNextProblems } from './problem-selector';
 
 /** How many problems one session holds — short enough to finish in a sitting. */
@@ -95,4 +102,103 @@ export function buildSession(
 	});
 
 	return { cards, startedAt: Date.now() };
+}
+
+// ── What the Treningsrom keeps between page loads ──
+
+/** The topic filter as the Treningsrom stores it. Null means "all". */
+export interface TrenFilter {
+	course: Course | null;
+	moduleId: string | null;
+	topic: string | null;
+	level: number | null;
+}
+
+/**
+ * S1 is the default course, which is what the app was before integration. An
+ * S2 student picks S2 once and it stays picked.
+ */
+export const DEFAULT_FILTER: TrenFilter = { course: 'S1', moduleId: null, topic: null, level: null };
+
+/**
+ * A stored filter, checked field by field.
+ *
+ * Read straight from storage, a filter saved as `null` crashed the page, and one
+ * naming a subject that has since been removed gave an empty choice. Anything
+ * unrecognised falls back to its default.
+ */
+export function parseFilter(stored: unknown): TrenFilter {
+	if (typeof stored !== 'object' || stored === null) return { ...DEFAULT_FILTER };
+	const s = stored as Partial<Record<keyof TrenFilter, unknown>>;
+	const course =
+		s.course === null ? null : COURSES.includes(s.course as Course) ? (s.course as Course) : DEFAULT_FILTER.course;
+	const mod = typeof s.moduleId === 'string' ? getModule(s.moduleId) : undefined;
+	const moduleId = mod ? mod.id : null;
+	const topic =
+		mod && typeof s.topic === 'string' && mod.topics.some((t) => t.id === s.topic) ? s.topic : null;
+	const level =
+		typeof s.level === 'number' && Number.isInteger(s.level) && s.level >= 1 && s.level <= 5 ? s.level : null;
+	return { course, moduleId, topic, level };
+}
+
+const sameFilter = (a: TrenFilter, b: TrenFilter) =>
+	a.course === b.course && a.moduleId === b.moduleId && a.topic === b.topic && a.level === b.level;
+
+/** A session in progress, as it is written to storage after every card. */
+export interface StoredSession {
+	filter: TrenFilter;
+	cards: { id: string; isNew: boolean }[];
+	startedAt: number;
+	/** Cards answered so far. */
+	position: number;
+	/** Of those, how many the student got right. */
+	correct: number;
+}
+
+export function storeSession(
+	session: Session,
+	filter: TrenFilter,
+	position: number,
+	correct: number
+): StoredSession {
+	return {
+		filter,
+		cards: session.cards.map((c) => ({ id: c.problem.id, isNew: c.isNewConcept })),
+		startedAt: session.startedAt,
+		position,
+		correct
+	};
+}
+
+/**
+ * Pick a stored session back up, if it can be.
+ *
+ * Reloading the page — or the phone dropping the tab — used to throw away the
+ * session: "3 av 10" became "1 av 10" with different problems. It is resumed
+ * when it is from today, for the same filter, not finished, and every card still
+ * exists in the bank. Otherwise null, and the caller builds a fresh one.
+ */
+export function restoreSession(
+	stored: unknown,
+	filter: TrenFilter,
+	now: number = Date.now()
+): { session: Session; position: number; correct: number } | null {
+	if (typeof stored !== 'object' || stored === null) return null;
+	const s = stored as Partial<StoredSession>;
+	if (!Array.isArray(s.cards) || s.cards.length === 0) return null;
+	if (typeof s.startedAt !== 'number' || typeof s.position !== 'number' || typeof s.correct !== 'number') {
+		return null;
+	}
+	if (!sameFilter(parseFilter(s.filter), filter)) return null;
+	if (localISO(new Date(s.startedAt)) !== localISO(new Date(now))) return null;
+	if (!Number.isInteger(s.position) || s.position < 0 || s.position >= s.cards.length) return null;
+
+	const cards: SessionCard[] = [];
+	for (const c of s.cards) {
+		const problem = typeof c?.id === 'string' ? getProblemById(c.id) : undefined;
+		if (!problem) return null;
+		cards.push({ problem, conceptId: conceptIdOf(problem), isNewConcept: c.isNew === true });
+	}
+	const correct = Math.max(0, Math.min(s.correct, s.position));
+	return { session: { cards, startedAt: s.startedAt }, position: s.position, correct };
 }

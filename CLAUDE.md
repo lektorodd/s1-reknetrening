@@ -93,7 +93,16 @@ asserts every concept has problems behind it.
   generator seeds its RNG from it (`rngFor` in `modules/rng.ts`), so the same id always
   yields the same problem. Never introduce unseeded `Math.random()` into a generator.
 - **Storage** is namespaced `mattetrening_v1_` and every access is wrapped — a browser
-  can refuse localStorage entirely.
+  can refuse localStorage entirely. Anything read back goes through a repair or parse
+  function (`repairModel`, `parseFilter`, `restoreSession`), never straight into state.
+- **Difficulty is per concept.** The selector picks each problem's level from that
+  concept's working level (`workLevel`, a two-up-one-down staircase in
+  `updateAfterAttempt`). There is no global level: `overallLevel` is a statistic and
+  must not choose problems — it once gave an S1 veteran level 5 integrals in their first
+  S2 session. Due-ness is counted in local calendar days.
+- **`simulation.test.ts` pins what simulated students meet** (weak, strong, S1 veteran
+  moving to S2, single-topic drill). Run it after any engine change; a threshold that
+  fails is a finding, not a number to loosen.
 
 ## Development
 

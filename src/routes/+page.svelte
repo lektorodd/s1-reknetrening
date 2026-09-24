@@ -5,6 +5,7 @@
 		loadStudentModel,
 		getDueCount,
 		getSuccessRate,
+		currentStreak,
 		todayISO,
 		type StudentModel
 	} from '$lib/engine/student-model';
@@ -16,7 +17,7 @@
 	});
 
 	const dueCount = $derived(model ? getDueCount(model) : 0);
-	const streak = $derived(model?.streakDays ?? 0);
+	const streak = $derived(model ? currentStreak(model) : 0);
 	const attempts = $derived(model?.totalAttempts ?? 0);
 	const successRate = $derived(model ? getSuccessRate(model) : 0);
 	const trainedToday = $derived(model?.lastActiveDate === todayISO());
