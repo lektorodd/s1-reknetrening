@@ -15,17 +15,29 @@ import {
 	getReviewBuckets,
 	getRegisteredConceptIds,
 	localISO,
+	mastery,
 	MAX_INTERVAL_DAYS,
+	repairModel,
+	workingLevel,
 	type StudentModel
 } from '$lib/engine/student-model';
 import {
+	evidence,
 	isDue,
 	urgency,
 	updateAfterAttempt
 } from '$lib/engine/spaced-repetition';
 import { selectNextProblems, splitBudget } from '$lib/engine/problem-selector';
 import { fadeSteps } from '$lib/engine/guidance-fading';
-import { buildSession, filterBank, SESSION_LENGTH } from '$lib/engine/session';
+import {
+	buildSession,
+	DEFAULT_FILTER,
+	filterBank,
+	parseFilter,
+	restoreSession,
+	SESSION_LENGTH,
+	storeSession
+} from '$lib/engine/session';
 import { buildLadder, LADDER_LEVEL, LADDER_RUNGS, rungsFor } from '$lib/engine/ladder';
 import {
 	COURSES,
@@ -153,8 +165,10 @@ describe('Spaced Repetition', () => {
 	});
 
 	it('isDue returns false when not yet due', () => {
+		// Seen just now. (Not "an hour ago": that is yesterday between 00:00 and
+		// 01:00, and due-ness is counted in calendar days.)
 		const concept = model.concepts['chain_poly'];
-		concept.lastSeen = Date.now() - 1 * 60 * 60 * 1000;
+		concept.lastSeen = Date.now();
 		concept.currentInterval = 1;
 		expect(isDue(concept)).toBe(false);
 	});
@@ -177,27 +191,27 @@ describe('Spaced Repetition', () => {
 
 	it('correct answer increases confidence', () => {
 		const before = model.concepts['chain_poly'].confidence;
-		updateAfterAttempt(model, { conceptId: 'chain_poly', correct: true, hintUsed: false });
+		updateAfterAttempt(model, { conceptId: 'chain_poly', correct: true, hintUsed: false, level: 1 });
 		expect(model.concepts['chain_poly'].confidence).toBeGreaterThan(before);
 	});
 
 	it('incorrect answer decreases confidence', () => {
 		const before = model.concepts['chain_poly'].confidence;
-		updateAfterAttempt(model, { conceptId: 'chain_poly', correct: false, hintUsed: false });
+		updateAfterAttempt(model, { conceptId: 'chain_poly', correct: false, hintUsed: false, level: 1 });
 		expect(model.concepts['chain_poly'].confidence).toBeLessThan(before);
 	});
 
 	it('correct answer sets interval to 1 on first attempt', () => {
-		updateAfterAttempt(model, { conceptId: 'chain_poly', correct: true, hintUsed: false });
+		updateAfterAttempt(model, { conceptId: 'chain_poly', correct: true, hintUsed: false, level: 1 });
 		expect(model.concepts['chain_poly'].currentInterval).toBe(1);
 	});
 
 	it('a correct answer on a due review grows the interval by the ease factor', () => {
 		const concept = model.concepts['chain_poly'];
-		updateAfterAttempt(model, { conceptId: 'chain_poly', correct: true, hintUsed: false });
+		updateAfterAttempt(model, { conceptId: 'chain_poly', correct: true, hintUsed: false, level: 1 });
 		// Come back once it is due.
 		concept.lastSeen = Date.now() - 2 * DAY;
-		updateAfterAttempt(model, { conceptId: 'chain_poly', correct: true, hintUsed: false });
+		updateAfterAttempt(model, { conceptId: 'chain_poly', correct: true, hintUsed: false, level: 1 });
 		expect(concept.currentInterval).toBeGreaterThan(1);
 	});
 
@@ -206,18 +220,18 @@ describe('Spaced Repetition', () => {
 		// schedule in five minutes: ten correct ratings took it to 1078 days.
 		const concept = model.concepts['chain_poly'];
 		for (let i = 0; i < 10; i++) {
-			updateAfterAttempt(model, { conceptId: 'chain_poly', correct: true, hintUsed: false });
+			updateAfterAttempt(model, { conceptId: 'chain_poly', correct: true, hintUsed: false, level: 1 });
 		}
 		expect(concept.currentInterval).toBe(1);
 	});
 
 	it('never schedules a concept further away than the ceiling', () => {
 		const concept = model.concepts['chain_poly'];
-		updateAfterAttempt(model, { conceptId: 'chain_poly', correct: true, hintUsed: false });
+		updateAfterAttempt(model, { conceptId: 'chain_poly', correct: true, hintUsed: false, level: 1 });
 		// A year of perfect, on-time reviews.
 		for (let i = 0; i < 40; i++) {
 			concept.lastSeen = Date.now() - (concept.currentInterval + 1) * DAY;
-			updateAfterAttempt(model, { conceptId: 'chain_poly', correct: true, hintUsed: false });
+			updateAfterAttempt(model, { conceptId: 'chain_poly', correct: true, hintUsed: false, level: 1 });
 		}
 		expect(concept.currentInterval).toBe(MAX_INTERVAL_DAYS);
 		expect(Number.isFinite(concept.currentInterval)).toBe(true);
@@ -227,7 +241,7 @@ describe('Spaced Repetition', () => {
 		const concept = model.concepts['chain_poly'];
 		concept.currentInterval = 40;
 		concept.lastSeen = Date.now() - 41 * DAY;
-		updateAfterAttempt(model, { conceptId: 'chain_poly', correct: false, hintUsed: false });
+		updateAfterAttempt(model, { conceptId: 'chain_poly', correct: false, hintUsed: false, level: 1 });
 		// Halving used to leave a 1078-day interval at 539.
 		expect(concept.currentInterval).toBe(1);
 	});
@@ -245,7 +259,7 @@ describe('Spaced Repetition', () => {
 		(overflowed as { currentInterval: unknown }).currentInterval = null;
 		overflowed.lastSeen = Date.now() - 2 * DAY;
 		expect(isDue(overflowed)).toBe(true);
-		updateAfterAttempt(model, { conceptId: 'chain_root', correct: true, hintUsed: false });
+		updateAfterAttempt(model, { conceptId: 'chain_root', correct: true, hintUsed: false, level: 1 });
 		expect(Number.isFinite(overflowed.currentInterval)).toBe(true);
 		expect(overflowed.currentInterval).toBeLessThanOrEqual(MAX_INTERVAL_DAYS);
 	});
@@ -268,7 +282,7 @@ describe('Spaced Repetition', () => {
 					const c = model.concepts[id];
 					if (c.lastSeen === 0 || isDue(c)) {
 						for (let k = 0; k < 3; k++) {
-							updateAfterAttempt(model, { conceptId: id, correct: true, hintUsed: false });
+							updateAfterAttempt(model, { conceptId: id, correct: true, hintUsed: false, level: 1 });
 						}
 					}
 				}
@@ -285,26 +299,26 @@ describe('Spaced Repetition', () => {
 
 	it('incorrect answer reduces ease factor', () => {
 		const before = model.concepts['chain_poly'].easeFactor;
-		updateAfterAttempt(model, { conceptId: 'chain_poly', correct: false, hintUsed: false });
+		updateAfterAttempt(model, { conceptId: 'chain_poly', correct: false, hintUsed: false, level: 1 });
 		expect(model.concepts['chain_poly'].easeFactor).toBeLessThan(before);
 	});
 
 	it('ease factor never drops below 1.3', () => {
 		for (let i = 0; i < 20; i++) {
-			updateAfterAttempt(model, { conceptId: 'chain_poly', correct: false, hintUsed: false });
+			updateAfterAttempt(model, { conceptId: 'chain_poly', correct: false, hintUsed: false, level: 1 });
 		}
 		expect(model.concepts['chain_poly'].easeFactor).toBeGreaterThanOrEqual(1.3);
 	});
 
 	it('updates total attempt counters', () => {
-		updateAfterAttempt(model, { conceptId: 'chain_poly', correct: true, hintUsed: false });
-		updateAfterAttempt(model, { conceptId: 'chain_poly', correct: false, hintUsed: false });
+		updateAfterAttempt(model, { conceptId: 'chain_poly', correct: true, hintUsed: false, level: 1 });
+		updateAfterAttempt(model, { conceptId: 'chain_poly', correct: false, hintUsed: false, level: 1 });
 		expect(model.totalAttempts).toBe(2);
 		expect(model.totalCorrect).toBe(1);
 	});
 
 	it('hint usage increases hintsUsedFrequency', () => {
-		updateAfterAttempt(model, { conceptId: 'chain_poly', correct: true, hintUsed: true });
+		updateAfterAttempt(model, { conceptId: 'chain_poly', correct: true, hintUsed: true, level: 1 });
 		expect(model.concepts['chain_poly'].hintsUsedFrequency).toBeGreaterThan(0);
 	});
 
@@ -312,10 +326,181 @@ describe('Spaced Repetition', () => {
 		const concepts = ['chain_poly', 'chain_root', 'product_poly', 'product_root'];
 		for (const cId of concepts) {
 			for (let i = 0; i < 5; i++) {
-				updateAfterAttempt(model, { conceptId: cId, correct: true, hintUsed: false });
+				updateAfterAttempt(model, { conceptId: cId, correct: true, hintUsed: false, level: 1 });
 			}
 		}
 		expect(model.overallLevel).toBeGreaterThan(1.0);
+	});
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// WORKING LEVEL, EVIDENCE AND MASTERY
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+describe('Working level', () => {
+	let model: StudentModel;
+	const rate = (correct: boolean, level: number, hintUsed = false) =>
+		updateAfterAttempt(model, { conceptId: 'log_power', correct, hintUsed, level });
+
+	beforeEach(() => {
+		model = createStudentModel();
+	});
+
+	it('starts at level 1', () => {
+		expect(workingLevel(model.concepts['log_power'])).toBe(1);
+	});
+
+	it('steps up after two unaided correct answers in a row, not one', () => {
+		rate(true, 1);
+		expect(model.concepts['log_power'].workLevel).toBe(1);
+		rate(true, 1);
+		expect(model.concepts['log_power'].workLevel).toBe(2);
+	});
+
+	it('steps down after a miss, and resets the climb', () => {
+		rate(true, 1);
+		rate(true, 1);
+		rate(true, 2);
+		rate(true, 2);
+		expect(model.concepts['log_power'].workLevel).toBe(3);
+		rate(false, 3);
+		expect(model.concepts['log_power'].workLevel).toBe(2);
+		rate(true, 2);
+		expect(model.concepts['log_power'].workLevel).toBe(2); // one correct is not enough again
+	});
+
+	it('drops to the level that was missed when that is lower', () => {
+		model.concepts['log_power'].workLevel = 4;
+		rate(false, 2);
+		expect(model.concepts['log_power'].workLevel).toBe(2);
+	});
+
+	it('does not move on a correct answer with the hint open', () => {
+		rate(true, 1, true);
+		rate(true, 1, true);
+		rate(true, 1, true);
+		expect(model.concepts['log_power'].workLevel).toBe(1);
+	});
+
+	it('does not move on a correct answer below it', () => {
+		model.concepts['log_power'].workLevel = 3;
+		rate(true, 1);
+		rate(true, 1);
+		expect(model.concepts['log_power'].workLevel).toBe(3);
+	});
+
+	it('is read off the confidence for a model saved before working levels existed', () => {
+		const c = model.concepts['log_power'];
+		(c as { workLevel: unknown }).workLevel = undefined;
+		c.lastSeen = Date.now();
+		c.confidence = 0.9;
+		expect(workingLevel(c)).toBe(4);
+		c.confidence = 0.3;
+		expect(workingLevel(c)).toBe(1);
+	});
+});
+
+describe('Evidence from a rating', () => {
+	it('counts a correct answer on a harder problem for more', () => {
+		expect(evidence(true, 5, false)).toBeGreaterThan(evidence(true, 1, false));
+	});
+
+	it('counts a correct answer with the hint open for half as much', () => {
+		const unaided = evidence(true, 3, false) - 0.5;
+		const hinted = evidence(true, 3, true) - 0.5;
+		expect(hinted).toBeCloseTo(unaided / 2);
+	});
+
+	it('no longer takes a concept to "Sit" on one easy correct answer', () => {
+		// 0.5 -> 0.85 in one step was the audit's finding.
+		const model = createStudentModel();
+		updateAfterAttempt(model, { conceptId: 'log_power', correct: true, hintUsed: false, level: 1 });
+		const c = model.concepts['log_power'];
+		expect(c.confidence).toBeLessThan(0.7);
+		expect(mastery(c)).not.toBe('Sit');
+	});
+
+	it('does not push the next review out on a hinted answer', () => {
+		const model = createStudentModel();
+		const c = model.concepts['log_power'];
+		updateAfterAttempt(model, { conceptId: 'log_power', correct: true, hintUsed: false, level: 1 });
+		c.lastSeen = Date.now() - 2 * DAY;
+		updateAfterAttempt(model, { conceptId: 'log_power', correct: true, hintUsed: true, level: 1 });
+		expect(c.currentInterval).toBe(1);
+	});
+});
+
+describe('Mastery', () => {
+	const concept = (over: Partial<ReturnType<typeof createStudentModel>['concepts'][string]>) => ({
+		...createStudentModel().concepts['log_power'],
+		lastSeen: Date.now(),
+		...over
+	});
+
+	it('says so when a concept has not been tried', () => {
+		expect(mastery(createStudentModel().concepts['log_power'])).toBe('Ikkje prøvd');
+	});
+
+	it('takes confidence, several correct answers and level 3', () => {
+		expect(mastery(concept({ confidence: 0.95, timesCorrect: 5, workLevel: 3 }))).toBe('Sit');
+		expect(mastery(concept({ confidence: 0.95, timesCorrect: 2, workLevel: 3 }))).toBe('På veg');
+		expect(mastery(concept({ confidence: 0.95, timesCorrect: 5, workLevel: 2 }))).toBe('På veg');
+		expect(mastery(concept({ confidence: 0.7, timesCorrect: 5, workLevel: 4 }))).toBe('På veg');
+	});
+
+	it('only asks for the top of a concept that stops below level 3', () => {
+		// chain_poly only has levels 1-2.
+		expect(mastery(concept({ confidence: 0.95, timesCorrect: 5, workLevel: 2 }), 2)).toBe('Sit');
+	});
+
+	it('can be reached by a student who practises', () => {
+		const model = createStudentModel();
+		for (let i = 0; i < 8; i++) {
+			const level = workingLevel(model.concepts['log_power']);
+			updateAfterAttempt(model, { conceptId: 'log_power', correct: true, hintUsed: false, level });
+		}
+		expect(mastery(model.concepts['log_power'])).toBe('Sit');
+	});
+});
+
+describe('Repairing a stored model', () => {
+	it('gives a fresh model for anything that is not one', () => {
+		for (const junk of [null, 42, 'x', [], undefined]) {
+			expect(Object.keys(repairModel(junk).concepts)).toHaveLength(getAllConceptIds().length);
+		}
+	});
+
+	it('fills in missing and broken concept fields instead of producing NaN', () => {
+		const repaired = repairModel({
+			concepts: {
+				log_power: { confidence: 'høg', lastSeen: 5 },
+				log_product: null
+			},
+			sessionHistory: [null, { date: '2026-09-01', correct: 2 }, { correct: 1 }],
+			totalAttempts: 'mange'
+		});
+		const c = repaired.concepts['log_power'];
+		for (const v of [c.confidence, c.timesCorrect, c.timesIncorrect, c.hintsUsedFrequency, c.easeFactor, c.workLevel, c.climb]) {
+			expect(Number.isFinite(v)).toBe(true);
+		}
+		expect(repaired.concepts['log_product'].confidence).toBe(0.5);
+		expect(repaired.sessionHistory).toEqual([
+			{ date: '2026-09-01', correct: 2, incorrect: 0, hintsUsed: 0, conceptsTouched: [] }
+		]);
+		expect(repaired.totalAttempts).toBe(0);
+		expect(getSuccessRate(repaired)).toBe(0);
+	});
+
+	it('keeps what was valid', () => {
+		const model = createStudentModel();
+		model.concepts['log_power'].confidence = 0.77;
+		model.concepts['log_power'].workLevel = 4;
+		model.totalAttempts = 12;
+		model.totalCorrect = 9;
+		const repaired = repairModel(JSON.parse(JSON.stringify(model)));
+		expect(repaired.concepts['log_power'].confidence).toBe(0.77);
+		expect(repaired.concepts['log_power'].workLevel).toBe(4);
+		expect(getSuccessRate(repaired)).toBe(75);
 	});
 });
 
@@ -366,7 +551,7 @@ describe('Problem Selector', () => {
 	it('after rating concepts, still fills the whole request', () => {
 		const concepts = ['chain_poly', 'chain_root', 'product_poly', 'log_power'];
 		for (const cId of concepts) {
-			updateAfterAttempt(model, { conceptId: cId, correct: true, hintUsed: false });
+			updateAfterAttempt(model, { conceptId: cId, correct: true, hintUsed: false, level: 1 });
 		}
 		const selected = selectNextProblems(model, bank, 5);
 		expect(selected).toHaveLength(5);
@@ -383,10 +568,10 @@ describe('Problem Selector', () => {
 
 	it('preferentially returns weak concepts after mixed rating', () => {
 		for (let i = 0; i < 5; i++) {
-			updateAfterAttempt(model, { conceptId: 'chain_poly', correct: true, hintUsed: false });
-			updateAfterAttempt(model, { conceptId: 'chain_root', correct: false, hintUsed: false });
-			updateAfterAttempt(model, { conceptId: 'product_poly', correct: true, hintUsed: false });
-			updateAfterAttempt(model, { conceptId: 'log_power', correct: false, hintUsed: false });
+			updateAfterAttempt(model, { conceptId: 'chain_poly', correct: true, hintUsed: false, level: 1 });
+			updateAfterAttempt(model, { conceptId: 'chain_root', correct: false, hintUsed: false, level: 1 });
+			updateAfterAttempt(model, { conceptId: 'product_poly', correct: true, hintUsed: false, level: 1 });
+			updateAfterAttempt(model, { conceptId: 'log_power', correct: false, hintUsed: false, level: 1 });
 		}
 
 		let weakCount = 0;
@@ -403,9 +588,9 @@ describe('Problem Selector', () => {
 	});
 
 	it('mixes modules once more than one has been started', () => {
-		updateAfterAttempt(model, { conceptId: 'chain_poly', correct: true, hintUsed: false });
-		updateAfterAttempt(model, { conceptId: 'log_product', correct: false, hintUsed: false });
-		updateAfterAttempt(model, { conceptId: 'quotient_poly', correct: true, hintUsed: false });
+		updateAfterAttempt(model, { conceptId: 'chain_poly', correct: true, hintUsed: false, level: 1 });
+		updateAfterAttempt(model, { conceptId: 'log_product', correct: false, hintUsed: false, level: 1 });
+		updateAfterAttempt(model, { conceptId: 'quotient_poly', correct: true, hintUsed: false, level: 1 });
 
 		const modules = new Set<string>();
 		for (let i = 0; i < 10; i++) {
@@ -500,7 +685,7 @@ describe('Session History', () => {
 	});
 
 	it('updateAfterAttempt creates today session entry', () => {
-		updateAfterAttempt(model, { conceptId: 'chain_poly', correct: true, hintUsed: false });
+		updateAfterAttempt(model, { conceptId: 'chain_poly', correct: true, hintUsed: false, level: 1 });
 		expect(model.sessionHistory).toHaveLength(1);
 		expect(model.sessionHistory[0].date).toBe(todayISO());
 		expect(model.sessionHistory[0].correct).toBe(1);
@@ -508,9 +693,9 @@ describe('Session History', () => {
 	});
 
 	it('updateAfterAttempt increments counters on same day', () => {
-		updateAfterAttempt(model, { conceptId: 'chain_poly', correct: true, hintUsed: false });
-		updateAfterAttempt(model, { conceptId: 'chain_poly', correct: false, hintUsed: true });
-		updateAfterAttempt(model, { conceptId: 'chain_root', correct: true, hintUsed: false });
+		updateAfterAttempt(model, { conceptId: 'chain_poly', correct: true, hintUsed: false, level: 1 });
+		updateAfterAttempt(model, { conceptId: 'chain_poly', correct: false, hintUsed: true, level: 1 });
+		updateAfterAttempt(model, { conceptId: 'chain_root', correct: true, hintUsed: false, level: 1 });
 		expect(model.sessionHistory).toHaveLength(1);
 		expect(model.sessionHistory[0].correct).toBe(2);
 		expect(model.sessionHistory[0].incorrect).toBe(1);
@@ -898,6 +1083,73 @@ describe('Practice ladder', () => {
 					expect(ladder.every((r) => r.problem.level === level)).toBe(true);
 				}
 			}
+		}
+	});
+});
+
+describe('Stored filter', () => {
+	it('falls back to the default for anything that is not a filter', () => {
+		// A filter stored as null used to crash the Treningsrom on load.
+		for (const junk of [null, 'S2', 7, undefined]) expect(parseFilter(junk)).toEqual(DEFAULT_FILTER);
+	});
+
+	it('keeps a valid filter, including "every course"', () => {
+		const f = { course: null, moduleId: 'integral', topic: 'parts', level: 3 };
+		expect(parseFilter(f)).toEqual(f);
+	});
+
+	it('drops what no longer exists, field by field', () => {
+		expect(parseFilter({ course: 'S9', moduleId: 'borte', topic: 'parts', level: 9 })).toEqual(DEFAULT_FILTER);
+		expect(parseFilter({ course: 'S2', moduleId: 'integral', topic: 'borte', level: 2 })).toEqual({
+			course: 'S2',
+			moduleId: 'integral',
+			topic: null,
+			level: 2
+		});
+	});
+});
+
+describe('Resuming a session', () => {
+	const filter = { ...DEFAULT_FILTER };
+	const session = () => buildSession(createStudentModel(), SESSION_LENGTH, filterBank(getFullBank(), filter));
+	const roundTrip = <T>(x: T): unknown => JSON.parse(JSON.stringify(x));
+
+	it('picks up where it left off, with the same cards', () => {
+		const s = session();
+		const back = restoreSession(roundTrip(storeSession(s, filter, 3, 2)), filter, s.startedAt + 60_000);
+		expect(back).not.toBeNull();
+		expect(back!.position).toBe(3);
+		expect(back!.correct).toBe(2);
+		expect(back!.session.cards.map((c) => c.problem.id)).toEqual(s.cards.map((c) => c.problem.id));
+		expect(back!.session.cards.map((c) => c.conceptId)).toEqual(s.cards.map((c) => c.conceptId));
+	});
+
+	it('starts afresh on another day', () => {
+		const s = session();
+		expect(restoreSession(roundTrip(storeSession(s, filter, 3, 2)), filter, s.startedAt + 2 * DAY)).toBeNull();
+	});
+
+	it('starts afresh when the filter has changed', () => {
+		const s = session();
+		const other = { ...filter, course: 'S2' as const };
+		expect(restoreSession(roundTrip(storeSession(s, filter, 3, 2)), other, s.startedAt)).toBeNull();
+	});
+
+	it('does not resume a finished session', () => {
+		const s = session();
+		expect(restoreSession(roundTrip(storeSession(s, filter, s.cards.length, 5)), filter, s.startedAt)).toBeNull();
+	});
+
+	it('starts afresh when a card is no longer in the bank', () => {
+		const s = session();
+		const stored = storeSession(s, filter, 1, 1);
+		stored.cards[4].id = 'derivative:borte:1:0';
+		expect(restoreSession(roundTrip(stored), filter, s.startedAt)).toBeNull();
+	});
+
+	it('ignores storage that is not a session', () => {
+		for (const junk of [null, 'x', { cards: [] }, { cards: 'x', position: 0 }]) {
+			expect(restoreSession(junk, filter)).toBeNull();
 		}
 	});
 });

@@ -6,11 +6,18 @@
 		getSuccessRate,
 		getDueCount,
 		getReviewBuckets,
+		currentStreak,
 		localISO,
+		mastery,
 		todayISO,
 		type StudentModel
 	} from '$lib/engine/student-model';
-	import { MODULE_REGISTRY, conceptName, getModuleConceptIds } from '$lib/modules/registry';
+	import {
+		MODULE_REGISTRY,
+		conceptName,
+		conceptTopLevel,
+		getModuleConceptIds
+	} from '$lib/modules/registry';
 
 	let model = $state<StudentModel | null>(null);
 
@@ -64,13 +71,6 @@
 
 	const weekMax = $derived(Math.max(1, ...week.map((d) => d.total)));
 	const buckets = $derived(model ? getReviewBuckets(model) : null);
-
-	function confidenceLabel(c: number): string {
-		if (c >= 0.8) return 'Sit';
-		if (c >= 0.6) return 'På veg';
-		if (c >= 0.4) return 'Usikker';
-		return 'Treng øving';
-	}
 </script>
 
 <svelte:head><title>Framgang – Mattetrening</title></svelte:head>
@@ -88,7 +88,7 @@
 	<dl class="summary">
 		<div>
 			<dt>Dagar på rad</dt>
-			<dd>{model.streakDays}</dd>
+			<dd>{currentStreak(model)}</dd>
 		</div>
 		<div>
 			<dt>Oppgåver</dt>
@@ -131,9 +131,7 @@
 						<span class="meter" style="--accent: {group.color}">
 							<span class="meter-fill" style="width: {row.concept.confidence * 100}%"></span>
 						</span>
-						<span class="concept-state">
-							{row.concept.lastSeen === 0 ? 'Ikkje prøvd' : confidenceLabel(row.concept.confidence)}
-						</span>
+						<span class="concept-state">{mastery(row.concept, conceptTopLevel(row.id))}</span>
 					</li>
 				{/each}
 			</ul>

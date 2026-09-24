@@ -7,6 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-09-24
+
+Fase 2 etter den fulle gjennomgangen: motoren. Endringane er målte med simulerte elevar
+som øver dagleg. Simuleringane er no varige testar i `simulation.test.ts`.
+
+| | Før | No |
+|---|---|---|
+| Svak elev, del av korta på nivå 4–5 | 54 % | 11 % |
+| Svak elev, del rette | 37 % | 65 % |
+| Sterk elev, del av korta på nivå 4–5 (dag 15–19) | 34 % | 82 % |
+| Spreiing, færraste/flest trekk per konsept | 8 / 59 | 15 / 47 |
+| S1-veteran, første S2-økt | nivå 5, 4, 1, 2, 4, 3, … | berre nivå 1–2 |
+| Øving på eitt emne, snittnivå etter 10 dagar | 2,8 | 4,8 |
+
+### Changed
+- **Vanskegraden blir vald per konsept.** Kvart konsept har sitt eige arbeidsnivå.
+  Nivået går éitt steg opp etter to rette på rad utan hint, og éitt steg ned etter ein
+  bom. Denne «to opp, éin ned»-trappa landar der eleven får rett om lag 70 % av gongene.
+  Før styrte eitt snitt over alle konsept nivået, så svake elevar fekk for vanskelege
+  oppgåver, og eit nivå tent i S1 følgde med over i S2.
+- **«Sit» krev meir.** Eleven må ha minst tre rette, og arbeidsnivået må ha nått nivå 3
+  (eller toppen av konseptet, om det sluttar lågare). Før holdt éin rett på nivå 1.
+  Eit rett svar på eit vanskelegare nivå tel meir, og eit rett svar med hint tel halvparten.
+- **Hint verkar inn på planlegginga.** Eit rett svar med hint flyttar ikkje neste
+  repetisjon lenger fram, og løftar ikkje arbeidsnivået.
+- **Forfall blir rekna i kalenderdagar.** Eit konsept øvd klokka 20 er forfalle
+  dagen etter, uansett klokkeslett. Før måtte eleven venta til klokka 20.
+- **Nye konsept kjem inn på det lettaste nivået som finst.** Like tillitsverdiar blir avgjorde
+  tilfeldig, så eitt konsept ikkje får ti gonger så mange trekk som eit anna.
+  Repetisjonen blir fylt opp med dei konsepta som er nærast forfalle.
+- **Konsept eleven ikkje er klar for, blir ikkje terpa.** `chain_exp` finst berre på
+  nivå 4–5. Før kom konsept som det både i repetisjonen og i fokusdelen kvar dag. No kjem
+  dei berre når dei er forfalne.
+- **Filter med eitt emne tilpassar seg.** Kaldstarten krev no at eleven har prøvd tre
+  av konsepta i banken, eller alle, om banken har færre. Før kom eit emne med eitt
+  konsept aldri ut av kaldstarten.
+
+### Fixed
+- **Ein reload midt i økta starta henne på nytt.** No held økta fram der ho var, med same oppgåver, så
+  lenge ho er frå i dag og filteret er det same.
+- **Eit lagra filter som var `null`, krasja Tren.** Då vart det ikkje vist noko kort i det heile.
+- **Ein modell med `null` i øktloggen krasja Framgang.** Konsept med manglande felt gav
+  NaN. Alt som blir lese frå lagringa, blir no reparert felt for felt.
+- **Framsida og Framgang viste ein gammal streak** til ein elev som kom tilbake etter
+  ein pause. No viser dei 0 når det har gått ein heil dag utan øving.
+
 ## [0.9.3] - 2026-09-24
 
 Fase 1 etter den fulle gjennomgangen: rett matte og rett visning.

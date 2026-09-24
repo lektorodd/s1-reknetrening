@@ -84,6 +84,20 @@ export function getModuleForConcept(conceptId: string): TopicModule | undefined 
 	return moduleId ? getModule(moduleId) : undefined;
 }
 
+let topLevelCache: Map<string, number> | null = null;
+
+/** The highest difficulty the bank holds for a concept (5 if unknown). */
+export function conceptTopLevel(conceptId: string): number {
+	if (!topLevelCache) {
+		topLevelCache = new Map();
+		for (const p of getFullBank()) {
+			const id = conceptIdOf(p);
+			topLevelCache.set(id, Math.max(topLevelCache.get(id) ?? 0, p.level));
+		}
+	}
+	return topLevelCache.get(conceptId) ?? 5;
+}
+
 /** Display name for a concept, resolved through its owning module. */
 export function conceptName(conceptId: string): string {
 	return getModuleForConcept(conceptId)?.conceptName(conceptId) ?? conceptId;

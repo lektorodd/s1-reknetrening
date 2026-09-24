@@ -2,6 +2,61 @@
 
 ---
 
+## Stage 9b – Motoren, målt med simulerte elevar (v0.10.0)
+**Dato:** 2026-09-24
+
+Fase 2 starta med testane, ikkje med koden. Gjennomgangen fann motorfeila i
+simuleringar, og dei simuleringane er no ein fast del av testsuiten
+(`simulation.test.ts`). Dei bruker seeda tilfeldigheit og ei falsk klokke, og kvar
+simulert elev øver éi økt kvar ettermiddag. Alle seks feila mot den gamle motoren
+før eg endra ei einaste line.
+
+### Éin idé: nivå per konsept
+
+Fire av funna hadde same rot: `overallLevel`, eitt tal for heile eleven.
+
+- Det er grunnen til at ein S1-veteran fekk nivå 5 i S2.
+- Det er grunnen til at ein svak elev fekk 54 % av korta på nivå 4–5.
+- Det er grunnen til at eit enkelt emne ikkje tilpassa seg.
+
+No har kvart konsept eit eige arbeidsnivå, og selektoren vel det nærmaste nivået
+konseptet har.
+
+Den første versjonen gav eitt steg opp for kvart rett svar. Då stod den svake eleven
+framleis på 23 %. Eg rekna på det: ei trapp som går opp etter kvar rette, stabiliserer
+seg der eleven får rett 35 % av gongene. «To opp, éin ned» er den klassiske
+staircase-metoden frå psykofysikken, og ho landar på om lag 71 %.
+
+### Det simuleringa fann som ingen hadde sett
+
+Sjølv med trappa stod den svake eleven på 19 %. Fordelinga per konsept viste kvifor:
+`chain_root` finst berre på nivå 3 og `chain_exp` berre på nivå 4–5. Eleven bomma på dei,
+tilliten fall til 0,01, og då trekte både repetisjonen og fokusdelen dei att kvar dag.
+Berre desse to konsepta stod for 99 av 300 kort.
+
+Motoren kan ikkje finna ei oppgåve på nivå 1 som ikkje finst. Rettinga her er at
+fokusdelen hoppar over konsept som ligg meir enn eitt nivå over arbeidsnivået.
+Den eigentlege løysinga er innhald: kjerneregelen treng oppgåver på alle nivå.
+Det står i fase 4.
+
+### Tala
+
+Sjå tabellen i CHANGELOG. Testane held i tillegg med fem andre seed-sett, så
+resultatet er ikkje flaks med éitt seed.
+
+### I nettlesaren
+
+A/B mot førre bygg:
+
+| | Gamal | Ny |
+|---|---|---|
+| Reload etter 3 kort | 1 av 10, ny oppgåve | 4 av 10, same oppgåve |
+| `tren_filter = null` | Tren viser ingen kort | fungerer |
+| `null` i øktloggen | Framgang krasjar | fungerer |
+| Streak etter tre veker | 12 | 0 |
+
+---
+
 ## Stage 9a – Rett matte og rett visning (v0.9.3)
 **Dato:** 2026-09-24
 
