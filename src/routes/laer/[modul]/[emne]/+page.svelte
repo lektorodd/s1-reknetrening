@@ -2,6 +2,7 @@
 	import { base } from '$app/paths';
 	import TheoryArticle from '$lib/components/TheoryArticle.svelte';
 	import PracticeLadder from '$lib/components/PracticeLadder.svelte';
+	import { practicePath } from '$lib/engine/session';
 
 	let { data } = $props();
 </script>
@@ -36,7 +37,9 @@
 		<span></span>
 	{/if}
 
-	<a class="btn btn-primary" href={`${base}/tren/`}>Øv på dette</a>
+	<!-- Straight into this topic: it used to open whatever the stored filter
+	     held, so «Delvis integrasjon» led to an S1 card on the product rule. -->
+	<a class="btn btn-primary" href={`${base}${practicePath(data.moduleId, data.topicId)}`}>Øv på dette</a>
 
 	{#if data.next}
 		<a class="btn btn-ghost" href={`${base}/laer/${data.moduleSlug}/${data.next.id}/`}>

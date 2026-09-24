@@ -89,7 +89,7 @@
 	}
 
 	.formula-block h2 {
-		color: var(--color-example);
+		color: var(--color-example-text);
 	}
 
 	.formula {

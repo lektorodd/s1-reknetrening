@@ -238,9 +238,18 @@ export function daysUntilDue(c: ConceptKnowledge, now: number = Date.now()): num
 	return effectiveInterval(c) - daysSinceSeen(c, now);
 }
 
-export function getDueCount(model: StudentModel): number {
+/**
+ * The concepts to count, optionally narrowed to a set of ids — one course's,
+ * say, so an S1 student is not told about S2 concepts waiting for review.
+ */
+function conceptsIn(model: StudentModel, ids?: Iterable<string>): ConceptKnowledge[] {
+	if (!ids) return Object.values(model.concepts);
+	return [...ids].map((id) => model.concepts[id]).filter((c): c is ConceptKnowledge => !!c);
+}
+
+export function getDueCount(model: StudentModel, ids?: Iterable<string>): number {
 	const now = Date.now();
-	return Object.values(model.concepts)
+	return conceptsIn(model, ids)
 		.filter(c => c.lastSeen !== 0 && daysUntilDue(c, now) <= 0) // never seen = "new", not "due"
 		.length;
 }
@@ -366,13 +375,13 @@ export interface ReviewBuckets {
 	dueWeek: ConceptKnowledge[];
 }
 
-export function getReviewBuckets(model: StudentModel): ReviewBuckets {
+export function getReviewBuckets(model: StudentModel, ids?: Iterable<string>): ReviewBuckets {
 	const now = Date.now();
 	const dueNow: ConceptKnowledge[] = [];
 	const dueTomorrow: ConceptKnowledge[] = [];
 	const dueWeek: ConceptKnowledge[] = [];
 
-	for (const c of Object.values(model.concepts)) {
+	for (const c of conceptsIn(model, ids)) {
 		if (c.lastSeen === 0) continue; // never seen
 		const left = daysUntilDue(c, now);
 

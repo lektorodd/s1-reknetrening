@@ -62,11 +62,11 @@ src/lib/
   modules/      types.ts (shared contract) · registry.ts · rng.ts · derivative/ · logarithm/
   engine/       session.ts · ladder.ts · problem-selector.ts
                 spaced-repetition.ts · student-model.ts · guidance-fading.ts
-  components/   AppHeader · SessionCard · TopicFilter
-                TheoryArticle · PracticeLadder
+  components/   AppHeader · SessionCard · TopicFilter · CourseSwitch
+                TheoryArticle · PracticeLadder · Tex · TexProse
   content/      strings.ts (shared UI text)
   utils/        storage.ts · mathjax.ts
-src/routes/     / · /tren/ · /laer/[modul]/[emne]/ · /framgang/
+src/routes/     / · /tren/ · /laer/[modul]/[emne]/ · /framgang/ · +error
 ```
 
 ### Module contract
@@ -100,6 +100,12 @@ asserts every concept has problems behind it.
   `updateAfterAttempt`). There is no global level: `overallLevel` is a statistic and
   must not choose problems — it once gave an S1 veteran level 5 integrals in their first
   S2 session. Due-ness is counted in local calendar days.
+- **Links into practice carry the filter in the address**: `/tren/?fag=<moduleId>`
+  with optional `&emne=<topic>`, `&niva=<1-5>`, or `?kurs=<S1|S2>` alone. Build them
+  with `practicePath()` (and `theoryPath()` for the Lærebok), never by hand. The course
+  follows from the subject. Tren applies the filter, stores it, and tidies the address,
+  so a reload resumes the session. The course chosen on the front page is the same
+  stored filter (`loadFilter`/`saveFilter`), so every page agrees on it.
 - **`simulation.test.ts` pins what simulated students meet** (weak, strong, S1 veteran
   moving to S2, single-topic drill). Run it after any engine change; a threshold that
   fails is a finding, not a number to loosen.

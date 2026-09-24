@@ -13,6 +13,27 @@ function getKey(key: string): string {
 	return PREFIX + key;
 }
 
+let availableCache: boolean | null = null;
+
+/**
+ * Whether this browser keeps what we save. Private windows and blocked site
+ * data refuse it, and every save then fails silently by design — so the app
+ * asks once, and tells the student their progress will not be kept.
+ */
+export function isAvailable(): boolean {
+	if (typeof window === 'undefined') return true;
+	if (availableCache !== null) return availableCache;
+	try {
+		const probe = getKey('__probe__');
+		localStorage.setItem(probe, '1');
+		localStorage.removeItem(probe);
+		availableCache = true;
+	} catch {
+		availableCache = false;
+	}
+	return availableCache;
+}
+
 export function load<T>(key: string, fallback: T): T {
 	if (typeof window === 'undefined') return fallback;
 	try {

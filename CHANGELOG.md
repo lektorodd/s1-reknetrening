@@ -7,6 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-09-24
+
+Fase 3 etter den fulle gjennomgangen: elevvegen. Kvar side peikar no vidare til neste
+naturlege steg, og kursvalet er synleg.
+
+### Added
+- **Kursbrytar S1 | S2 på framsida og i Framgang.** Valet blir hugsa og styrer økta,
+  «Til repetisjon» og Framgang. Før låg kursvalet tre trykk inne, bak «Endre» i
+  filteret.
+- **Slutten av økta peikar vidare.** Ho viser opptil tre konsept eleven trong å øva meir
+  på, kvart med lenkjene «Øv meir» og «Les».
+- **Feilside på nynorsk og `404.html`.** Før viste SvelteKit si engelske standardside.
+- **Melding når nettlesaren ikkje lagrar.** I private vindauge og med blokkerte
+  nettstaddata forsvann framgangen utan at eleven fekk vita det.
+
+### Changed
+- **«Øv på dette» går til emnet.** Frå «Delvis integrasjon» fekk eleven før filteret
+  `S1 · alle fag` og eit kort om produktregelen. No gjeld filteret
+  `S2 · Integrasjon · Delvis integrasjon`, og alle korta i økta er frå det emnet.
+- **Framgang viser eitt kurs om gongen.**
+  - Berre konsept eleven har prøvd, får rad, og kvar rad lenkjer til øving og Lærebok.
+  - Urørte konsept står samla på éi linje med lenkje til øving.
+  - Før fekk ein S1-elev 20 rader «Ikkje prøvd», mellom dei integrasjon, med halvfulle
+    stolpar. Sida var 3650 px høg på mobil. No er ho 1955 px for ein S1-elev med ni
+    konsept.
+  - «Står for tur» gjeld det valde kurset, og konseptnamna er lenkjer.
+- **«Til repetisjon» tel berre det valde kurset.** Ein S1-elev fekk før høyra om S2-konsept
+  som venta.
+- **Byte av filter midt i økta spør først.** Før forsvann dei korta eleven alt hadde svart
+  på, utan at eleven fekk vita det.
+
+### Accessibility
+- **Fokus flyttar seg til det som dukkar opp**, i staden for å hamna øvst på sida:
+  - til spørsmålet på eit nytt kort
+  - til løysinga etter «Vis løysing»
+  - til hintet etter «Hint»
+- **Tren har ein `aria-live`-region** («Oppgåve 2 av 10», «Økt fullført. 6 av 10 sat.») og
+  ei overskrift for skjermlesarar.
+- **`aria-pressed`** er lagt til på vala i filteret, på kursbrytaren og på nivåa i stigen.
+- **Kontrasten er retta.**
+  - Grå tekst var 4,48:1 og er no 5,4:1.
+  - Merket «Nytt emne» var 3,2:1 og er no 5,3:1.
+  - «Regelen» i Læreboka var 4,2:1 og er no 5,5:1.
+- **`prefers-reduced-motion`** er respektert.
+- **Lenkjene i Framgang** har ei trykkflate på minst 24 px.
+
 ## [0.10.0] - 2026-09-24
 
 Fase 2 etter den fulle gjennomgangen: motoren. Endringane er målte med simulerte elevar

@@ -158,6 +158,39 @@ sine fag. Valet blir lagra, så ein S2-elev slepp å velja på nytt kvar gong.
 Lærebok held alle kursa, med kursoverskrift over fagkorta — der slår du opp, og ein
 S2-elev treng framleis S1-regelen kvar metode speglar.
 
+Kurset står òg synleg som ein brytar **S1 | S2** (`CourseSwitch`) på framsida og i
+Framgang. Brytaren skriv til det same lagra filteret som Treningsrommet bruker. Då
+følgjer økta, «Til repetisjon» og Framgang same val, og eleven slepp tre trykk bak
+«Endre» for å byta kurs.
+
+## Kvar side peikar vidare
+
+Ei side som berre viser, utan å visa vegen vidare, er ein blindveg:
+
+- **«Øv på dette» i Læreboka** går rett til emnet (`/tren/?fag=…&emne=…`).
+- **Kvar rad i Framgang** har lenkjene **Øv** og **Les**. Konsept eleven ikkje har
+  prøvd enno, står samla på éi linje med ei lenkje til øving.
+- **Slutten av økta** viser opptil tre konsept eleven trong å øva meir på, med dei same
+  to lenkjene.
+
+## Tilgjengelegheit
+
+- **Fokus flyttar seg til det som dukkar opp.** Knappen eleven trykte på, forsvinn, så
+  fokus går til det nye:
+  - eit nytt kort gir fokus til spørsmålet
+  - «Vis løysing» gir fokus til løysinga
+  - «Hint» gir fokus til hintet
+
+  Det første kortet får ikkje fokus, fordi sida ikkje skal hoppa når eleven kjem inn.
+- **Val blir markerte med `aria-pressed`**, ikkje berre med farge.
+- **Tren har ein `aria-live`-region** som les opp «Oppgåve N av M» og «Økt fullført».
+- **Tekst skal ha minst 4,5:1 i kontrast** mot flata han står på:
+  - `--color-text-secondary` og `--color-text-muted` er `#5E626A`.
+  - Aksentfargar som tekst på sin eigen lyse tone får ein mørkare tekstvariant:
+    `--color-warning-text` og `--color-example-text`.
+- **Lenkjer som står åleine** får ei trykkflate på minst 24 px.
+- **`prefers-reduced-motion`** slår av animasjonar og overgangar.
+
 ## Display-matte
 
 All matte som står på eiga line er **display-matte** (`\[...\]`), aldri inline. Inline
