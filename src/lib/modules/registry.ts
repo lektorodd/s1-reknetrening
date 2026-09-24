@@ -8,10 +8,12 @@ import type { Course, Problem, TopicModule } from './types';
 import { derivativeModule } from './derivative';
 import { logarithmModule } from './logarithm';
 import { integralModule } from './integral';
+import { analysisModule } from './analysis';
 
 export type { Course, Problem, TopicModule, TopicMeta, StepEntry, TheoryEntry, SelfExplanation, WorkedStep } from './types';
 
-export const MODULE_REGISTRY: TopicModule[] = [derivativeModule, logarithmModule, integralModule];
+// Order is the order a student meets them: the rules, then what they are for.
+export const MODULE_REGISTRY: TopicModule[] = [derivativeModule, analysisModule, logarithmModule, integralModule];
 
 /** Courses the app covers, in the order a student meets them. */
 export const COURSES: Course[] = ['S1', 'S2'];

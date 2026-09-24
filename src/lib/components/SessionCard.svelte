@@ -2,6 +2,7 @@
 	import type { SessionCard } from '$lib/engine/session';
 	import { getModule, instructionFor } from '$lib/modules/registry';
 	import Tex from './Tex.svelte';
+	import SignChart from './SignChart.svelte';
 	import TexProse from './TexProse.svelte';
 	import { base } from '$app/paths';
 	import { onMount, tick } from 'svelte';
@@ -99,6 +100,7 @@
 				<li>
 					<span class="step-label">{step.label}</span>
 					<div class="step-math"><Tex tex={step.latex} /></div>
+					{#if step.signChart}<SignChart chart={step.signChart} />{/if}
 				</li>
 			{/each}
 		</ol>

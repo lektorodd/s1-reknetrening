@@ -56,6 +56,7 @@ import {
 	modulesForCourse
 } from '$lib/modules/registry';
 import type { Problem, StepEntry } from '$lib/modules/types';
+import { compile } from '$lib/modules/testing/latex-eval';
 
 // ── Helpers ──
 
@@ -1318,7 +1319,9 @@ describe('Content rules', () => {
 			for (const line of [p.a, ...p.structuredSteps.map((s) => s.latex)]) {
 				if (/(^|[^0-9.}])1x/.test(line) || /\{1\}x/.test(line)) problems.push(`${p.id}: 1x i ${line}`);
 				if (/\+\s*-|-\s*-/.test(line)) problems.push(`${p.id}: +- i ${line}`);
-				if (/\^\{1\}/.test(line)) problems.push(`${p.id}: ^{1} i ${line}`);
+				// x^{1} or (…)^{1} is unfinished; 10^{1} and e^{1} can be the point, when a
+				// definition is being spelt out.
+				if (/[a-z)]\^\{1\}/.test(line.replace(/\be\^/g, 'E^'))) problems.push(`${p.id}: ^{1} i ${line}`);
 			}
 			// Unreduced fractions, in the answer only: a working line may well show
 			// 98/2 on its way to 49.
@@ -1338,6 +1341,47 @@ describe('Content rules', () => {
 	});
 });
 
+describe('Sign charts', () => {
+	const charts = getFullBank().flatMap((p) =>
+		p.structuredSteps.filter((s) => s.signChart).map((s) => ({ id: p.id, chart: s.signChart! }))
+	);
+
+	it('draw every factor with the sign it really has', () => {
+		const wrong: string[] = [];
+		for (const { id, chart } of charts) {
+			const xs = chart.points.map((p) => p.value);
+			// A sample inside each interval: before, between and after the points.
+			const samples = [xs[0] - 1, ...xs.slice(1).map((x, i) => (x + xs[i]) / 2), xs[xs.length - 1] + 1];
+			const factors = chart.rows.slice(0, -1);
+			const product = chart.rows[chart.rows.length - 1];
+			if (chart.rows.some((r) => r.signs.length !== xs.length + 1 || r.zeros.length !== xs.length)) {
+				wrong.push(`${id}: feil lengd`);
+				continue;
+			}
+			for (const row of factors) {
+				const f = compile(row.expr);
+				samples.forEach((x, i) => {
+					const sg = f({ x }) > 0 ? '+' : '-';
+					if (sg !== row.signs[i]) wrong.push(`${id}: ${row.expr} har ${sg} i intervall ${i}`);
+				});
+				xs.forEach((x, i) => {
+					const zero = Math.abs(f({ x })) < 1e-9;
+					if (zero !== row.zeros[i]) wrong.push(`${id}: ${row.expr} null i ${x}: ${zero}`);
+				});
+			}
+			// The product row: the sign of the product of the rows above.
+			samples.forEach((_, i) => {
+				const neg = factors.filter((r) => r.signs[i] === '-').length % 2 === 1;
+				if ((neg ? '-' : '+') !== product.signs[i]) wrong.push(`${id}: produktet i intervall ${i}`);
+			});
+			xs.forEach((_, i) => {
+				if (factors.some((r) => r.zeros[i]) !== product.zeros[i]) wrong.push(`${id}: produktet null i punkt ${i}`);
+			});
+		}
+		expect(wrong).toEqual([]);
+	});
+});
+
 describe('Nynorsk', () => {
 	// Bokmål forms that have crept into the content before. The app is Nynorsk
 	// only; a student notices a mix at once.
@@ -1348,7 +1392,8 @@ describe('Nynorsk', () => {
 		[/Gjenkjenn/, 'Kjenn att'],
 		[/\bSett inn\b/, 'Set inn'],
 		[/setningen\b/, 'setninga'],
-		[/[Kk]votientregel/, 'brøkregelen']
+		[/[Kk]votientregel/, 'brøkregelen'],
+		[/[Ss]tigning/, 'stiging']
 	];
 
 	/** Every string a module can put in front of a student. */

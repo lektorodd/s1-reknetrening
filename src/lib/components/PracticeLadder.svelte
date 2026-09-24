@@ -4,6 +4,7 @@
 	import { fadeSteps } from '$lib/engine/guidance-fading';
 	import { rungLabel, rungShort, rungPrompt, levelName } from '$lib/content/strings';
 	import Tex from './Tex.svelte';
+	import SignChart from './SignChart.svelte';
 	import TexProse from './TexProse.svelte';
 	import { rngFor } from '$lib/modules/rng';
 	import { instructionFor } from '$lib/modules/registry';
@@ -134,6 +135,7 @@
 				<li>
 					<span class="step-label">{step.label}</span>
 					<div class="step-math"><Tex tex={step.latex} /></div>
+					{#if step.signChart}<SignChart chart={step.signChart} />{/if}
 				</li>
 			{/each}
 		</ol>
@@ -151,6 +153,7 @@
 				<li>
 					<span class="step-label">{step.label}</span>
 					<div class="step-math"><Tex tex={step.latex} /></div>
+					{#if step.signChart}<SignChart chart={step.signChart} />{/if}
 				</li>
 			{/each}
 		</ol>

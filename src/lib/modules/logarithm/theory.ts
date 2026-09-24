@@ -4,6 +4,30 @@
 import type { TheoryEntry } from '../types';
 
 export const LOG_THEORY: Record<string, TheoryEntry> = {
+	"log_definition": {
+		"title": "Kva er ein logaritme?",
+		"intro": "Logaritmen svarar på spørsmålet: kva eksponent må grunntalet ha for å gi dette talet? $\\lg$ har grunntal 10, og $\\ln$ har grunntal $e \\approx 2{,}718$.\n\nLogaritmen er berre definert for positive tal, fordi $10^y$ og $e^y$ alltid er positive.",
+		"formula": "\\lg x = y \\iff 10^{y} = x",
+		"ruleText": "Det same gjeld for $\\ln$: $\\ln x = y$ betyr at $e^y = x$. Difor er $\\lg 10^n = n$, $\\ln e^n = n$ og $10^{\\lg x} = x$.",
+		"example": "Eks: $\\lg 1000 = 3$, fordi $10^3 = 1000$. $\\lg 0{,}01 = -2$, fordi $10^{-2} = 0{,}01$.",
+		"patternRecognition": "🔍 Kan talet skrivast som ein potens av 10 (eller $e$)? Då er logaritmen berre eksponenten.\n\nTypiske teikn:\n• $\\lg 100$, $\\lg 0{,}001$ — potensar av 10\n• $\\ln e^4$, $\\ln \\frac{1}{e}$ — potensar av $e$\n• $10^{\\lg 5}$ — logaritmen og potensen opphevar kvarandre\n\nEr ikkje talet ein potens av 10, kan du likevel seie kva to heile tal logaritmen ligg mellom.",
+		"thinkAloud": "«Eg skal finne $\\lg 0{,}001$. Eg spør: 10 opphøgd i kva er 0,001?\n\n$0{,}001 = \\frac{1}{1000} = 10^{-3}$.\nAltså er $\\lg 0{,}001 = -3$.\n\nKontroll: tal mellom 0 og 1 har negativ logaritme. Det stemmer.»",
+		"workedSteps": [
+			{
+				"explanation": "Kor stor er $\\lg 350$? Finn dei næraste potensane av 10.",
+				"latex": "100 < 350 < 1000"
+			},
+			{
+				"explanation": "Skriv dei som potensar.",
+				"latex": "10^{2} < 350 < 10^{3}"
+			},
+			{
+				"explanation": "Logaritmen veks når talet veks, så han ligg mellom eksponentane.",
+				"latex": "2 < \\lg 350 < 3"
+			}
+		],
+		"mnemonic": "«Logaritmen er eksponenten.»"
+	},
 	"log_product": {
 		"title": "Produktsetninga",
 		"intro": "Logaritmen av eit produkt er lik summen av logaritmane.\n\nLogaritmen er berre definert for positive tal: $\\lg x$ og $\\ln x$ krev at $x > 0$. Det gjeld i alle reglane som følgjer.",

@@ -266,6 +266,17 @@ Oppgåvefeltet under held berre matte. Utan instruksjonen stod eleven med eit ut
 måtte gjetta om det skulle forenklast, skrivast ut eller samlast. Instruksjonen stod før
 somme stader inne i formelen, som `\text{…}`, og då vart han sett med matteskrift.
 
+## Forteiknslinja
+
+`SignChart` teiknar forteiknslinja slik elevane teiknar henne på papiret:
+- heiltrekt linje der faktoren er positiv, stipla der han er negativ, og **0** i nullpunktet
+- éi rad per faktor, og produktet nedst under ein strek over heile breidda
+- punkta med lik avstand, ikkje etter målestokk, fordi det berre er rekkjefølgja som tel
+
+Ho er eit rutenett av celler og ikkje SVG. Då går etikettane gjennom `Tex` som all anna
+matte, og forteiknslinja får plass på mobil utan at sida må rullast sidelengs.
+Skjermlesarar får ei beskriving i ord: «x + 3: negativ før −3, 0 i −3, positiv etter».
+
 ## Steg-etikettar
 
 `.step-label` er ein **merkelapp**, ikkje ei setning: liten, feit, versalar, sperra.

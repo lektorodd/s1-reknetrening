@@ -4,11 +4,10 @@
 // of a solution is shown is instruction, and the student chooses it there
 // rather than having it drawn for them.
 
-// Generic step entry — both derivative and logarithm modules use this shape
-export interface FadingStepEntry {
-	label: string;
-	latex: string;
-}
+import type { StepEntry } from '$lib/modules/types';
+
+/** A solution step as the modules write it — sign charts and all. */
+export type FadingStepEntry = StepEntry;
 
 // ── Fading Levels ──
 

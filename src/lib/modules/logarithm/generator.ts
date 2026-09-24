@@ -7,7 +7,7 @@ import type { Problem, StepEntry } from '../types';
 import { rngFor } from '../rng';
 
 export type LogTopicId =
-	| 'log_product' | 'log_quotient' | 'log_power'
+	| 'log_definition' | 'log_product' | 'log_quotient' | 'log_power'
 	| 'log_simplify' | 'log_equation' | 'exp_equation';
 
 /** Draft problem — id and moduleId are attached by generateBank(). */
@@ -114,6 +114,103 @@ function baseFor(variant: number): 'lg' | 'ln' {
 
 /** A number and its log, as LaTeX: \lg\,5 */
 const lgOf = (log: string, arg: string | number) => `${log}\\,${arg}`;
+
+// ── Definition: lg x = y ⟺ 10^y = x ──
+// What a logarithm *is*, before any rule for combining them.
+// Lvl 1: a power of the base           lg 1000, ln e³
+// Lvl 2: a negative exponent           lg 0,01, ln(1/e²)
+// Lvl 3: the base to the log           10^{lg 7}, e^{2 ln 3}
+// Lvl 4: an equation by definition     lg x = 3, ln x = 2
+// Lvl 5: an estimate                   2 < lg 350 < 3
+
+/** e to a power: e, e^{3}, e^{-2}. */
+const ePow = (k: number) => (k === 1 ? 'e' : `e^{${k}}`);
+
+/** 10^k written out: 1000, 0{,}01. */
+function powerOfTen(k: number): string {
+	if (k >= 0) return `${10 ** k}`;
+	return `0{,}${'0'.repeat(-k - 1)}1`;
+}
+
+function generateLogDefinitionProblem(lvl: number, variant: number): Draft {
+	const base = baseFor(variant);
+	const log = logCmd(base);
+	const n = 1 + (variant % 4);
+	let q = '', structuredSteps: StepEntry[] = [];
+	let instruction: string | undefined;
+
+	if (lvl === 1) {
+		if (base === 'lg') {
+			q = lgOf(log, powerOfTen(n));
+			structuredSteps = [
+				{ label: 'Skriv som potens av 10', latex: `${log}(10^{${n}})` },
+				{ label: 'Definisjonen', latex: `${n}` }
+			];
+		} else {
+			q = `${log}(e^{${n + 1}})`;
+			structuredSteps = [
+				{ label: 'Definisjonen', latex: `${n + 1}` }
+			];
+		}
+	} else if (lvl === 2) {
+		if (base === 'lg') {
+			q = lgOf(log, powerOfTen(-n));
+			structuredSteps = [
+				{ label: 'Skriv som potens av 10', latex: `${log}(10^{-${n}})` },
+				{ label: 'Definisjonen', latex: `-${n}` }
+			];
+		} else {
+			q = `${log}\\left(\\frac{1}{${ePow(n)}}\\right)`;
+			structuredSteps = [
+				{ label: 'Skriv som potens av e', latex: `${log}(e^{-${n}})` },
+				{ label: 'Definisjonen', latex: `-${n}` }
+			];
+		}
+	} else if (lvl === 3) {
+		const a = 2 + variant;
+		const b = base === 'lg' ? '10' : 'e';
+		if (variant % 2 === 0) {
+			q = `${b}^{${lgOf(log, a)}}`;
+			structuredSteps = [
+				{ label: 'Definisjonen', latex: `${a}` }
+			];
+		} else {
+			q = `${b}^{2${lgOf(log, a)}}`;
+			structuredSteps = [
+				{ label: 'Potenssetninga', latex: `${b}^{${log}(${a}^{2})}` },
+				{ label: 'Definisjonen', latex: `${a * a}` }
+			];
+		}
+	} else if (lvl === 4) {
+		instruction = 'Løys likninga.';
+		const k = variant % 2 === 0 ? n : -n;
+		if (base === 'lg') {
+			q = `${log}\\,x = ${k}`;
+			structuredSteps = [
+				{ label: 'Definisjonen', latex: `x = 10^{${k}}` },
+				{ label: 'Rekn ut', latex: `x = ${powerOfTen(k)}` }
+			];
+		} else {
+			q = `${log}\\,x = ${k}`;
+			structuredSteps = [
+				{ label: 'Definisjonen', latex: `x = ${ePow(k)}` }
+			];
+		}
+	} else {
+		instruction = 'Finn dei to heile tala som logaritmen ligg mellom.';
+		const values = [35, 350, 4800, 7, 620, 91, 12000, 2500];
+		const N = values[variant];
+		const k = Math.floor(Math.log10(N));
+		q = `\\lg\\,${N}`;
+		structuredSteps = [
+			{ label: 'Nærmaste potensar av 10', latex: `10^{${k}} < ${N} < 10^{${k + 1}}` },
+			{ label: 'lg veks med talet', latex: `${k} < \\lg\\,${N} < ${k + 1}` }
+		];
+		return finish('log_definition', lvl, 'lg', q, structuredSteps, 'Definisjonen: $\\lg x = y$ betyr at $10^y = x$.', instruction);
+	}
+
+	return finish('log_definition', lvl, base, q, structuredSteps, 'Definisjonen: $\\lg x = y$ betyr at $10^y = x$, og $\\ln x = y$ at $e^y = x$.', instruction);
+}
 
 // ── Product Rule: lg(a·b) = lg a + lg b ──
 // Lvl 1: two numbers           lg(3·4)
@@ -620,6 +717,8 @@ export function generateSingleLogProblem(
 	variant = 0
 ): Draft | null {
 	switch (topic) {
+		case 'log_definition':
+			return generateLogDefinitionProblem(lvl, variant);
 		case 'log_product':
 			return generateLogProductProblem(lvl, variant);
 		case 'log_quotient':
@@ -642,7 +741,7 @@ const VARIANTS = 8;
 
 export function generateLogProblemBank(): Problem[] {
 	const topics: LogTopicId[] = [
-		'log_product', 'log_quotient', 'log_power',
+		'log_definition', 'log_product', 'log_quotient', 'log_power',
 		'log_simplify', 'log_equation', 'exp_equation'
 	];
 	const levels = [1, 2, 3, 4, 5];

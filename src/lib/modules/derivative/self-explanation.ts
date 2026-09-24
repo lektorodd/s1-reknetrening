@@ -4,6 +4,35 @@
 import type { SelfExplanation } from '../types';
 
 export const SELF_EXPLANATIONS: Record<string, SelfExplanation[]> = {
+	"power": [
+		{
+			"question": "Kvifor forsvinn konstantleddet når vi deriverer?",
+			"options": [
+				"Fordi ein konstant ikkje endrar seg når $x$ endrar seg — stigingstalet er 0",
+				"Fordi vi alltid strykar det siste leddet",
+				"Fordi konstanten blir gonga med eksponenten 1"
+			],
+			"correct": 0
+		},
+		{
+			"question": "Kvifor skriv vi $\\frac{1}{x^2}$ som $x^{-2}$ før vi deriverer?",
+			"options": [
+				"Fordi potensregelen då gjeld direkte, same som for $x^3$",
+				"Fordi brøkar ikkje kan deriverast",
+				"Fordi svaret må ha negativ eksponent"
+			],
+			"correct": 0
+		},
+		{
+			"question": "Kvifor må vi gonge ut $(x+2)(x-3)$ før vi bruker potensregelen?",
+			"options": [
+				"Fordi potensregelen gjeld ledd for ledd i ein sum, ikkje for eit produkt",
+				"Fordi parentesar ikkje er lov i svaret",
+				"Det treng vi ikkje — vi kan derivere kvar parentes for seg og gonge"
+			],
+			"correct": 0
+		}
+	],
 	"chain": [
 		{
 			"question": "Kvifor brukar vi kjerneregelen her?",

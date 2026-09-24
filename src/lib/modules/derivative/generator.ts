@@ -6,7 +6,7 @@
 import type { Problem, StepEntry } from '../types';
 import { rngFor } from '../rng';
 
-export type TopicId = 'chain' | 'product' | 'quotient';
+export type TopicId = 'power' | 'chain' | 'product' | 'quotient';
 export type ProblemType = 'poly' | 'root' | 'exp' | 'log';
 
 /** Draft problem — id and moduleId are attached by generateBank(). */
@@ -67,6 +67,141 @@ function rand(min: number, max: number): number {
 
 function pick<T>(arr: T[]): T {
 	return arr[Math.floor(rng() * arr.length)];
+}
+
+// ── Power Rule Generator ──
+//
+// The foundation the other rules stand on: (xⁿ)' = n·xⁿ⁻¹, term by term.
+// Lvl 1: one term                       4x³
+// Lvl 2: a polynomial                   2x³ − 5x² + 3x − 7
+// Lvl 3: a power in disguise            3/x², 4√x
+// Lvl 4: multiply out first             (x+2)(x−3), x²(3x−1)
+// Lvl 5: simplify first                 (2x³ + 5x)/x, x√x
+
+/** x to a power as LaTeX: 1, x, x^{3}, x^{-2}, x^{1/2}. */
+function xPow(k: number | string): string {
+	if (k === 0) return '';
+	if (k === 1) return 'x';
+	return `x^{${k}}`;
+}
+
+/**
+ * A polynomial from [coefficient, power] terms, highest power first, with the
+ * signs, 1s and 0s written the way a teacher would.
+ */
+function polyTex(terms: [number, number][]): string {
+	let out = '';
+	for (const [c, k] of terms) {
+		if (c === 0) continue;
+		const body = k === 0 ? `${Math.abs(c)}` : `${Math.abs(c) === 1 ? '' : Math.abs(c)}${xPow(k)}`;
+		if (out === '') out = c < 0 ? `-${body}` : body;
+		else out += c < 0 ? ` - ${body}` : ` + ${body}`;
+	}
+	return out || '0';
+}
+
+/** The derivative of a polynomial given as [coefficient, power] terms. */
+function derivePoly(terms: [number, number][]): [number, number][] {
+	return terms.filter(([, k]) => k !== 0).map(([c, k]) => [c * k, k - 1]);
+}
+
+function generatePowerProblem(lvl: number, variant: number): Draft {
+	let q = '';
+	let structuredSteps: StepEntry[] = [];
+	let hint = 'Potensregelen: $(x^n)\' = n \\cdot x^{n-1}$. Ein konstant framfor blir ståande.';
+
+	if (lvl === 1) {
+		const a = 2 + variant;
+		const n = rand(2, 5);
+		q = `f(x) = ${a}${xPow(n)}`;
+		structuredSteps = [
+			{ label: 'Potensregelen', latex: `f'(x) = ${a} \\cdot ${n}${xPow(n - 1)}` },
+			{ label: 'Forenkle', latex: `f'(x) = ${a * n}${xPow(n - 1)}` }
+		];
+	} else if (lvl === 2) {
+		const a = pick([1, 2, 3, -2]);
+		const b = rand(1, 6) * (rng() < 0.6 ? -1 : 1);
+		const c = 1 + variant;
+		const d = rand(1, 9) * (rng() < 0.5 ? -1 : 1);
+		const terms: [number, number][] = [[a, 3], [b, 2], [c, 1], [d, 0]];
+		q = `f(x) = ${polyTex(terms)}`;
+		structuredSteps = [
+			{ label: 'Deriver kvart ledd', latex: `f'(x) = ${a} \\cdot 3x^{2} ${b < 0 ? '-' : '+'} ${Math.abs(b)} \\cdot 2x + ${c}` },
+			{ label: 'Forenkle', latex: `f'(x) = ${polyTex(derivePoly(terms))}` }
+		];
+		hint = 'Deriver ledd for ledd. Konstantleddet har derivert 0.';
+	} else if (lvl === 3) {
+		const a = 2 + Math.floor(variant / 2);
+		if (variant % 2 === 0) {
+			// a / xⁿ  →  a·x⁻ⁿ
+			const n = rand(1, 3);
+			q = `f(x) = \\frac{${a}}{${xPow(n)}}`;
+			structuredSteps = [
+				{ label: 'Skriv som potens', latex: `f(x) = ${a}x^{-${n}}` },
+				{ label: 'Potensregelen', latex: `f'(x) = ${a} \\cdot (-${n})x^{-${n + 1}}` },
+				{ label: 'Utan negativ eksponent', latex: `f'(x) = -\\frac{${a * n}}{${xPow(n + 1)}}` }
+			];
+		} else {
+			// a√x  →  a·x^{1/2}
+			q = `f(x) = ${a}\\sqrt{x}`;
+			structuredSteps = [
+				{ label: 'Skriv som potens', latex: `f(x) = ${a}x^{1/2}` },
+				{ label: 'Potensregelen', latex: `f'(x) = ${a} \\cdot \\frac{1}{2}x^{-1/2}` },
+				{
+					label: 'Skriv med rot',
+					latex: a % 2 === 0 ? `f'(x) = \\frac{${a / 2 === 1 ? '1' : a / 2}}{\\sqrt{x}}` : `f'(x) = \\frac{${a}}{2\\sqrt{x}}`
+				}
+			];
+		}
+		hint = 'Skriv rot og brøk som potensar først: $\\sqrt{x} = x^{1/2}$ og $\\frac{1}{x^n} = x^{-n}$.';
+	} else if (lvl === 4) {
+		const p = 1 + variant;
+		const r = rand(1, 5);
+		if (variant % 2 === 0) {
+			// (x + p)(x − r) = x² + (p − r)x − pr
+			const terms: [number, number][] = [[1, 2], [p - r, 1], [-p * r, 0]];
+			q = `f(x) = (x + ${p})(x - ${r})`;
+			structuredSteps = [
+				{ label: 'Gong ut', latex: `f(x) = ${polyTex(terms)}` },
+				{ label: 'Deriver kvart ledd', latex: `f'(x) = ${polyTex(derivePoly(terms))}` }
+			];
+		} else {
+			// x²(p x − r) = p x³ − r x²
+			const terms: [number, number][] = [[p, 3], [-r, 2]];
+			q = `f(x) = x^{2}(${p === 1 ? '' : p}x - ${r})`;
+			structuredSteps = [
+				{ label: 'Gong ut', latex: `f(x) = ${polyTex(terms)}` },
+				{ label: 'Deriver kvart ledd', latex: `f'(x) = ${polyTex(derivePoly(terms))}` }
+			];
+		}
+		hint = 'Gong ut parentesane først, så har du eit vanleg polynom.';
+	} else {
+		const a = 2 + Math.floor(variant / 2);
+		if (variant % 2 === 0) {
+			// (a x³ + b x) / x = a x² + b
+			const b = rand(1, 7);
+			q = `f(x) = \\frac{${a}x^{3} + ${b}x}{x}`;
+			structuredSteps = [
+				{ label: 'Del kvart ledd med x', latex: `f(x) = ${a}x^{2} + ${b}` },
+				{ label: 'Potensregelen', latex: `f'(x) = ${2 * a}x` }
+			];
+		} else {
+			// a x √x = a x^{3/2}
+			q = `f(x) = ${a}x\\sqrt{x}`;
+			structuredSteps = [
+				{ label: 'Skriv som éin potens', latex: `f(x) = ${a}x^{3/2}` },
+				{ label: 'Potensregelen', latex: `f'(x) = ${a} \\cdot \\frac{3}{2}x^{1/2}` },
+				{
+					label: 'Skriv med rot',
+					latex: a % 2 === 0 ? `f'(x) = ${(3 * a) / 2}\\sqrt{x}` : `f'(x) = \\frac{${3 * a}}{2}\\sqrt{x}`
+				}
+			];
+		}
+		hint = 'Forenkle uttrykket til potensar av $x$ før du deriverer.';
+	}
+
+	const lastStep = structuredSteps[structuredSteps.length - 1];
+	return { topic: 'power', level: lvl, type: 'basic', q, a: lastStep.latex, structuredSteps, hint };
 }
 
 // ── Chain Rule Generator ──
@@ -542,6 +677,8 @@ function generateQuotientProblem(lvl: number, variant: number): Draft {
 
 export function generateSingleProblem(rule: TopicId, lvl: number, variant = 0): Draft | null {
 	switch (rule) {
+		case 'power':
+			return generatePowerProblem(lvl, variant);
 		case 'chain':
 			return generateChainProblem(lvl, variant);
 		case 'product':
@@ -557,7 +694,7 @@ export const MODULE_ID = 'derivative';
 const VARIANTS = 8;
 
 export function generateProblemBank(): Problem[] {
-	const rules: TopicId[] = ['chain', 'product', 'quotient'];
+	const rules: TopicId[] = ['power', 'chain', 'product', 'quotient'];
 	const levels = [1, 2, 3, 4, 5];
 	const bank: Problem[] = [];
 

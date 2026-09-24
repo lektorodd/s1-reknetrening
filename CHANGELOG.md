@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-09-24
+
+Fase 4b: nytt S1-stoff.
+
+### Added
+- **Ny modul: Drøfting (S1).** Ho handlar om kva den deriverte blir brukt til, og har tre
+  emne med fem nivå kvart:
+  - **Tangenten:** likninga i eit gitt punkt (andregrad og tredjegrad), punktet med eit
+    gitt stigingstal, og tangentar til $e^{kx}$ og $c\ln x$.
+  - **Topp- og botnpunkt:** frå andregradsfunksjonar til fjerdegrad og terrassepunkt.
+    Løysinga viser ei **teikna forteiknslinje**.
+  - **Optimering:** største og minste verdi på eit intervall, der endepunkta må vera med.
+    Nivå 4–5 er tekstoppgåver: gjerde langs ein vegg, rektangel med gitt omkrins, boks
+    utan lok og størst overskot.
+- **Forteiknslinje** (`SignChart`) som ein ny del av løysingsstega. Ho er heiltrekt der
+  faktoren er positiv, stipla der han er negativ, og har 0 i nullpunkta. Skjermlesarar får
+  ei beskriving i ord.
+- **Potensregelen** er nytt første emne i Derivasjon: eitt ledd, polynom, $\frac{1}{x^n}$
+  og $\sqrt{x}$, gong ut først og forenkl først.
+- **Definisjonen** er nytt første emne i Logaritmar: $\lg 1000$, $\lg 0{,}01$, $10^{\lg 7}$,
+  $\lg x = 3$ og overslag som $2 < \lg 350 < 3$.
+- **Teori og refleksjonsspørsmål** for alle dei nye emna.
+
+### Testing
+- Kvar tangent blir kontrollert: han skal røra grafen med same stigning.
+- Kvart topp- og botnpunkt blir kontrollert: $f' = 0$, rett $y$-verdi og rett type ut frå
+  forteiknsskiftet. Testen sjekkar òg at ingen nullpunkt til $f'$ manglar.
+- Kvart optimum blir samanlikna med tett prøvetaking over heile området.
+- Kvar rad i kvar forteiknslinje blir rekna ut frå LaTeX-en og samanlikna, forteikn for
+  forteikn. Ein feil som vart lagd inn med vilje, vart fanga.
+- Nynorsk: «stiging» og «stigingstal» er lagde til i lista.
+
 ## [0.12.0] - 2026-09-24
 
 Fase 4a: kvaliteten på oppgåvene som finst. Nytt pensum (tangentar, forteiknslinjer,

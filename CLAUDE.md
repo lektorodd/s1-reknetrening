@@ -59,10 +59,11 @@ difficulty selector covers the rest, so the row was a third copy of the same thi
 
 ```
 src/lib/
-  modules/      types.ts (shared contract) · registry.ts · rng.ts · derivative/ · logarithm/
+  modules/      types.ts (shared contract) · registry.ts · rng.ts · testing/latex-eval.ts
+                derivative/ · analysis/ (Drøfting) · logarithm/ · integral/
   engine/       session.ts · ladder.ts · problem-selector.ts
                 spaced-repetition.ts · student-model.ts · guidance-fading.ts
-  components/   AppHeader · SessionCard · TopicFilter · CourseSwitch
+  components/   AppHeader · SessionCard · TopicFilter · CourseSwitch · SignChart
                 TheoryArticle · PracticeLadder · Tex · TexProse
   content/      strings.ts (shared UI text)
   utils/        storage.ts · mathjax.ts
@@ -99,6 +100,10 @@ asserts every concept has problems behind it.
   that restates the one before, reduced answers, no `1x`/`+-`, and Nynorsk forms
   (a list of Bokmål words that have crept in before). When the evaluator cannot read
   something new, teach it — don't skip the problem.
+- **Sign charts are data, not pictures.** A step may carry `signChart` (factor rows
+  and a product row, signs per interval, zeros per point). Build it from the factors
+  as functions (`signChart()` in `analysis/generator.ts`), never by typing signs; a
+  registry-wide test evaluates every row's LaTeX and checks each sign and zero.
 - **Vary a parameter by variant**, not only at random: a generator gets the variant
   number, and the parameter a student notices first should follow it, so eight
   variants are eight different problems.

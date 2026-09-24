@@ -4,6 +4,30 @@
 import type { TheoryEntry } from '../types';
 
 export const theoryBank: Record<string, TheoryEntry> = {
+	"power": {
+		"title": "Potensregelen",
+		"intro": "Grunnregelen alle dei andre byggjer på. Ein potens av $x$ blir derivert ved at eksponenten kjem ned som faktor, og eksponenten minkar med 1.\n\nDøme: $x^3$, $5x^2$, $\\frac{1}{x^2}$, $\\sqrt{x}$",
+		"formula": "(x^n)' = n \\cdot x^{n-1}",
+		"ruleText": "Ein konstant framfor blir ståande, og eit polynom deriverer du ledd for ledd. Konstantleddet har derivert 0. Regelen gjeld for alle eksponentar — òg negative og brøkar.",
+		"example": "Eks: $4x^3 - 2x + 7 \\Rightarrow 12x^2 - 2$",
+		"patternRecognition": "🔍 Er funksjonen berre ein sum av potensar av $x$? Då held potensregelen.\n\nSkriv om før du deriverer:\n• $\\frac{1}{x^n} = x^{-n}$\n• $\\sqrt{x} = x^{1/2}$\n• Parentesar: gong ut først, til dømes $(x+1)(x-2) = x^2 - x - 2$",
+		"thinkAloud": "«Eg ser $f(x) = \\frac{3}{x^2}$. Det er ein brøk, men eigentleg berre ein potens: $3x^{-2}$.\n\nEksponenten $-2$ kjem ned: $3 \\cdot (-2) = -6$.\nEksponenten minkar med 1: $-2 - 1 = -3$.\nAltså $f'(x) = -6x^{-3} = -\\frac{6}{x^3}$.\n\nHugs: skriv om til potens først, så er det same regel som for $x^3$.»",
+		"workedSteps": [
+			{
+				"explanation": "Vi skal derivere eit polynom, ledd for ledd.",
+				"latex": "f(x) = 2x^3 - 5x^2 + 4x - 7"
+			},
+			{
+				"explanation": "Bruk potensregelen på kvart ledd. Konstanten $-7$ har derivert 0.",
+				"latex": "f'(x) = 2 \\cdot 3x^2 - 5 \\cdot 2x + 4"
+			},
+			{
+				"explanation": "Rekn ut koeffisientane.",
+				"latex": "f'(x) = 6x^2 - 10x + 4"
+			}
+		],
+		"mnemonic": "«Eksponenten ned, eksponenten éin mindre.»"
+	},
 	"chain": {
 		"title": "Kjerneregelen",
 		"intro": "Derivasjon av samansette funksjonar — ein funksjon inne i ein annan. Generelt: $f(x) = g(u(x))$.\n\nDøme: $(2x+1)^3$, $\\sqrt{3x+2}$, $e^{x^2}$, $\\ln(5x-1)$",

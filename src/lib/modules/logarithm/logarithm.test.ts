@@ -113,7 +113,7 @@ const SAMPLES: Record<string, number>[] = [
 const mathOf = (q: string) => q.replace(/\\text\{[^}]*\}/g, '').trim();
 
 describe('Logaritmeuttrykk: svaret har same verdi som oppgåva', () => {
-	it.each(bank.filter((p) => EXPRESSION_TOPICS.includes(p.topic)).map((p) => [p.id, p] as const))(
+	it.each(bank.filter((p) => EXPRESSION_TOPICS.includes(p.topic) || (p.topic === 'log_definition' && p.level <= 3)).map((p) => [p.id, p] as const))(
 		'%s',
 		(_id, p) => {
 			const q = compile(mathOf(p.q));
@@ -127,7 +127,7 @@ describe('Logaritmeuttrykk: svaret har same verdi som oppgåva', () => {
 });
 
 describe('Likningar: svaret løyser likninga', () => {
-	it.each(bank.filter((p) => ['log_equation', 'exp_equation'].includes(p.topic)).map((p) => [p.id, p] as const))(
+	it.each(bank.filter((p) => ['log_equation', 'exp_equation'].includes(p.topic) || (p.topic === 'log_definition' && p.level === 4)).map((p) => [p.id, p] as const))(
 		'%s',
 		(_id, p) => {
 			const [lhsSrc, rhsSrc] = mathOf(p.q).split('=');
@@ -144,4 +144,14 @@ describe('Likningar: svaret løyser likninga', () => {
 			}
 		}
 	);
+});
+
+describe('Definisjonen, nivå 5: overslag', () => {
+	it.each(at('log_definition', 5).map((p) => [p.id, p] as const))('%s: lg ligg mellom dei to tala', (_id, p) => {
+		const N = Number(p.q.match(/\\lg\\,(\d+)/)![1]);
+		const [lo, hi] = p.a.match(/^(-?\d+) < \\lg\\,\d+ < (-?\d+)$/)!.slice(1).map(Number);
+		expect(hi - lo).toBe(1);
+		expect(Math.log10(N)).toBeGreaterThan(lo);
+		expect(Math.log10(N)).toBeLessThan(hi);
+	});
 });

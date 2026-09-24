@@ -4,6 +4,35 @@
 import type { SelfExplanation } from '../types';
 
 export const LOG_SELF_EXPLANATIONS: Record<string, SelfExplanation[]> = {
+	"log_definition": [
+		{
+			"question": "Kvifor er $\\lg 0{,}01$ negativ?",
+			"options": [
+				"Fordi $0{,}01 = 10^{-2}$, og eksponenten er det logaritmen gir",
+				"Fordi alle logaritmar av desimaltal er negative",
+				"Fordi $\\lg$ av eit tal under 1 ikkje er definert"
+			],
+			"correct": 0
+		},
+		{
+			"question": "Kvifor er $10^{\\lg 7} = 7$?",
+			"options": [
+				"Fordi $\\lg 7$ er nettopp eksponenten 10 må ha for å gi 7",
+				"Fordi $10$ og $\\lg$ alltid strykar kvarandre, same kva som står der",
+				"Fordi $\\lg 7$ er om lag 1"
+			],
+			"correct": 0
+		},
+		{
+			"question": "Kvifor finst ikkje $\\lg(-5)$?",
+			"options": [
+				"Fordi $10^y$ er positiv for alle $y$, så ingen eksponent gir $-5$",
+				"Fordi kalkulatoren gir feilmelding",
+				"Fordi $-5$ ikkje er eit heilt tal"
+			],
+			"correct": 0
+		}
+	],
 	"log_product": [
 		{
 			"question": "Kvifor kan vi skrive lg(ab) som lg a + lg b?",
