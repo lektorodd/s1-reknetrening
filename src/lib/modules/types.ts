@@ -35,6 +35,12 @@ export interface Problem {
 	a: string;
 	structuredSteps: StepEntry[];
 	hint: string;
+	/**
+	 * What to do, when it differs from the topic's usual instruction — a
+	 * logarithm topic that mostly expands, say, asking once to combine instead.
+	 * Prose; may contain inline $...$. The question itself stays pure maths.
+	 */
+	instruction?: string;
 }
 
 /** One step of a curated, hand-written worked example. */
@@ -68,6 +74,13 @@ export interface SelfExplanation {
 export interface TopicMeta {
 	id: string;
 	name: string;
+	/**
+	 * What a student is asked to do with this topic's problems, shown above the
+	 * question: «Deriver funksjonen.», «Løys likninga.». Prose; may contain
+	 * inline $...$. Without it a bare expression left the student to guess
+	 * whether to simplify, expand or combine.
+	 */
+	instruction: string;
 }
 
 /**

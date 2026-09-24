@@ -11,7 +11,7 @@ export const theoryBank: Record<string, TheoryEntry> = {
 		"ruleText": "Deriver den ytre funksjonen, la den indre stå som ho er, og gong med den deriverte av den indre.",
 		"example": "Eks: $(3x+1)^4 \\Rightarrow 12(3x+1)^3$",
 		"patternRecognition": "🔍 Ser du ein funksjon inne i ein annan funksjon? Då treng du kjerneregelen!\n\nTypiske teikn:\n• Noko opphøgd i potens: $(\\ldots)^n$\n• Rot av noko: $\\sqrt{\\ldots}$\n• Logaritme av noko: $\\ln(\\ldots)$\n• $e$ opphøgd i noko: $e^{(\\ldots)}$\n\nSpør deg sjølv: «Kan eg peike på éin del som er den indre funksjonen?»",
-		"thinkAloud": "«Eg ser $\\sqrt{3x+2}$. Det er ei rot av noko — altså noko inni noko, så kjerneregelen gjeld.\n\nDet ytre er $g(u) = \\sqrt{u}$, det indre er $u = 3x+2$.\nFørst deriverer eg det ytre: $g'(u) = \\frac{1}{2\\sqrt{u}}$.\nSå deriverer eg det indre: $(3x+2)' = 3$.\nTil slutt gongar eg dei saman:\n$f'(x) = \\frac{1}{2\\sqrt{3x+2}} \\cdot 3 = \\frac{3}{2\\sqrt{3x+2}}$.\n\nHusk: ytre derivert × indre derivert. Det indre får stå urørt inne i rota.»",
+		"thinkAloud": "«Eg ser $\\sqrt{3x+2}$. Det er ei rot av noko — altså noko inni noko, så kjerneregelen gjeld.\n\nDet ytre er $g(u) = \\sqrt{u}$, det indre er $u = 3x+2$.\nFørst deriverer eg det ytre: $g'(u) = \\frac{1}{2\\sqrt{u}}$.\nSå deriverer eg det indre: $(3x+2)' = 3$.\nTil slutt gongar eg dei saman:\n$f'(x) = \\frac{1}{2\\sqrt{3x+2}} \\cdot 3 = \\frac{3}{2\\sqrt{3x+2}}$.\n\nHugs: ytre derivert × indre derivert. Det indre får stå urørt inne i rota.»",
 		"workedSteps": [
 			{
 				"explanation": "Vi har $f(x) = (2x+1)^3$. Fyrst identifiserer vi at dette er ein samansett funksjon.",
@@ -38,7 +38,7 @@ export const theoryBank: Record<string, TheoryEntry> = {
 				"latex": "f'(x) = 6(2x+1)^2"
 			}
 		],
-		"mnemonic": "«Derivér det ytre, behold det indre, gong med den deriverte av det indre.»"
+		"mnemonic": "«Deriver det ytre, behald det indre, gong med den deriverte av det indre.»"
 	},
 	"product": {
 		"title": "Produktregelen",
@@ -46,8 +46,8 @@ export const theoryBank: Record<string, TheoryEntry> = {
 		"formula": "(u \\cdot v)' = u'v + uv'",
 		"ruleText": "Deriver den eine faktoren og la den andre stå — så byter du om, og legg dei to saman.",
 		"example": "Eks: $x^2 \\cdot e^x \\Rightarrow 2xe^x + x^2e^x$",
-		"patternRecognition": "🔍 Ser du to separate funksjonar av $x$ som er gonga saman? Då treng du produktregelen!\n\nTypiske teikn:\n• $x^n \\cdot \\sin(x)$ — potens gonger trig\n• $x^2 \\cdot e^x$ — polynom gonger eksponential\n• $(x+1) \\cdot \\ln(x)$ — to ulike typar\n\nSpør deg sjølv: «Kan eg peike på to delar som begge inneheld $x$?»",
-		"thinkAloud": "«Eg ser $x \\cdot \\ln x$. To faktorar gonga saman, og begge inneheld $x$ — då er det produktregelen.\n\nEg vel $u = x$ og $v = \\ln x$.\nDeriverer kvar for seg: $u' = 1$, $v' = \\frac{1}{x}$.\nSet inn: $f'(x) = u'v + uv' = 1 \\cdot \\ln x + x \\cdot \\frac{1}{x}$.\nForenklar: $x \\cdot \\frac{1}{x} = 1$, så $f'(x) = \\ln x + 1$.\n\nHusk: «Den eine derivert gonger den andre, pluss motsett.»»",
+		"patternRecognition": "🔍 Ser du to separate funksjonar av $x$ som er gonga saman? Då treng du produktregelen!\n\nTypiske teikn:\n• $x^3 \\cdot \\sqrt{x+1}$ — potens gonger rot\n• $x^2 \\cdot e^x$ — polynom gonger eksponential\n• $(x+1) \\cdot \\ln(x)$ — to ulike typar\n\nSpør deg sjølv: «Kan eg peike på to delar som begge inneheld $x$?»",
+		"thinkAloud": "«Eg ser $x \\cdot \\ln x$. To faktorar gonga saman, og begge inneheld $x$ — då er det produktregelen.\n\nEg vel $u = x$ og $v = \\ln x$.\nDeriverer kvar for seg: $u' = 1$, $v' = \\frac{1}{x}$.\nSet inn: $f'(x) = u'v + uv' = 1 \\cdot \\ln x + x \\cdot \\frac{1}{x}$.\nForenklar: $x \\cdot \\frac{1}{x} = 1$, så $f'(x) = \\ln x + 1$.\n\nHugs: «Den eine derivert gonger den andre, pluss motsett.»»",
 		"workedSteps": [
 			{
 				"explanation": "Vi har $f(x) = x^2 \\cdot (3x+1)$. To funksjonar gonga saman.",
@@ -82,7 +82,7 @@ export const theoryBank: Record<string, TheoryEntry> = {
 		"formula": "\\left(\\frac{u}{v}\\right)' = \\frac{u'v - uv'}{v^2}",
 		"ruleText": "Teljaren derivert gonger nemnaren, minus teljaren gonger nemnaren derivert, delt på nemnaren i andre.",
 		"example": "Eks: $\\frac{e^x}{x} \\Rightarrow \\frac{e^x(x-1)}{x^2}$",
-		"patternRecognition": "🔍 Ser du ein brøk der både teljar og nemnar har $x$? Då treng du brøkregelen!\n\nTypiske teikn:\n• $\\frac{x^2}{x+1}$ — polynom over polynom\n• $\\frac{\\sin(x)}{x}$ — trig over polynom\n• $\\frac{e^x}{x^2+1}$ — eksponential over polynom\n\nSpør deg sjølv: «Er det ein brøkstrek, og har begge sider $x$?»",
+		"patternRecognition": "🔍 Ser du ein brøk der både teljar og nemnar har $x$? Då treng du brøkregelen!\n\nTypiske teikn:\n• $\\frac{x^2}{x+1}$ — polynom over polynom\n• $\\frac{\\ln x}{x}$ — logaritme over polynom\n• $\\frac{e^x}{x^2+1}$ — eksponential over polynom\n\nSpør deg sjølv: «Er det ein brøkstrek, og har begge sider $x$?»",
 		"thinkAloud": "«Eg ser $\\frac{x^2}{x+2}$. Ein brøk der $x$ står både oppe og nede — då må eg bruke brøkregelen.\n\nEg vel $u = x^2$ (teljar) og $v = x+2$ (nemnar).\nDeriverer: $u' = 2x$, $v' = 1$.\nBrøkregelen: $\\frac{u'v - uv'}{v^2} = \\frac{2x(x+2) - x^2 \\cdot 1}{(x+2)^2}$.\nForenklar teljaren: $2x^2 + 4x - x^2 = x^2 + 4x$.\nSvar: $\\frac{x^2+4x}{(x+2)^2} = \\frac{x(x+4)}{(x+2)^2}$.\n\nPass på: rekkefølgja i teljaren er viktig! $u'v$ fyrst, minus $uv'$.»",
 		"workedSteps": [
 			{

@@ -8,6 +8,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { generateLogProblemBank } from './generator';
+import { compile, rhsOf } from '../testing/latex-eval';
 
 const bank = generateLogProblemBank();
 const at = (topic: string, level: number) =>
@@ -97,4 +98,50 @@ describe('Exponential equations, level 5: c · b^(x+k) = R', () => {
 			expect(Math.abs(e - Math.round(e)), p.q).toBeGreaterThan(1e-6);
 		}
 	});
+});
+
+// ── Every problem, checked numerically ──
+
+const EXPRESSION_TOPICS = ['log_product', 'log_quotient', 'log_power', 'log_simplify'];
+const SAMPLES: Record<string, number>[] = [
+	{ x: 2.3, y: 1.7, z: 3.1 },
+	{ x: 5.9, y: 0.6, z: 1.4 },
+	{ x: 1.2, y: 7.5, z: 0.8 }
+];
+
+/** The maths of a question, without any instruction written into it. */
+const mathOf = (q: string) => q.replace(/\\text\{[^}]*\}/g, '').trim();
+
+describe('Logaritmeuttrykk: svaret har same verdi som oppgåva', () => {
+	it.each(bank.filter((p) => EXPRESSION_TOPICS.includes(p.topic)).map((p) => [p.id, p] as const))(
+		'%s',
+		(_id, p) => {
+			const q = compile(mathOf(p.q));
+			const a = compile(rhsOf(p.a));
+			for (const v of SAMPLES) {
+				const want = q(v);
+				expect(Math.abs(a(v) - want), `${p.q} ⟶ ${p.a} ved ${JSON.stringify(v)}`).toBeLessThan(1e-9 * Math.max(1, Math.abs(want)));
+			}
+		}
+	);
+});
+
+describe('Likningar: svaret løyser likninga', () => {
+	it.each(bank.filter((p) => ['log_equation', 'exp_equation'].includes(p.topic)).map((p) => [p.id, p] as const))(
+		'%s',
+		(_id, p) => {
+			const [lhsSrc, rhsSrc] = mathOf(p.q).split('=');
+			const lhs = compile(lhsSrc);
+			const rhs = compile(rhsSrc);
+			const expr = rhsOf(p.a);
+			const roots = expr.startsWith('\\pm')
+				? [compile(expr.slice(3)), (v: Record<string, number>) => -compile(expr.slice(3))(v)]
+				: [compile(expr)];
+			for (const root of roots) {
+				const x = root({});
+				const diff = lhs({ x }) - rhs({ x });
+				expect(Number.isFinite(diff) && Math.abs(diff) < 1e-9 * Math.max(1, Math.abs(rhs({ x }))), `${p.q} ved x=${x}: ${diff}`).toBe(true);
+			}
+		}
+	);
 });

@@ -2,6 +2,55 @@
 
 ---
 
+## Stage 10a – Innhald som tåler å bli rekna på (v0.12.0)
+**Dato:** 2026-09-24
+
+### Testane først
+
+Før eg endra ei einaste oppgåve, skreiv eg ein liten LaTeX-evaluator, `latex-eval.ts`,
+som berre testane bruker. Han les strengane generatorane skriv, som tal.
+
+- **Derivasjon:** kvar `f(x)` blir derivert numerisk og samanlikna med svaret og med
+  kvar mellomlinje.
+- **Logaritmar:** kvar oppgåve blir rekna ut og samanlikna med svaret, og kvart
+  likningssvar blir sett inn att.
+
+Testane gjekk grøne mot den gamle koden: matten var rett. Evaluatoren har difor sine
+eigne testar, mellom anna éin som viser at han skil ein feil derivert frå ein rett.
+
+Reglane for heile registeret feila derimot:
+
+| Regel | Talet på brot |
+|---|---|
+| Under 6 ulike oppgåver per emne/nivå | 17 |
+| Svar-steg som berre gjentek førre steg | 9 emne/nivå |
+| Instruksjon inne i `q` | 3 |
+| `1x`, `+ -` og uforkorta svar | 25, mellom dei 11 i integrasjon, som gjennomgangen ikkje hadde fanga |
+| Bokmålsord | 484 treff |
+
+### Kjerneregelen
+
+Typen følgde nivået (`lvl <= 2 ? 'poly' : …`), så konseptet «rot» var «alt på nivå 3».
+No følgjer typen den ytre funksjonen, og nivået følgjer den indre. Familien blir
+vald ut frå variantnummeret, så kvar familie finst garantert på kvart nivå han høyrer
+til. Koeffisienten følgjer òg variantnummeret, sidan tilfeldige trekk gav to like
+`e^{2x+3}`.
+
+### Stigen
+
+Når dei gjentekne svar-stega forsvann, vart fleire logaritmeoppgåver endå kortare, og
+trinna fall saman endå meir. Løysinga ligg difor i stigen: `distinctRungs` tek berre med
+trinn som gøymer fleire steg enn trinnet før. Ei oppgåve med eitt steg får «Døme · Sjølv»,
+og det er ærleg.
+
+### Resultat i simuleringa
+
+Motoren er ikkje endra. Likevel fekk den svake eleven 4 % av korta på nivå 4–5, ned frå
+11 %. Grunnen er at alle kjerneregelkonsepta no har eit lett nivå, så motoren har noko å
+gi han.
+
+---
+
 ## Stage 9c – Elevvegen (v0.11.0)
 **Dato:** 2026-09-24
 

@@ -6,6 +6,7 @@
 	import Tex from './Tex.svelte';
 	import TexProse from './TexProse.svelte';
 	import { rngFor } from '$lib/modules/rng';
+	import { instructionFor } from '$lib/modules/registry';
 
 	interface Props {
 		/** One ladder per difficulty the topic offers, easiest first. */
@@ -122,7 +123,10 @@
 
 	<p class="prompt">{rungPrompt(faded.prompt)}</p>
 
-	<div class="question"><Tex tex={current.problem.q} /></div>
+	<div class="task">
+		<p class="instruction"><TexProse text={instructionFor(current.problem)} /></p>
+		<div class="question"><Tex tex={current.problem.q} /></div>
+	</div>
 
 	{#if faded.shown.length > 0}
 		<ol class="steps">
@@ -298,6 +302,18 @@
 		margin: 0;
 		color: var(--color-text-secondary);
 		font-size: var(--font-size-sm);
+	}
+
+	.task {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-2);
+	}
+
+	.instruction {
+		margin: 0;
+		font-weight: 600;
+		color: var(--color-text-strong);
 	}
 
 	.question {

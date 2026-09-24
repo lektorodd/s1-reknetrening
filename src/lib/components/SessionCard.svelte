@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { SessionCard } from '$lib/engine/session';
-	import { getModule } from '$lib/modules/registry';
+	import { getModule, instructionFor } from '$lib/modules/registry';
 	import Tex from './Tex.svelte';
 	import TexProse from './TexProse.svelte';
 	import { base } from '$app/paths';
@@ -74,6 +74,8 @@
 		{/if}
 		<span class="counter">{index + 1} av {total}</span>
 	</header>
+
+	<p class="instruction"><TexProse text={instructionFor(card.problem)} /></p>
 
 	<!-- A labelled group, so a screen reader announces "Oppgåve N" and then reads
 	     the maths; a bare aria-label on a div can replace its content instead. -->
@@ -161,6 +163,15 @@
 		margin-left: auto;
 		color: var(--color-text-muted);
 		font-size: var(--font-size-sm);
+	}
+
+	/* What to do with the maths below. Plain body text, not a label: it is the
+	   first thing read on the card, and a bare expression left the student to
+	   guess whether to simplify, expand or solve. */
+	.instruction {
+		margin: 0 0 calc(-1 * var(--space-2));
+		font-weight: 600;
+		color: var(--color-text-strong);
 	}
 
 	/* An inset field, but a large one: the soft surface, not the sunk tone that

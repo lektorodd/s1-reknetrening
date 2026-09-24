@@ -12,7 +12,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { createStudentModel, type StudentModel } from '$lib/engine/student-model';
 import { updateAfterAttempt } from '$lib/engine/spaced-repetition';
 import { buildSession, filterBank, SESSION_LENGTH } from '$lib/engine/session';
-import { conceptIdOf, getFullBank } from '$lib/modules/registry';
+import { conceptIdOf, conceptIdsForCourse, getFullBank } from '$lib/modules/registry';
 import type { Problem } from '$lib/modules/types';
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -105,7 +105,7 @@ describe('Simulated students', () => {
 		for (const c of log) draws.set(c.conceptId, (draws.get(c.conceptId) ?? 0) + 1);
 		const counts = [...draws.values()];
 		const mean = counts.reduce((a, b) => a + b, 0) / counts.length;
-		expect(draws.size).toBe(11);
+		expect(draws.size).toBe(conceptIdsForCourse('S1').length);
 		expect(Math.min(...counts), JSON.stringify(Object.fromEntries(draws))).toBeGreaterThanOrEqual(0.4 * mean);
 	});
 

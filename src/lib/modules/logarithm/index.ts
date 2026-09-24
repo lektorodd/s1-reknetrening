@@ -12,6 +12,19 @@ const TOPIC_NAMES: Record<string, string> = {
 	exp_equation: 'Eksponentiallikningar'
 };
 
+/**
+ * The usual task per topic. Problems that ask the other way round — combine
+ * into one logarithm instead of expanding — carry their own instruction.
+ */
+const INSTRUCTIONS: Record<string, string> = {
+	log_product: 'Skriv som ein sum av logaritmar.',
+	log_quotient: 'Skriv ut logaritmen så langt det går.',
+	log_power: 'Skriv ut logaritmen med potenssetninga.',
+	log_simplify: 'Skriv ut logaritmen så langt det går.',
+	log_equation: 'Løys likninga.',
+	exp_equation: 'Løys likninga.'
+};
+
 export const logarithmModule: TopicModule = {
 	id: MODULE_ID,
 	slug: 'logaritmar',
@@ -20,7 +33,7 @@ export const logarithmModule: TopicModule = {
 	color: '#276749',
 	name: 'Logaritmar',
 	description: 'Reknereglane, forenkling og likningar',
-	topics: Object.entries(TOPIC_NAMES).map(([id, name]) => ({ id, name })),
+	topics: Object.entries(TOPIC_NAMES).map(([id, name]) => ({ id, name, instruction: INSTRUCTIONS[id] })),
 	generateBank: generateLogProblemBank,
 	theory: LOG_THEORY,
 	selfExplanations: LOG_SELF_EXPLANATIONS,

@@ -61,7 +61,7 @@ export const LOG_SELF_EXPLANATIONS: Record<string, SelfExplanation[]> = {
 		{
 			"question": "Korleis får du ned ein ukjend eksponent?",
 			"options": [
-				"Ta logaritmen på begge sider og bruk potenssetningen",
+				"Ta logaritmen på begge sider og bruk potenssetninga",
 				"Ta kvadratrota av begge sider",
 				"Del begge sider på grunntalet"
 			],

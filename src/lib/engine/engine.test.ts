@@ -49,6 +49,7 @@ import {
 	conceptIdOf,
 	conceptIdsForCourse,
 	conceptTopic,
+	instructionFor,
 	getAllConceptIds,
 	getFullBank,
 	getModuleBySlug,
@@ -1070,6 +1071,25 @@ describe('Practice ladder', () => {
 		expect(rungsFor(8)).toEqual(LADDER_RUNGS);
 	});
 
+	it('gives less help at every rung than at the one before', () => {
+		// A 3-step problem used to show one step on both «To siste» and «Starten»:
+		// «Mindre hjelp» gave the same help again.
+		const flat: string[] = [];
+		for (const mod of MODULE_REGISTRY) {
+			for (const topic of mod.topics) {
+				for (const level of [1, 2, 3, 4, 5]) {
+					const hidden = buildLadder(mod.id, topic.id, getFullBank(), level).map(
+						(r) => fadeSteps(r.problem.structuredSteps, r.rung).hidden.length
+					);
+					if (hidden.some((h, i) => i > 0 && h <= hidden[i - 1])) {
+						flat.push(`${mod.id}/${topic.id} nivå ${level}: ${hidden.join('-')}`);
+					}
+				}
+			}
+		}
+		expect(flat).toEqual([]);
+	});
+
 	it('returns nothing for a topic that does not exist', () => {
 		expect(buildLadder('derivative', 'finst-ikkje', getFullBank())).toEqual([]);
 	});
@@ -1242,5 +1262,125 @@ describe('Resuming a session: what was missed', () => {
 		expect(restoreSession(stored, filter, s.startedAt)!.missed).toEqual(['log_power']);
 		delete stored.missed;
 		expect(restoreSession(stored, filter, s.startedAt)!.missed).toEqual([]);
+	});
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CONTENT RULES — every module, every problem
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+describe('Content rules', () => {
+	const bank = getFullBank();
+	const cells = new Map<string, Problem[]>();
+	for (const p of bank) {
+		const k = `${p.moduleId}/${p.topic} nivå ${p.level}`;
+		cells.set(k, [...(cells.get(k) ?? []), p]);
+	}
+	// Spacing and an explicit \cdot carry no content: «3 \cdot lg x» restates «3lg x».
+	const squash = (s: string) => s.replace(/\\[,;: ]|\\cdot|\s/g, '');
+
+	it('gives at least six different questions of eight at every topic and level', () => {
+		// Some cells had two, differing only in lg against ln, so a session or a
+		// ladder showed the same problem over and over.
+		const thin = [...cells].filter(([, ps]) => new Set(ps.map((p) => p.q)).size < 6)
+			.map(([k, ps]) => `${k}: ${new Set(ps.map((p) => p.q)).size}`);
+		expect(thin).toEqual([]);
+	});
+
+	it('never has a step that only repeats the one before', () => {
+		// A closing «Svar» that restated the last line made «Siste steg» on the
+		// ladder show the whole answer.
+		const repeats = bank.filter((p) =>
+			p.structuredSteps.some((s, i) => {
+				if (i === 0) return false;
+				const prev = squash(p.structuredSteps[i - 1].latex);
+				const cur = squash(s.latex);
+				// Same line, or the previous line's result restated on its own.
+				return cur === prev || prev.endsWith(`=${cur}`) || cur.endsWith(`=${prev}`) || cur.startsWith(`${prev}=`);
+			})
+		).map((p) => p.id);
+		expect(repeats).toEqual([]);
+	});
+
+	it('tells the student what to do with every problem', () => {
+		expect(bank.filter((p) => instructionFor(p).trim() === '').map((p) => p.id)).toEqual([]);
+	});
+
+	it('keeps instructions out of the question', () => {
+		// The question is maths; «Skriv som éin logaritme» belongs above it.
+		expect(bank.filter((p) => /\\text\{/.test(p.q)).map((p) => p.id)).toEqual([]);
+	});
+
+	it('writes answers the way a teacher would', () => {
+		const gcd = (a: number, b: number): number => (b === 0 ? Math.abs(a) : gcd(b, a % b));
+		const problems: string[] = [];
+		for (const p of bank) {
+			for (const line of [p.a, ...p.structuredSteps.map((s) => s.latex)]) {
+				if (/(^|[^0-9.}])1x/.test(line) || /\{1\}x/.test(line)) problems.push(`${p.id}: 1x i ${line}`);
+				if (/\+\s*-|-\s*-/.test(line)) problems.push(`${p.id}: +- i ${line}`);
+				if (/\^\{1\}/.test(line)) problems.push(`${p.id}: ^{1} i ${line}`);
+			}
+			// Unreduced fractions, in the answer only: a working line may well show
+			// 98/2 on its way to 49.
+			{
+				const line = p.a;
+				// A number over a linear expression with a factor common to all three.
+				for (const m of line.matchAll(/\\frac\{(-?\d+)\}\{(\d+)x([+-]\d+)\}/g)) {
+					const [n, a, b] = [Number(m[1]), Number(m[2]), Number(m[3])];
+					if (gcd(gcd(n, a), b) > 1) problems.push(`${p.id}: kan forkortast: ${m[0]}`);
+				}
+				for (const m of line.matchAll(/\\frac\{(\d+)\}\{(\d+)\}/g)) {
+					if (gcd(Number(m[1]), Number(m[2])) > 1) problems.push(`${p.id}: kan forkortast: ${m[0]}`);
+				}
+			}
+		}
+		expect(problems).toEqual([]);
+	});
+});
+
+describe('Nynorsk', () => {
+	// Bokmål forms that have crept into the content before. The app is Nynorsk
+	// only; a student notices a mix at once.
+	const FORBIDDEN: [RegExp, string][] = [
+		[/\bHusk\b/, 'Hugs'],
+		[/\bbehold\b/, 'behald'],
+		[/Derivér/, 'Deriver'],
+		[/Gjenkjenn/, 'Kjenn att'],
+		[/\bSett inn\b/, 'Set inn'],
+		[/setningen\b/, 'setninga'],
+		[/[Kk]votientregel/, 'brøkregelen']
+	];
+
+	/** Every string a module can put in front of a student. */
+	function texts(): { where: string; text: string }[] {
+		const out: { where: string; text: string }[] = [];
+		const walk = (where: string, v: unknown) => {
+			if (typeof v === 'string') out.push({ where, text: v });
+			else if (Array.isArray(v)) v.forEach((x, i) => walk(`${where}[${i}]`, x));
+			else if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) walk(`${where}.${k}`, x);
+		};
+		for (const mod of MODULE_REGISTRY) {
+			walk(`${mod.id}.topics`, mod.topics);
+			walk(`${mod.id}.theory`, mod.theory);
+			walk(`${mod.id}.selfExplanations`, mod.selfExplanations);
+			walk(`${mod.id}.name`, [mod.name, mod.description]);
+			for (const id of getAllConceptIds()) walk(`${mod.id}.conceptName`, mod.conceptName(id));
+		}
+		for (const p of getFullBank()) {
+			walk(`${p.id}.hint`, p.hint);
+			walk(`${p.id}.steps`, p.structuredSteps.map((s) => s.label));
+		}
+		return out;
+	}
+
+	it('uses Nynorsk forms throughout', () => {
+		const found = new Set<string>();
+		for (const { where, text } of texts()) {
+			for (const [re, want] of FORBIDDEN) {
+				const m = text.match(re);
+				if (m) found.add(`«${m[0]}» → «${want}» (${where.split('[')[0]})`);
+			}
+		}
+		expect([...found]).toEqual([]);
 	});
 });

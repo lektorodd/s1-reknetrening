@@ -256,6 +256,16 @@ var fem strekar på 126 × 6 px, under halvparten av dei 24 × 24 ei treffflate 
 fylte streken låg lengst til høgre, der det er *minst* hjelp. Meir farge tydde mindre hjelp.
 Ord ber meininga, og då finst det ikkje noko fyll som kan peika feil veg.
 
+## Instruksjonen over oppgåva
+
+Over kvar oppgåve, i Tren og i stigen, står det kva eleven skal gjera: «Deriver
+funksjonen.», «Skriv som éin logaritme.». Instruksjonen er feit brødtekst, ikkje ein
+merkelapp i versalar, fordi han er det første eleven les på kortet.
+
+Oppgåvefeltet under held berre matte. Utan instruksjonen stod eleven med eit uttrykk og
+måtte gjetta om det skulle forenklast, skrivast ut eller samlast. Instruksjonen stod før
+somme stader inne i formelen, som `\text{…}`, og då vart han sett med matteskrift.
+
 ## Steg-etikettar
 
 `.step-label` er ein **merkelapp**, ikkje ei setning: liten, feit, versalar, sperra.

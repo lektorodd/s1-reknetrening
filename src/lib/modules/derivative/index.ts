@@ -24,7 +24,11 @@ export const derivativeModule: TopicModule = {
 	color: '#2B6CB0',
 	name: 'Derivasjon',
 	description: 'Kjerneregelen, produktregelen og brøkregelen',
-	topics: Object.entries(TOPIC_NAMES).map(([id, name]) => ({ id, name })),
+	topics: Object.entries(TOPIC_NAMES).map(([id, name]) => ({
+		id,
+		name,
+		instruction: 'Deriver funksjonen.'
+	})),
 	generateBank: generateProblemBank,
 	theory: theoryBank,
 	selfExplanations: SELF_EXPLANATIONS,

@@ -125,6 +125,12 @@ export function conceptName(conceptId: string): string {
 	return getModuleForConcept(conceptId)?.conceptName(conceptId) ?? conceptId;
 }
 
+/** What the student is asked to do with a problem: its own instruction, or its topic's. */
+export function instructionFor(problem: Problem): string {
+	if (problem.instruction) return problem.instruction;
+	return getModule(problem.moduleId)?.topics.find((t) => t.id === problem.topic)?.instruction ?? '';
+}
+
 /** Which module a problem belongs to, and the concept it trains. */
 export function conceptIdOf(problem: Problem): string {
 	const mod = getModule(problem.moduleId);

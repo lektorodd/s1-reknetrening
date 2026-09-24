@@ -77,279 +77,312 @@ function sqrtFraction(num: number, den: number, prefix = ''): string {
 	return bottom === 1 ? numerator : `\\frac{${numerator}}{${bottom}}`;
 }
 
+/**
+ * (p + √D)/2 in simplest form, with a decimal when it is not whole:
+ * (2 + √44)/2 → 1 + √11 ≈ 4{,}32, (1 + √9)/2 → 2.
+ */
+function halfRoot(p: number, D: number): string {
+	const [k, m] = splitSquare(D);
+	if (m === 1) return `${(p + k) / 2}`;
+	const approx = `\\approx ${dec((p + Math.sqrt(D)) / 2)}`;
+	const root = `${k === 1 ? '' : k}\\sqrt{${m}}`;
+	if (p % 2 === 0 && k % 2 === 0) {
+		const half = `${k / 2 === 1 ? '' : k / 2}\\sqrt{${m}}`;
+		return `${p / 2} + ${half} ${approx}`;
+	}
+	return `\\frac{${p} + ${root}}{2} ${approx}`;
+}
+
 /** A decimal in Norwegian notation, for LaTeX: 2.81 → 2{,}81. */
 function dec(x: number, digits = 2): string {
 	return x.toFixed(digits).replace('.', '{,}');
 }
 
-// ── Product Rule: lg(a·b) = lg a + lg b ──
+// Every generator below takes the variant number as well as the level. The
+// parameter a student would notice first follows the variant, so the eight
+// problems at one level are eight different problems: drawn at random they
+// often repeated, and three levels had no parameter at all — two problems,
+// lg and ln, eight times over.
+//
+// No step restates the one before. A closing «Svar» that repeated the last
+// line made «Siste steg» on the ladder give the whole answer away.
 
-function generateLogProductProblem(lvl: number): Draft {
-	const base = pickBase();
+/** lg for the first half of the variants, ln for the second: both, always. */
+function baseFor(variant: number): 'lg' | 'ln' {
+	return variant < 4 ? 'lg' : 'ln';
+}
+
+/** A number and its log, as LaTeX: \lg\,5 */
+const lgOf = (log: string, arg: string | number) => `${log}\\,${arg}`;
+
+// ── Product Rule: lg(a·b) = lg a + lg b ──
+// Lvl 1: two numbers           lg(3·4)
+// Lvl 2: a number and x        lg(5x)
+// Lvl 3: three factors         lg(3xy)
+// Lvl 4: factorise first       lg 12
+// Lvl 5: constants to gather   lg(2x · 3y)
+
+function generateLogProductProblem(lvl: number, variant: number): Draft {
+	const base = lvl === 1 || lvl === 4 ? pickBase() : baseFor(variant);
 	const log = logCmd(base);
+	const k = 2 + (variant % 4); // 2..5, a different one per variant within a base
 	let q = '', structuredSteps: StepEntry[] = [];
 
 	if (lvl === 1) {
-		const a = rand(2, 5);
-		const b = rand(2, 9);
+		const pairs = [[2, 3], [2, 5], [3, 4], [2, 7], [3, 5], [4, 5], [3, 7], [5, 6]];
+		const [a, b] = pairs[variant];
 		q = `${log}(${a} \\cdot ${b})`;
 		structuredSteps = [
-			{ label: 'Identifiser produkt', latex: `${log}(${a} \\cdot ${b})` },
-			{ label: 'Produktsetningen', latex: `${log}\\,${a} + ${log}\\,${b}` },
-			{ label: 'Kontroller', latex: `${log}\\,${a * b} = ${log}\\,${a} + ${log}\\,${b}` }
+			{ label: 'Produktsetninga', latex: `${lgOf(log, a)} + ${lgOf(log, b)}` }
 		];
 	} else if (lvl === 2) {
-		const a = rand(2, 6);
-		q = `${log}(${a}x)`;
+		q = `${log}(${k}x)`;
 		structuredSteps = [
-			{ label: 'Identifiser produkt', latex: `${log}(${a} \\cdot x)` },
-			{ label: 'Produktsetningen', latex: `${log}\\,${a} + ${log}\\,x` },
-			{ label: 'Svar', latex: `${log}\\,${a} + ${log}\\,x` }
+			{ label: 'Kjenn att produktet', latex: `${log}(${k} \\cdot x)` },
+			{ label: 'Produktsetninga', latex: `${lgOf(log, k)} + ${lgOf(log, 'x')}` }
 		];
 	} else if (lvl === 3) {
-		const a = rand(2, 5);
-		q = `${log}(${a}xy)`;
+		q = `${log}(${k}xy)`;
 		structuredSteps = [
-			{ label: 'Identifiser faktorar', latex: `${log}(${a} \\cdot x \\cdot y)` },
-			{ label: 'Produktsetningen (1)', latex: `${log}\\,${a} + ${log}(x \\cdot y)` },
-			{ label: 'Produktsetningen (2)', latex: `${log}\\,${a} + ${log}\\,x + ${log}\\,y` }
+			{ label: 'Produktsetninga', latex: `${lgOf(log, k)} + ${log}(xy)` },
+			{ label: 'Produktsetninga att', latex: `${lgOf(log, k)} + ${lgOf(log, 'x')} + ${lgOf(log, 'y')}` }
 		];
 	} else if (lvl === 4) {
-		const a = rand(2, 4);
-		const b = rand(2, 5);
-		const product = a * b;
-		q = `\\text{Skriv } ${log}\\,${product} \\text{ som ein sum av logaritmar}`;
+		const pairs = [[2, 3], [2, 5], [2, 7], [3, 5], [3, 7], [2, 11], [5, 7], [3, 11]];
+		const [a, b] = pairs[variant];
+		q = lgOf(log, a * b);
 		structuredSteps = [
-			{ label: 'Faktoriser', latex: `${product} = ${a} \\cdot ${b}` },
-			{ label: 'Sett inn', latex: `${log}(${a} \\cdot ${b})` },
-			{ label: 'Produktsetningen', latex: `${log}\\,${a} + ${log}\\,${b}` }
+			{ label: 'Faktoriser', latex: `${a * b} = ${a} \\cdot ${b}` },
+			{ label: 'Produktsetninga', latex: `${lgOf(log, a)} + ${lgOf(log, b)}` }
 		];
 	} else {
-		const a = rand(2, 4);
-		const b = rand(2, 5);
-		q = `${log}(${a}x \\cdot ${b}y)`;
+		const b = rand(2, 4);
+		q = `${log}(${k}x \\cdot ${b}y)`;
 		structuredSteps = [
-			{ label: 'Identifiser faktorar', latex: `${log}(${a} \\cdot x \\cdot ${b} \\cdot y)` },
-			{ label: 'Forenkle konstantar', latex: `${log}(${a * b} \\cdot x \\cdot y)` },
-			{ label: 'Produktsetningen', latex: `${log}\\,${a * b} + ${log}(x \\cdot y)` },
-			{ label: 'Produktsetningen att', latex: `${log}\\,${a * b} + ${log}\\,x + ${log}\\,y` }
+			{ label: 'Samle konstantane', latex: `${log}(${k * b}xy)` },
+			{ label: 'Produktsetninga', latex: `${lgOf(log, k * b)} + ${log}(xy)` },
+			{ label: 'Produktsetninga att', latex: `${lgOf(log, k * b)} + ${lgOf(log, 'x')} + ${lgOf(log, 'y')}` }
 		];
 	}
 
-	const lastStep = structuredSteps[structuredSteps.length - 1];
-	return {
-		topic: 'log_product',
-		level: lvl,
-		type: base,
-		q,
-		a: lastStep.latex,
-		structuredSteps,
-		hint: 'Produktsetningen: log(a·b) = log a + log b'
-	};
+	return finish('log_product', lvl, base, q, structuredSteps, 'Produktsetninga: $\\lg(a \\cdot b) = \\lg a + \\lg b$.');
 }
 
 // ── Quotient Rule: lg(a/b) = lg a − lg b ──
+// Lvl 1: two numbers           lg(7/3)
+// Lvl 2: x over a number       lg(x/5)
+// Lvl 3: a power over y        lg(x³/y)
+// Lvl 4: the other way round   lg 12 − lg 5  →  one logarithm
+// Lvl 5: all three rules       lg(3xy / z²)
 
-function generateLogQuotientProblem(lvl: number): Draft {
-	const base = pickBase();
+function generateLogQuotientProblem(lvl: number, variant: number): Draft {
+	const base = lvl === 1 || lvl === 4 ? pickBase() : baseFor(variant);
 	const log = logCmd(base);
+	const k = 2 + (variant % 4);
 	let q = '', structuredSteps: StepEntry[] = [];
+	let instruction: string | undefined;
 
 	if (lvl === 1) {
-		const a = rand(4, 20);
-		const b = rand(2, 5);
+		// Coprime, so the fraction is not one a student would first cancel.
+		const pairs = [[5, 2], [7, 3], [3, 4], [9, 2], [5, 3], [7, 4], [11, 5], [8, 3]];
+		const [a, b] = pairs[variant];
 		q = `${log}\\left(\\frac{${a}}{${b}}\\right)`;
 		structuredSteps = [
-			{ label: 'Identifiser brøk', latex: `${log}\\left(\\frac{${a}}{${b}}\\right)` },
-			{ label: 'Kvotientsetningen', latex: `${log}\\,${a} - ${log}\\,${b}` },
-			{ label: 'Kontroller', latex: `${log}\\,${a} - ${log}\\,${b}` }
+			{ label: 'Kvotientsetninga', latex: `${lgOf(log, a)} - ${lgOf(log, b)}` }
 		];
 	} else if (lvl === 2) {
-		const b = rand(2, 6);
+		const b = k + 1;
 		q = `${log}\\left(\\frac{x}{${b}}\\right)`;
 		structuredSteps = [
-			{ label: 'Identifiser brøk', latex: `${log}\\left(\\frac{x}{${b}}\\right)` },
-			{ label: 'Kvotientsetningen', latex: `${log}\\,x - ${log}\\,${b}` },
-			{ label: 'Svar', latex: `${log}\\,x - ${log}\\,${b}` }
+			{ label: 'Kvotientsetninga', latex: `${lgOf(log, 'x')} - ${lgOf(log, b)}` }
 		];
 	} else if (lvl === 3) {
-		const n = rand(2, 3);
+		const n = k;
 		q = `${log}\\left(\\frac{x^{${n}}}{y}\\right)`;
 		structuredSteps = [
-			{ label: 'Identifiser brøk', latex: `${log}\\left(\\frac{x^{${n}}}{y}\\right)` },
-			{ label: 'Kvotientsetningen', latex: `${log}\\,x^{${n}} - ${log}\\,y` },
-			{ label: 'Potenssetningen', latex: `${n}${log}\\,x - ${log}\\,y` }
+			{ label: 'Kvotientsetninga', latex: `${log}(x^{${n}}) - ${lgOf(log, 'y')}` },
+			{ label: 'Potenssetninga', latex: `${n}${lgOf(log, 'x')} - ${lgOf(log, 'y')}` }
 		];
 	} else if (lvl === 4) {
-		const a = rand(2, 8);
-		const b = rand(2, 5);
-		q = `\\text{Skriv som éin logaritme: } ${log}\\,${a} - ${log}\\,${b}`;
+		// Some pairs divide evenly and some do not, so the answer is sometimes a
+		// fraction and sometimes a whole number to spot.
+		const pairs = [[12, 3], [15, 4], [20, 5], [14, 3], [18, 6], [21, 4], [24, 8], [10, 7]];
+		const [a, b] = pairs[variant];
+		const g = gcd(a, b);
+		const reduced = b / g === 1 ? `${a / g}` : `\\frac{${a / g}}{${b / g}}`;
+		q = `${lgOf(log, a)} - ${lgOf(log, b)}`;
+		instruction = 'Skriv som éin logaritme.';
 		structuredSteps = [
-			{ label: 'Gjenkjenn differanse', latex: `${log}\\,${a} - ${log}\\,${b}` },
-			{ label: 'Kvotientsetningen baklengs', latex: `${log}\\left(\\frac{${a}}{${b}}\\right)` },
-			{ label: 'Kontroller', latex: `${log}\\left(\\frac{${a}}{${b}}\\right) = ${log}\\,${a} - ${log}\\,${b}` }
+			{ label: 'Kvotientsetninga baklengs', latex: `${log}\\left(\\frac{${a}}{${b}}\\right)` },
+			...(g > 1 ? [{ label: 'Forkort brøken', latex: b / g === 1 ? lgOf(log, reduced) : `${log}\\left(${reduced}\\right)` }] : [])
 		];
 	} else {
-		q = `${log}\\left(\\frac{xy}{z}\\right)`;
+		const n = rand(2, 3);
+		q = `${log}\\left(\\frac{${k}xy}{z^{${n}}}\\right)`;
 		structuredSteps = [
-			{ label: 'Identifiser brøk', latex: `${log}\\left(\\frac{xy}{z}\\right)` },
-			{ label: 'Kvotientsetningen', latex: `${log}(xy) - ${log}\\,z` },
-			{ label: 'Produktsetningen', latex: `${log}\\,x + ${log}\\,y - ${log}\\,z` }
+			{ label: 'Kvotientsetninga', latex: `${log}(${k}xy) - ${log}(z^{${n}})` },
+			{ label: 'Produktsetninga', latex: `${lgOf(log, k)} + ${lgOf(log, 'x')} + ${lgOf(log, 'y')} - ${log}(z^{${n}})` },
+			{ label: 'Potenssetninga', latex: `${lgOf(log, k)} + ${lgOf(log, 'x')} + ${lgOf(log, 'y')} - ${n}${lgOf(log, 'z')}` }
 		];
 	}
 
-	const lastStep = structuredSteps[structuredSteps.length - 1];
-	return {
-		topic: 'log_quotient',
-		level: lvl,
-		type: base,
-		q,
-		a: lastStep.latex,
-		structuredSteps,
-		hint: 'Kvotientsetningen: log(a/b) = log a − log b'
-	};
+	return finish('log_quotient', lvl, base, q, structuredSteps, 'Kvotientsetninga: $\\lg\\frac{a}{b} = \\lg a - \\lg b$.', instruction);
 }
 
 // ── Power Rule: lg(aⁿ) = n·lg a ──
+// Lvl 1: a number to a power      lg(3⁴)
+// Lvl 2: x to a power             lg(x⁵)
+// Lvl 3: a power in the denominator  lg(1/x³)
+// Lvl 4: a root                   lg ∛(x²)
+// Lvl 5: an exact value           lg ∛100 = 2/3
 
-function generateLogPowerProblem(lvl: number): Draft {
-	const base = pickBase();
+/** Reduced fraction m/k as LaTeX: 4/2 → 2, 2/3 → \frac{2}{3}. */
+function fracLatex(m: number, k: number): string {
+	const g = gcd(m, k);
+	return k / g === 1 ? `${m / g}` : `\\frac{${m / g}}{${k / g}}`;
+}
+
+function generateLogPowerProblem(lvl: number, variant: number): Draft {
+	const base = lvl === 1 ? pickBase() : baseFor(variant);
 	const log = logCmd(base);
+	const n = 2 + (variant % 4);
 	let q = '', structuredSteps: StepEntry[] = [];
+	let instruction: string | undefined;
 
 	if (lvl === 1) {
-		const a = rand(2, 5);
-		const n = rand(2, 4);
+		const a = rand(2, 7);
 		q = `${log}(${a}^{${n}})`;
 		structuredSteps = [
-			{ label: 'Identifiser potens', latex: `${log}(${a}^{${n}})` },
-			{ label: 'Potenssetningen', latex: `${n} \\cdot ${log}\\,${a}` },
-			{ label: 'Svar', latex: `${n} \\cdot ${log}\\,${a}` }
+			{ label: 'Potenssetninga', latex: `${n}${lgOf(log, a)}` }
 		];
 	} else if (lvl === 2) {
-		const n = rand(2, 5);
 		q = `${log}(x^{${n}})`;
 		structuredSteps = [
-			{ label: 'Identifiser potens', latex: `${log}(x^{${n}})` },
-			{ label: 'Potenssetningen', latex: `${n} \\cdot ${log}\\,x` },
-			{ label: 'Svar', latex: `${n} \\cdot ${log}\\,x` }
+			{ label: 'Potenssetninga', latex: `${n}${lgOf(log, 'x')}` }
 		];
 	} else if (lvl === 3) {
-		q = `${log}(\\sqrt{x})`;
+		q = `${log}\\left(\\frac{1}{x^{${n}}}\\right)`;
 		structuredSteps = [
-			{ label: 'Identifiser rotuttrykk', latex: `${log}(\\sqrt{x})` },
-			{ label: 'Omskriv rot til potens', latex: `${log}(x^{1/2})` },
-			{ label: 'Potenssetningen', latex: `\\frac{1}{2} \\cdot ${log}\\,x` }
+			{ label: 'Skriv som potens', latex: `${log}(x^{-${n}})` },
+			{ label: 'Potenssetninga', latex: `-${n}${lgOf(log, 'x')}` }
 		];
 	} else if (lvl === 4) {
-		if (base === 'ln') {
-			q = `\\ln(\\sqrt[3]{e^2})`;
-			structuredSteps = [
-				{ label: 'Omskriv rot', latex: `\\ln(e^{2/3})` },
-				{ label: 'Potenssetningen', latex: `\\frac{2}{3} \\cdot \\ln\\,e` },
-				{ label: 'ln e = 1', latex: `\\frac{2}{3}` }
-			];
-		} else {
-			q = `\\lg(\\sqrt[3]{100})`;
-			structuredSteps = [
-				{ label: 'Omskriv rot', latex: `\\lg(100^{1/3})` },
-				{ label: 'Potenssetningen', latex: `\\frac{1}{3} \\cdot \\lg\\,100` },
-				{ label: 'lg 100 = 2', latex: `\\frac{2}{3}` }
-			];
-		}
-	} else {
-		const n = rand(2, 4);
-		q = `${log}(x^{-${n}})`;
+		const roots = [[2, 1], [3, 1], [3, 2], [2, 3], [4, 1], [4, 3], [3, 4], [5, 2]];
+		const [k, m] = roots[variant];
+		const radicand = m === 1 ? 'x' : `x^{${m}}`;
+		const rootTex = k === 2 ? `\\sqrt{${radicand}}` : `\\sqrt[${k}]{${radicand}}`;
+		q = `${log}${rootTex}`;
 		structuredSteps = [
-			{ label: 'Identifiser negativ eksponent', latex: `${log}(x^{-${n}})` },
-			{ label: 'Potenssetningen', latex: `-${n} \\cdot ${log}\\,x` },
-			{ label: 'Svar', latex: `-${n} \\cdot ${log}\\,x` }
+			{ label: 'Skriv rota som potens', latex: `${log}(x^{${m}/${k}})` },
+			{ label: 'Potenssetninga', latex: `${fracLatex(m, k)}${lgOf(log, 'x')}` }
+		];
+	} else {
+		const roots = [[3, 2], [2, 3], [4, 3], [3, 1], [5, 2], [2, 1], [4, 1], [3, 4]];
+		const [k, m] = roots[variant];
+		const baseNum = base === 'lg' ? '10' : 'e';
+		const radicand = base === 'lg' ? `${10 ** m}` : m === 1 ? 'e' : `e^{${m}}`;
+		const rootTex = k === 2 ? `\\sqrt{${radicand}}` : `\\sqrt[${k}]{${radicand}}`;
+		q = `${log}${rootTex}`;
+		instruction = 'Rekn ut den eksakte verdien.';
+		structuredSteps = [
+			{ label: 'Skriv som potens', latex: `${log}(${baseNum}^{${m}/${k}})` },
+			{ label: 'Potenssetninga', latex: `${fracLatex(m, k)} \\cdot ${lgOf(log, baseNum)}` },
+			{ label: base === 'lg' ? 'lg 10 = 1' : 'ln e = 1', latex: fracLatex(m, k) }
 		];
 	}
 
-	const lastStep = structuredSteps[structuredSteps.length - 1];
-	return {
-		topic: 'log_power',
-		level: lvl,
-		type: base,
-		q,
-		a: lastStep.latex,
-		structuredSteps,
-		hint: 'Potenssetningen: log(aⁿ) = n·log a'
-	};
+	return finish('log_power', lvl, base, q, structuredSteps, 'Potenssetninga: $\\lg a^n = n \\cdot \\lg a$. Ei rot er ein potens med brøk som eksponent.', instruction);
 }
 
 // ── Simplify: combine multiple rules ──
+// Lvl 1: product and power         lg(3x²)
+// Lvl 2: all three                  lg(3x²/y)
+// Lvl 3: the other way round        2 lg x + lg 3 − lg y  →  one logarithm
+// Lvl 4: a root inside              lg(x³√y)
+// Lvl 5: the other way round, with brackets  2 lg(x+1) − ½ lg(x²+1)
 
-function generateLogSimplifyProblem(lvl: number): Draft {
-	const base = pickBase();
+function generateLogSimplifyProblem(lvl: number, variant: number): Draft {
+	const base = baseFor(variant);
 	const log = logCmd(base);
+	const a = 2 + (variant % 4) + (lvl === 3 ? 1 : 0);
 	let q = '', structuredSteps: StepEntry[] = [];
+	let instruction: string | undefined;
 
 	if (lvl === 1) {
-		const a = rand(2, 6);
-		const n = rand(2, 3);
+		const n = rand(2, 4);
 		q = `${log}(${a}x^{${n}})`;
 		structuredSteps = [
-			{ label: 'Identifiser produkt', latex: `${log}(${a} \\cdot x^{${n}})` },
-			{ label: 'Produktsetningen', latex: `${log}\\,${a} + ${log}(x^{${n}})` },
-			{ label: 'Potenssetningen på siste ledd', latex: `${log}\\,${a} + ${n} \\cdot ${log}\\,x` },
-			{ label: 'Svar', latex: `${log}\\,${a} + ${n}${log}\\,x` }
+			{ label: 'Produktsetninga', latex: `${lgOf(log, a)} + ${log}(x^{${n}})` },
+			{ label: 'Potenssetninga', latex: `${lgOf(log, a)} + ${n}${lgOf(log, 'x')}` }
 		];
 	} else if (lvl === 2) {
-		const a = rand(2, 5);
 		const n = rand(2, 3);
 		q = `${log}\\left(\\frac{${a}x^{${n}}}{y}\\right)`;
 		structuredSteps = [
-			{ label: 'Identifiser brøk', latex: `${log}\\left(\\frac{${a}x^{${n}}}{y}\\right)` },
-			{ label: 'Kvotientsetningen', latex: `${log}(${a}x^{${n}}) - ${log}\\,y` },
-			{ label: 'Produktsetningen', latex: `${log}\\,${a} + ${log}(x^{${n}}) - ${log}\\,y` },
-			{ label: 'Potenssetningen', latex: `${log}\\,${a} + ${n}${log}\\,x - ${log}\\,y` }
+			{ label: 'Kvotientsetninga', latex: `${log}(${a}x^{${n}}) - ${lgOf(log, 'y')}` },
+			{ label: 'Produktsetninga', latex: `${lgOf(log, a)} + ${log}(x^{${n}}) - ${lgOf(log, 'y')}` },
+			{ label: 'Potenssetninga', latex: `${lgOf(log, a)} + ${n}${lgOf(log, 'x')} - ${lgOf(log, 'y')}` }
 		];
 	} else if (lvl === 3) {
-		const a = rand(2, 5);
 		const n = rand(2, 3);
-		q = `\\text{Skriv som éin logaritme: } ${n} \\cdot ${log}\\,x + ${log}\\,${a} - ${log}\\,y`;
+		q = `${n}${lgOf(log, 'x')} + ${lgOf(log, a)} - ${lgOf(log, 'y')}`;
+		instruction = 'Skriv som éin logaritme.';
 		structuredSteps = [
-			{ label: 'Potenssetningen baklengs', latex: `${log}(x^{${n}}) + ${log}\\,${a} - ${log}\\,y` },
-			{ label: 'Produktsetningen baklengs', latex: `${log}(${a}x^{${n}}) - ${log}\\,y` },
-			{ label: 'Kvotientsetningen baklengs', latex: `${log}\\left(\\frac{${a}x^{${n}}}{y}\\right)` }
+			{ label: 'Potenssetninga baklengs', latex: `${log}(x^{${n}}) + ${lgOf(log, a)} - ${lgOf(log, 'y')}` },
+			{ label: 'Produktsetninga baklengs', latex: `${log}(${a}x^{${n}}) - ${lgOf(log, 'y')}` },
+			{ label: 'Kvotientsetninga baklengs', latex: `${log}\\left(\\frac{${a}x^{${n}}}{y}\\right)` }
 		];
 	} else if (lvl === 4) {
-		const n = rand(2, 4);
-		q = `${log}(x^{${n}} \\sqrt{y})`;
+		const n = 2 + (variant % 4);
+		q = `${log}(x^{${n}}\\sqrt{y})`;
 		structuredSteps = [
-			{ label: 'Identifiser produkt', latex: `${log}(x^{${n}} \\cdot y^{1/2})` },
-			{ label: 'Produktsetningen', latex: `${log}(x^{${n}}) + ${log}(y^{1/2})` },
-			{ label: 'Potenssetningen (x)', latex: `${n} \\cdot ${log}\\,x + ${log}(y^{1/2})` },
-			{ label: 'Potenssetningen (y)', latex: `${n} \\cdot ${log}\\,x + \\frac{1}{2} \\cdot ${log}\\,y` }
+			{ label: 'Skriv rota som potens', latex: `${log}(x^{${n}} \\cdot y^{1/2})` },
+			{ label: 'Produktsetninga', latex: `${log}(x^{${n}}) + ${log}(y^{1/2})` },
+			{ label: 'Potenssetninga', latex: `${n}${lgOf(log, 'x')} + \\frac{1}{2}${lgOf(log, 'y')}` }
 		];
 	} else {
-		q = `\\text{Skriv som éin logaritme: } 2 \\cdot ${log}(x+1) - \\frac{1}{2} \\cdot ${log}(x^2+1)`;
+		const p = 2 + (variant % 2);
+		const k = 2 + (Math.floor(variant / 2) % 2);
+		const c = 1 + Math.floor(variant / 4) + rand(0, 2);
+		const root = k === 2 ? `\\sqrt{x^{2}+${c}}` : `\\sqrt[${k}]{x^{2}+${c}}`;
+		q = `${p}${log}(x+1) - \\frac{1}{${k}}${log}(x^{2}+${c})`;
+		instruction = 'Skriv som éin logaritme.';
 		structuredSteps = [
-			{ label: 'Potenssetningen (1)', latex: `${log}((x+1)^2) - \\frac{1}{2} \\cdot ${log}(x^2+1)` },
-			{ label: 'Potenssetningen (2)', latex: `${log}((x+1)^2) - ${log}((x^2+1)^{1/2})` },
-			{ label: 'Omskriv rot', latex: `${log}((x+1)^2) - ${log}(\\sqrt{x^2+1})` },
-			{ label: 'Kvotientsetningen baklengs', latex: `${log}\\left(\\frac{(x+1)^2}{\\sqrt{x^2+1}}\\right)` }
+			{ label: 'Potenssetninga baklengs', latex: `${log}((x+1)^{${p}}) - ${log}((x^{2}+${c})^{1/${k}})` },
+			{ label: 'Skriv potensen som rot', latex: `${log}((x+1)^{${p}}) - ${log}${root}` },
+			{ label: 'Kvotientsetninga baklengs', latex: `${log}\\left(\\frac{(x+1)^{${p}}}{${root}}\\right)` }
 		];
 	}
 
-	const lastStep = structuredSteps[structuredSteps.length - 1];
+	return finish('log_simplify', lvl, base, q, structuredSteps, 'Bruk setningane éin om gongen: produkt, kvotient, potens.', instruction);
+}
+
+/** Assemble a draft; the answer is the last step. */
+function finish(
+	topic: LogTopicId,
+	level: number,
+	base: 'lg' | 'ln',
+	q: string,
+	structuredSteps: StepEntry[],
+	hint: string,
+	instruction?: string
+): Draft {
 	return {
-		topic: 'log_simplify',
-		level: lvl,
+		topic,
+		level,
 		type: base,
 		q,
-		a: lastStep.latex,
+		a: structuredSteps[structuredSteps.length - 1].latex,
 		structuredSteps,
-		hint: 'Bruk fleire setningar saman: produkt, kvotient, potens.'
+		hint,
+		...(instruction ? { instruction } : {})
 	};
 }
 
 // ── Log Equations (enhanced: use log laws before definition) ──
 
-function generateLogEquationProblem(lvl: number): Draft {
-	const base = pickBase();
+function generateLogEquationProblem(lvl: number, variant: number): Draft {
+	const base = lvl >= 3 ? baseFor(variant) : pickBase();
 	const log = logCmd(base);
 	let q = '', structuredSteps: StepEntry[] = [];
 
@@ -363,14 +396,14 @@ function generateLogEquationProblem(lvl: number): Draft {
 			const answer = 10 - b;
 			structuredSteps = [
 				{ label: 'Del begge sider med ' + coeff, latex: `${log}(x + ${b}) = \\frac{${rhs}}{${coeff}} = 1` },
-				{ label: 'Definisjon av logaritme', latex: `x + ${b} = 10^1` },
+				{ label: 'Definisjonen', latex: `x + ${b} = 10^1` },
 				{ label: 'Rekn ut høgresida', latex: `x + ${b} = 10` },
 				{ label: 'Løys for x', latex: `x = 10 - ${b} = ${answer}` }
 			];
 		} else {
 			structuredSteps = [
 				{ label: 'Del begge sider med ' + coeff, latex: `${log}(x + ${b}) = \\frac{${rhs}}{${coeff}} = 1` },
-				{ label: 'Definisjon av logaritme', latex: `x + ${b} = e^1` },
+				{ label: 'Definisjonen', latex: `x + ${b} = e^1` },
 				{ label: 'Forenkle', latex: `x + ${b} = e` },
 				{ label: 'Løys for x', latex: `x = e - ${b}` }
 			];
@@ -405,75 +438,65 @@ function generateLogEquationProblem(lvl: number): Draft {
 			];
 		}
 	} else if (lvl === 3) {
-		// 2·lg x - lg y + lg 5 = 1  →  power + quotient + product  →  5 steps
-		const a = rand(2, 6);
+		// 2·lg x − lg a = 1. Only the positive root: lg x itself needs x > 0,
+		// which is the contrast with level 2, where lg(x²) allows both signs.
+		const a = 2 + variant;
 		const n = 2;
 		q = `${n} \\cdot ${log}\\,x - ${log}\\,${a} = 1`;
 		if (base === 'lg') {
-			const answer = 10 * a;
 			structuredSteps = [
-				{ label: 'Potenssetningen', latex: `${log}(x^{${n}}) - ${log}\\,${a} = 1` },
-				{ label: 'Kvotientsetningen', latex: `${log}\\left(\\frac{x^{${n}}}{${a}}\\right) = 1` },
-				{ label: 'Definisjon', latex: `\\frac{x^{${n}}}{${a}} = 10` },
+				{ label: 'Potenssetninga', latex: `${log}(x^{${n}}) - ${log}\\,${a} = 1` },
+				{ label: 'Kvotientsetninga', latex: `${log}\\left(\\frac{x^{${n}}}{${a}}\\right) = 1` },
+				{ label: 'Definisjonen', latex: `\\frac{x^{${n}}}{${a}} = 10` },
 				{ label: `Gong med ${a}`, latex: `x^{${n}} = ${10 * a}` },
-				{ label: 'Løys for x', latex: `x = \\sqrt{${10 * a}}` }
+				{ label: 'Berre x > 0 gjeld', latex: `x = ${sqrtFraction(10 * a, 1)}` }
 			];
 		} else {
 			structuredSteps = [
-				{ label: 'Potenssetningen', latex: `${log}(x^{${n}}) - ${log}\\,${a} = 1` },
-				{ label: 'Kvotientsetningen', latex: `${log}\\left(\\frac{x^{${n}}}{${a}}\\right) = 1` },
-				{ label: 'Definisjon', latex: `\\frac{x^{${n}}}{${a}} = e` },
+				{ label: 'Potenssetninga', latex: `${log}(x^{${n}}) - ${log}\\,${a} = 1` },
+				{ label: 'Kvotientsetninga', latex: `${log}\\left(\\frac{x^{${n}}}{${a}}\\right) = 1` },
+				{ label: 'Definisjonen', latex: `\\frac{x^{${n}}}{${a}} = e` },
 				{ label: `Gong med ${a}`, latex: `x^{${n}} = ${a}e` },
-				{ label: 'Løys for x', latex: `x = \\sqrt{${a}e}` }
+				{ label: 'Berre x > 0 gjeld', latex: `x = \\sqrt{${a}e}` }
 			];
 		}
 	} else if (lvl === 4) {
 		// lg(x) + lg(x−b) = 1  →  product rule + quadratic → 6 steps
-		const b = rand(2, 5);
+		const b = 2 + (variant % 4);
 		q = `${log}\\,x + ${log}(x - ${b}) = 1`;
 		if (base === 'lg') {
 			const D = b * b + 40;
-			const sqrtD = Math.sqrt(D);
-			const x1 = (b + sqrtD) / 2;
 			structuredSteps = [
-				{ label: 'Produktsetningen', latex: `${log}(x(x - ${b})) = 1` },
-				{ label: 'Definisjon', latex: `x(x - ${b}) = 10` },
-				{ label: 'Utvid', latex: `x^2 - ${b}x = 10` },
-				{ label: 'Omform', latex: `x^2 - ${b}x - 10 = 0` },
-				{ label: 'abc-formelen', latex: `x = \\frac{${b} \\pm \\sqrt{${b}^2 + 40}}{2} = \\frac{${b} \\pm \\sqrt{${D}}}{2}` },
-				{ label: `Domene: x > ${b}`, latex: Number.isInteger(x1)
-					? `x = \\frac{${b} + \\sqrt{${D}}}{2} = ${x1}`
-					: `x = \\frac{${b} + \\sqrt{${D}}}{2} \\approx ${x1.toFixed(2)}`
-				}
+				{ label: 'Produktsetninga', latex: `${log}(x(x - ${b})) = 1` },
+				{ label: 'Definisjonen', latex: `x(x - ${b}) = 10` },
+				{ label: 'Gong ut', latex: `x^{2} - ${b}x = 10` },
+				{ label: 'Samle på éi side', latex: `x^{2} - ${b}x - 10 = 0` },
+				{ label: 'abc-formelen', latex: `x = \\frac{${b} \\pm \\sqrt{${D}}}{2}` },
+				{ label: `Berre x > ${b} gjeld`, latex: `x = ${halfRoot(b, D)}` }
 			];
 		} else {
 			structuredSteps = [
-				{ label: 'Produktsetningen', latex: `${log}(x(x - ${b})) = 1` },
-				{ label: 'Definisjon', latex: `x(x - ${b}) = e` },
-				{ label: 'Utvid', latex: `x^2 - ${b}x = e` },
-				{ label: 'Omform', latex: `x^2 - ${b}x - e = 0` },
-				{ label: 'abc-formelen', latex: `x = \\frac{${b} \\pm \\sqrt{${b}^2 + 4e}}{2}` },
-				{ label: `Domene: x > ${b}`, latex: `x = \\frac{${b} + \\sqrt{${b}^2 + 4e}}{2}` }
+				{ label: 'Produktsetninga', latex: `${log}(x(x - ${b})) = 1` },
+				{ label: 'Definisjonen', latex: `x(x - ${b}) = e` },
+				{ label: 'Gong ut', latex: `x^{2} - ${b}x = e` },
+				{ label: 'Samle på éi side', latex: `x^{2} - ${b}x - e = 0` },
+				{ label: 'abc-formelen', latex: `x = \\frac{${b} \\pm \\sqrt{${b * b} + 4e}}{2}` },
+				{ label: `Berre x > ${b} gjeld`, latex: `x = \\frac{${b} + \\sqrt{${b * b} + 4e}}{2} \\approx ${dec((b + Math.sqrt(b * b + 4 * Math.E)) / 2)}` }
 			];
 		}
 	} else {
 		// 2·lg x − lg(x+b) = 0  →  power + quotient + definition → 7 steps
-		const b = rand(2, 8);
+		const b = 2 + variant;
 		const D5 = 1 + 4 * b;
-		const sqrtD5 = Math.sqrt(D5);
-		const x1_5 = (1 + sqrtD5) / 2;
 		q = `2 \\cdot ${log}\\,x - ${log}(x + ${b}) = 0`;
 		structuredSteps = [
-			{ label: 'Potenssetningen', latex: `${log}(x^2) - ${log}(x + ${b}) = 0` },
-			{ label: 'Kvotientsetningen', latex: `${log}\\left(\\frac{x^2}{x + ${b}}\\right) = 0` },
-			{ label: 'Definisjon (log = 0 → argument = 1)', latex: `\\frac{x^2}{x + ${b}} = 1` },
+			{ label: 'Potenssetninga', latex: `${log}(x^2) - ${log}(x + ${b}) = 0` },
+			{ label: 'Kvotientsetninga', latex: `${log}\\left(\\frac{x^2}{x + ${b}}\\right) = 0` },
+			{ label: 'log = 0 gir argument = 1', latex: `\\frac{x^2}{x + ${b}} = 1` },
 			{ label: `Gong med (x + ${b})`, latex: `x^2 = x + ${b}` },
-			{ label: 'Omform', latex: `x^2 - x - ${b} = 0` },
-			{ label: 'abc-formelen', latex: `x = \\frac{1 \\pm \\sqrt{1 + ${4 * b}}}{2} = \\frac{1 \\pm \\sqrt{${D5}}}{2}` },
-			{ label: 'Domene: x > 0', latex: Number.isInteger(x1_5)
-				? `x = \\frac{1 + \\sqrt{${D5}}}{2} = ${x1_5}`
-				: `x = \\frac{1 + \\sqrt{${D5}}}{2} \\approx ${x1_5.toFixed(2)}`
-			}
+			{ label: 'Samle på éi side', latex: `x^{2} - x - ${b} = 0` },
+			{ label: 'abc-formelen', latex: `x = \\frac{1 \\pm \\sqrt{1 + ${4 * b}}}{2}` },
+			{ label: 'Berre x > 0 gjeld', latex: `x = ${halfRoot(1, D5)}` }
 		];
 	}
 
@@ -485,55 +508,68 @@ function generateLogEquationProblem(lvl: number): Draft {
 		q,
 		a: lastStep.latex,
 		structuredSteps,
-		hint: 'Bruk logaritmesetningane først, så definisjonen: log_b(x) = y ⟺ x = b^y'
+		hint: 'Bruk logaritmesetningane først, så definisjonen: $\\lg x = y \\iff x = 10^y$. Hugs at argumentet må vera positivt.'
 	};
 }
 
 // ── Exponential Equations ──
 
-function generateExpEquationProblem(lvl: number): Draft {
+function generateExpEquationProblem(lvl: number, variant: number): Draft {
 	const base = pickBase();
 	const log = logCmd(base);
 	let q = '', structuredSteps: StepEntry[] = [];
 
 	if (lvl === 1) {
-		const b = pick([2, 3, 5]);
-		const n = rand(2, 4);
-		const result = Math.pow(b, n);
-		q = `${b}^x = ${result}`;
+		// Both sides the same base: compare exponents.
+		const pairs = [[2, 3], [3, 2], [2, 5], [5, 2], [3, 4], [2, 4], [5, 3], [4, 3]];
+		const [b, n] = pairs[variant];
+		q = `${b}^{x} = ${b ** n}`;
 		structuredSteps = [
-			{ label: 'Gjenkjenn potens', latex: `${b}^x = ${result}` },
-			{ label: 'Skriv høgresida som potens', latex: `${b}^x = ${b}^{${n}}` },
-			{ label: 'Samanlikn eksponentar', latex: `x = ${n}` }
+			{ label: 'Skriv høgresida som potens', latex: `${b}^{x} = ${b}^{${n}}` },
+			{ label: 'Samanlikn eksponentane', latex: `x = ${n}` }
 		];
 	} else if (lvl === 2) {
-		const b = pick([2, 3, 4, 5]);
-		const n = rand(2, 5);
-		const result = Math.pow(b, n);
-		q = `${b}^x = ${result}`;
-		structuredSteps = [
-			{ label: 'Gjenkjenn potens', latex: `${b}^x = ${result}` },
-			{ label: 'Skriv høgresida som potens', latex: `${b}^x = ${b}^{${n}}` },
-			{ label: 'Samanlikn eksponentar', latex: `x = ${n}` }
-		];
+		// The same, with something to do after comparing: x + k or 2x.
+		const b = pick([2, 3, 5]);
+		const n = rand(2, 4);
+		if (variant % 2 === 0) {
+			const k = 1 + Math.floor(variant / 2);
+			q = `${b}^{x+${k}} = ${b ** n}`;
+			structuredSteps = [
+				{ label: 'Skriv høgresida som potens', latex: `${b}^{x+${k}} = ${b}^{${n}}` },
+				{ label: 'Samanlikn eksponentane', latex: `x + ${k} = ${n}` },
+				{ label: 'Løys for x', latex: `x = ${n - k}` }
+			];
+		} else {
+			const m = 2 + Math.floor(variant / 2);
+			q = `${b}^{${m}x} = ${b ** n}`;
+			structuredSteps = [
+				{ label: 'Skriv høgresida som potens', latex: `${b}^{${m}x} = ${b}^{${n}}` },
+				{ label: 'Samanlikn eksponentane', latex: `${m}x = ${n}` },
+				{ label: 'Løys for x', latex: `x = ${fracLatex(n, m)}` }
+			];
+		}
 	} else if (lvl === 3) {
-		const b = rand(2, 7);
-		const c = rand(8, 50);
-		q = `${b}^x = ${c}`;
+		// The right-hand side is not a power of b: logarithms are the only way.
+		const b = 2 + (variant % 4);
+		let c = rand(5, 40);
+		while (Math.abs(Math.log(c) / Math.log(b) - Math.round(Math.log(c) / Math.log(b))) < 1e-9) c++;
+		const x = Math.log(c) / Math.log(b);
+		q = `${b}^{x} = ${c}`;
 		structuredSteps = [
-			{ label: 'Ta logaritmen på begge sider', latex: `${log}(${b}^x) = ${log}\\,${c}` },
-			{ label: 'Potenssetningen', latex: `x \\cdot ${log}\\,${b} = ${log}\\,${c}` },
-			{ label: 'Isoler x', latex: `x = \\frac{${log}\\,${c}}{${log}\\,${b}}` }
+			{ label: 'Ta logaritmen på begge sider', latex: `${log}(${b}^{x}) = ${log}\\,${c}` },
+			{ label: 'Potenssetninga', latex: `x \\cdot ${log}\\,${b} = ${log}\\,${c}` },
+			{ label: 'Løys for x', latex: `x = \\frac{${log}\\,${c}}{${log}\\,${b}} \\approx ${dec(x)}` }
 		];
 	} else if (lvl === 4) {
-		const a = rand(2, 4);
-		const c = rand(3, 10);
+		const a = 2 + (variant % 3);
+		const c = 2 + variant + rand(0, 1) * 8;
+		const x = Math.log(c) / a;
 		q = `e^{${a}x} = ${c}`;
 		structuredSteps = [
 			{ label: 'Ta ln på begge sider', latex: `\\ln(e^{${a}x}) = \\ln\\,${c}` },
-			{ label: 'Potenssetningen + ln e = 1', latex: `${a}x \\cdot \\ln\\,e = \\ln\\,${c}` },
-			{ label: 'Forenkle (ln e = 1)', latex: `${a}x = \\ln\\,${c}` },
-			{ label: 'Løys for x', latex: `x = \\frac{\\ln\\,${c}}{${a}}` }
+			{ label: 'ln e = 1', latex: `${a}x = \\ln\\,${c}` },
+			{ label: 'Løys for x', latex: `x = \\frac{\\ln\\,${c}}{${a}} \\approx ${dec(x)}` }
 		];
 	} else {
 		// c · b^(x+k) = R, where R/c is NOT a power of b.
@@ -580,21 +616,22 @@ function generateExpEquationProblem(lvl: number): Draft {
 
 export function generateSingleLogProblem(
 	topic: LogTopicId,
-	lvl: number
+	lvl: number,
+	variant = 0
 ): Draft | null {
 	switch (topic) {
 		case 'log_product':
-			return generateLogProductProblem(lvl);
+			return generateLogProductProblem(lvl, variant);
 		case 'log_quotient':
-			return generateLogQuotientProblem(lvl);
+			return generateLogQuotientProblem(lvl, variant);
 		case 'log_power':
-			return generateLogPowerProblem(lvl);
+			return generateLogPowerProblem(lvl, variant);
 		case 'log_simplify':
-			return generateLogSimplifyProblem(lvl);
+			return generateLogSimplifyProblem(lvl, variant);
 		case 'log_equation':
-			return generateLogEquationProblem(lvl);
+			return generateLogEquationProblem(lvl, variant);
 		case 'exp_equation':
-			return generateExpEquationProblem(lvl);
+			return generateExpEquationProblem(lvl, variant);
 	}
 }
 
@@ -617,7 +654,7 @@ export function generateLogProblemBank(): Problem[] {
 				const id = `${MODULE_ID}:${topic}:${lvl}:${variant}`;
 				// Seed before generating so this id always yields this problem.
 				rng = rngFor(id);
-				const prob = generateSingleLogProblem(topic, lvl);
+				const prob = generateSingleLogProblem(topic, lvl, variant);
 				if (prob) bank.push({ ...prob, id, moduleId: MODULE_ID });
 			}
 		}

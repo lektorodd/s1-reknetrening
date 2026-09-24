@@ -565,8 +565,8 @@ function partsLog(): Draft {
 		[
 			{ label: 'Vel roller', latex: `v = \\ln x,\\ v' = \\frac{1}{x}, \\quad u' = ${poly},\\ u = ${coef(A, n + 1, `x^{${n + 1}}`)}` },
 			{ label: 'Set inn i formelen', latex: `${coef(A, n + 1, `x^{${n + 1}}`)}\\ln x - \\int ${coef(A, n + 1, `x^{${n + 1}}`)}\\cdot\\frac{1}{x}\\,dx` },
-			{ label: 'Forkort i det nye integralet', latex: `${coef(A, n + 1, `x^{${n + 1}}`)}\\ln x - ${coef(A, n + 1, '')}\\int ${powX(n)}\\,dx` },
-			{ label: 'Integrer', latex: `${coef(A, n + 1, `x^{${n + 1}}`)}\\ln x - ${coef(A, (n + 1) * (n + 1), `x^{${n + 1}}`)} + C` }
+			{ label: 'Forkort i det nye integralet', latex: `${coef(A, n + 1, `x^{${n + 1}}`)}\\ln x ${plusFrac(-A, n + 1, `\\int ${powX(n)}\\,dx`)}` },
+			{ label: 'Integrer', latex: `${coef(A, n + 1, `x^{${n + 1}}`)}\\ln x ${plusFrac(-A, (n + 1) * (n + 1), `x^{${n + 1}}`)} + C` }
 		],
 		'$\\ln x$ blir $\\frac{1}{x}$ og forkortar mot potensen. Kva skjer om du byter rollene?');
 }
@@ -582,7 +582,7 @@ function partsFrac(): Draft {
 			INTEGRAL(`\\frac{\\ln x}{x^{${m}}}`),
 			[
 				{ label: 'Vel roller', latex: `v = \\ln x,\\ v' = \\frac{1}{x}, \\quad u' = x^{${n}},\\ u = ${coef(1, n + 1, powX(n + 1))}` },
-				{ label: 'Set inn i formelen', latex: `${coef(1, n + 1, powX(n + 1))}\\ln x - ${coef(1, n + 1, '')}\\int x^{${n}}\\,dx` },
+				{ label: 'Set inn i formelen', latex: `${coef(1, n + 1, powX(n + 1))}\\ln x ${plusFrac(-1, n + 1, `\\int x^{${n}}\\,dx`)}` },
 				{ label: 'Integrer', latex: `${coef(1, n + 1, powX(n + 1))}\\ln x ${plusFrac(-1, (n + 1) * (n + 1), powX(n + 1))} + C` },
 				{ label: 'Skriv med brøk', latex: `-\\frac{\\ln x}{${times(m - 1, powX(m - 1))}} - \\frac{1}{${times((m - 1) * (m - 1), powX(m - 1))}} + C` }
 			],
@@ -640,7 +640,7 @@ function partsTwice(): Draft {
 			INTEGRAL(`${poly}${E}`),
 			[
 				{ label: 'Runde 1', latex: `v = ${poly},\\ v' = ${2 * A}x, \\quad u' = ${E},\\ u = ${coef(1, k, E)}` },
-				{ label: 'Set inn', latex: `${coef(A, k, `x^{2}${E}`)} - ${coef(2 * A, k, '')}\\int x${E}\\,dx` },
+				{ label: 'Set inn', latex: `${coef(A, k, `x^{2}${E}`)} ${plusFrac(-2 * A, k, `\\int x${E}\\,dx`)}` },
 				{ label: 'Runde 2 på det nye integralet', latex: `\\int x${E}\\,dx = ${coef(1, k, `x${E}`)} ${plusFrac(-1, k * k, E)}` },
 				{ label: 'Set inn og rydd', latex: `${coef(A, k, `x^{2}${E}`)} ${plusFrac(-2 * A, k * k, `x${E}`)} ${plusFrac(2 * A, k * k * k, E)} + C` },
 				{ label: 'Faktoriser', latex: `${E}\\left(${coef(A, k, 'x^{2}')} ${plusFrac(-2 * A, k * k, 'x')} ${plusFrac(2 * A, k * k * k, '')}\\right) + C` }
@@ -797,10 +797,10 @@ function partialDivision(): Draft {
 		return draft('partial', 3, 'division',
 			INTEGRAL(`\\frac{x^{2}${plus(c)}}{x^{2}-${d * d}}`),
 			[
-				{ label: 'Divider først', latex: `x^{2}${plus(c)} = (x^{2}-${d * d}) + ${rest}` },
+				{ label: 'Divider først', latex: `x^{2}${plus(c)} = (x^{2}-${d * d}) ${plus(rest)}` },
 				{ label: 'Skriv om', latex: `\\frac{x^{2}${plus(c)}}{x^{2}-${d * d}} = 1 + \\frac{${rest}}{x^{2}-${d * d}}` },
 				{ label: 'Faktoriser og spalt resten', latex: `\\frac{${rest}}{${factor(d)}${factor(-d)}} = ${coef(rest, 2 * d, '')}\\left(\\frac{1}{x-${d}} - \\frac{1}{x+${d}}\\right)` },
-				{ label: 'Integrer ledd for ledd', latex: `x + ${coef(rest, 2 * d, '')}\\left(\\ln|x-${d}| - \\ln|x+${d}|\\right) + C` }
+				{ label: 'Integrer ledd for ledd', latex: `x ${plusFrac(rest, 2 * d, `\\left(\\ln|x-${d}| - \\ln|x+${d}|\\right)`)} + C` }
 			],
 			'Grad i teljar $\\ge$ grad i nemnar. Kva må du gjere før du spaltar?');
 	}
@@ -812,7 +812,7 @@ function partialDivision(): Draft {
 		const c = pick([1, 2, -1]);
 		const den = a * c - b;
 		if (den === 0) return partialDistinct();
-		const Q = `${a}x^{2}${plus(a * c + b)}x${plus(b * c)}`;
+		const Q = `${a}x^{2}${plusTimes(a * c + b, 'x')}${plus(b * c)}`;
 		return draft('partial', 3, 'division',
 			INTEGRAL(`\\frac{1}{${Q}}`),
 			[
