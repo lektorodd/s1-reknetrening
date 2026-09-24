@@ -2,22 +2,26 @@
 // Based on future-report §3.2
 
 import type { ConceptKnowledge, StudentModel } from './student-model';
-import { getOrCreateTodaySession, updateStreak } from './student-model';
+import {
+	daysSinceSeen,
+	effectiveInterval,
+	getOrCreateTodaySession,
+	MAX_INTERVAL_DAYS,
+	updateStreak
+} from './student-model';
 
 // ── Scheduling ──
 
 /** Check whether a concept is due for review */
 export function isDue(concept: ConceptKnowledge): boolean {
 	if (concept.lastSeen === 0) return false; // never seen → "new", not "due"
-	const daysSince = (Date.now() - concept.lastSeen) / (1000 * 60 * 60 * 24);
-	return daysSince >= concept.currentInterval;
+	return daysSinceSeen(concept) >= effectiveInterval(concept);
 }
 
 /** Urgency score: higher = more urgent to review */
 export function urgency(concept: ConceptKnowledge): number {
 	if (concept.lastSeen === 0) return 0;
-	const daysSince = (Date.now() - concept.lastSeen) / (1000 * 60 * 60 * 24);
-	const overdue = Math.max(0, daysSince - concept.currentInterval);
+	const overdue = Math.max(0, daysSinceSeen(concept) - effectiveInterval(concept));
 	return overdue * (1 - concept.confidence);
 }
 
@@ -40,6 +44,11 @@ export function updateAfterAttempt(
 	const concept = model.concepts[result.conceptId];
 	if (!concept) return;
 
+	// Read before lastSeen moves: was this a scheduled review, or the same concept
+	// coming round again before it was due (later in the same session, say)?
+	const firstTime = concept.lastSeen === 0;
+	const wasDue = firstTime || isDue(concept);
+
 	// ── 1. Bayesian confidence update ──
 	const prior = concept.confidence;
 	const likelihood = result.correct ? 0.85 : 0.15;
@@ -48,22 +57,36 @@ export function updateAfterAttempt(
 	concept.confidence = clamp(posterior, 0.01, 0.99);
 
 	// ── 2. FSRS-inspired interval scheduling ──
+	//
+	// The interval only grows on a review that was actually due. It used to grow on
+	// every correct rating, so a concept drawn three times in one session tripled
+	// its schedule in five minutes, and a month of daily practice pushed intervals
+	// past 10^18 days — the scheduler simply stopped scheduling. A correct answer
+	// before the concept was due still raises confidence; it just doesn't move the
+	// next review further away.
+	const ease = Number.isFinite(concept.easeFactor) ? concept.easeFactor : 2.0;
 	if (result.correct) {
-		if (concept.currentInterval === 0) {
+		if (firstTime || concept.currentInterval === 0) {
 			concept.currentInterval = 1; // first review: 1 day
-		} else {
-			concept.currentInterval = Math.round(
-				concept.currentInterval * concept.easeFactor
+		} else if (wasDue) {
+			concept.currentInterval = Math.min(
+				MAX_INTERVAL_DAYS,
+				Math.max(1, Math.round(effectiveInterval(concept) * ease))
 			);
-		}
-		// Easy bonus: if confidence is high, increase ease
-		if (concept.confidence > 0.85) {
-			concept.easeFactor = Math.min(concept.easeFactor + 0.05, 2.5);
+			// Easy bonus, only on a real review for the same reason.
+			if (concept.confidence > 0.85) {
+				concept.easeFactor = Math.min(ease + 0.05, 2.5);
+			}
+		} else {
+			// Early repeat: keep the schedule, but normalise a stored value that is
+			// out of range (an old model with an exploded interval, say).
+			concept.currentInterval = effectiveInterval(concept);
 		}
 	} else {
-		// Lapse: cut interval, reduce ease
-		concept.currentInterval = Math.max(1, Math.round(concept.currentInterval * 0.5));
-		concept.easeFactor = Math.max(concept.easeFactor - 0.15, 1.3);
+		// Lapse: the concept is back to being learnt, so it comes back tomorrow.
+		// Halving used to leave a 1078-day interval at 539.
+		concept.currentInterval = 1;
+		concept.easeFactor = Math.max(ease - 0.15, 1.3);
 	}
 
 	// ── 3. Update counters ──

@@ -2,6 +2,75 @@
 
 ---
 
+## Stage 9a – Rett matte og rett visning (v0.9.3)
+**Dato:** 2026-09-24
+
+Første fase etter ein full gjennomgang av appen: tre agentar (pedagogikk og matte,
+læringsmotor og data, UI og kode) og ein gjennomgang som ny elev i Chromium.
+Funna og planen for fase 2–5 ligg i den godkjende planen. Denne fasen tek dei tre
+kritiske funna og to mindre.
+
+### K1 — repetisjonen som slutta å repetera
+
+Intervallet vart gonga med ease-faktoren ved kvar rett vurdering, uansett om konseptet var
+forfalle. I ei økt kjem same konsept att fleire gonger, så intervallet vart dobla kvar
+gong. Ein simulert elev som øvde kvar dag, hadde ingenting forfalle frå dag 5, og etter 30
+dagar var intervallet 4·10¹⁸ dagar.
+
+No veks intervallet berre ved ein repetisjon som faktisk var forfallen. Det har eit tak på
+60 dagar, og ein bom gir 1 dag. `effectiveInterval` reparerer lagra modellar med
+`null` (som er `Infinity` etter JSON) eller for store verdiar.
+
+Dei to gamle testane som skildra feilen som ønskt åtferd, er erstatta av seks nye. Fem av
+dei feilar mot den gamle koden. Ein av dei simulerer 30 dagar med dagleg øving og krev at
+det framleis finst noko å repetera.
+
+### K2 — svar som mista halve løysingsmengda
+
+`lg(x²) + lg 2 = 2` vart løyst via `2 lg x`, som stiller kravet x > 0 i det stille.
+Løysinga isolerer no `x²` og tek med ±. Hjelparen `sqrtFraction` gir rasjonalisert og
+forenkla form (`100/3` → `10√3/3`, `e²/4` → `e/2`).
+
+Eksponentiallikninga på nivå 5 hadde x = 1 i alle åtte oppgåvene. No blir høgresida trekt
+slik at ho ikkje er ein potens av grunntalet.
+
+Testane i `logarithm.test.ts` løyser likninga numerisk ut frå spørsmålet. Dei samanliknar
+altså med matten, ikkje med ein annan bit generatorkode. Seks av sju feilar mot den gamle
+generatoren.
+
+### K3 — prosa-matte
+
+Dette er same mekanisme som i v0.9.2, berre i prosa: `{entry.intro}` blir ein tekstnode
+som MathJax tek over. Målt A/B med MathJax servert lokalt, både med forseinking 0 ms og
+2500 ms:
+
+```
+                          gamal                   ny
+navigert parts → partial  rå$=58 mjx=40          rå$=0 mjx=36 (= full lasting)
+refleksjonsspørsmål       rå$= 8 mjx= 0           rå$=0 mjx= 4
+hint i Tren S2            rå$= 4 mjx= 0           rå$=0 mjx= 2
+```
+
+`TexProse` og `Tex` går no begge gjennom `renderInto`. Den kallar `typesetClear` før han
+set teksten, slik at MathJax gløymer dei gamle nodane, og typesettar i ein kø.
+
+### Stigen
+
+`buildLadder` lova i kommentaren å aldri visa same oppgåve to gonger. Han sjekka id-ar, men
+ikkje oppgåvetekst, og 11 emne/nivå har færre enn fem ulike oppgåver. Den nye testen
+fann òg ein dublett i `chain` nivå 1 som oversikta mi hadde gått glipp av.
+
+Ein kortare stige beheld begge endane (`rungsFor`: 2 → 0-4, 4 → 0-1-3-4). Eleven skal alltid
+få sjå eit gjennomgått døme først og prøva sjølv til slutt.
+
+### Datoar
+
+`toISOString()` gav UTC-datoen. `localISO` bruker lokal tid. `dates.test.ts` køyrer i
+`Europe/Oslo` og sveipar eit heilt år i kvarterssteg. Med UTC var det 24 kvarter med
+dublettdagar i vekegrafen, og kvar av dei krasja Framgang-sida.
+
+---
+
 ## Stage 8c – Ein knapp som ikkje verka, og ein lærebok som løgg (v0.9.2)
 **Dato:** 2026-09-16
 

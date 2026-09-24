@@ -108,4 +108,7 @@ npm run build    # static output in build/
 MathJax loads from a CDN in `src/app.html`; in a sandboxed environment it may be
 blocked, so assert the `\[...\]` markup rather than rendered `mjx-container` elements.
 
-Call `typesetElement(el)` after DOM updates that introduce maths.
+Never interpolate maths as `{text}` — MathJax takes over the text node and later values
+never reach the screen. Bare LaTeX goes through `<Tex tex={...} />`; prose with inline
+`$...$` (theory text, hints, self-explanation) through `<TexProse text={...} />`. See
+DESIGN.md, «All matte går gjennom `Tex`».

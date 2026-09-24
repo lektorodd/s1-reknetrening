@@ -129,22 +129,70 @@ export function getConceptCount(model: StudentModel, minConfidence: number): num
 		.length;
 }
 
+// ── Scheduling helpers ──
+
+/**
+ * The longest a concept may wait between reviews.
+ *
+ * Without a ceiling the interval grew geometrically: ten correct ratings of one
+ * concept in a single session took it from 1 day to 1078, and after a month of
+ * daily practice nothing was ever due again. Sixty days is still long enough to
+ * reward mastery while keeping every concept inside a school term.
+ */
+export const MAX_INTERVAL_DAYS = 60;
+
+const DAY_MS = 1000 * 60 * 60 * 24;
+
+/**
+ * The interval the scheduler actually honours.
+ *
+ * Also repairs models saved before the ceiling existed: an interval that grew
+ * past what a double can hold was stored as `Infinity`, which JSON writes as
+ * `null`, and a missing field reads as `undefined`. All of those, and anything
+ * past the ceiling, are brought back into range here rather than trusted.
+ */
+export function effectiveInterval(c: ConceptKnowledge): number {
+	const i = c.currentInterval;
+	if (typeof i !== 'number' || !Number.isFinite(i) || i < 0) return 1;
+	return Math.min(i, MAX_INTERVAL_DAYS);
+}
+
+/** Days since the concept was last practised (fractional). */
+export function daysSinceSeen(c: ConceptKnowledge, now: number = Date.now()): number {
+	return (now - c.lastSeen) / DAY_MS;
+}
+
 export function getDueCount(model: StudentModel): number {
 	const now = Date.now();
 	return Object.values(model.concepts)
 		.filter(c => {
 			if (c.lastSeen === 0) return false; // never seen = not "due", it's "new"
-			const daysSince = (now - c.lastSeen) / (1000 * 60 * 60 * 24);
-			return daysSince >= c.currentInterval;
+			return daysSinceSeen(c, now) >= effectiveInterval(c);
 		})
 		.length;
 }
 
 // ── Session history helpers ──
 
-/** ISO date string for today (local time) */
+/**
+ * A date as YYYY-MM-DD in the student's own time zone.
+ *
+ * `toISOString()` gives the UTC date, which in Norway is still yesterday until
+ * 01:00 (02:00 in summer). That made the streak, «Du har trena i dag» and the
+ * week chart change day in the middle of the night — and on the night the
+ * clocks go forward, two days mapped to the same date and the progress page's
+ * keyed list threw.
+ */
+export function localISO(d: Date): string {
+	const y = d.getFullYear();
+	const m = String(d.getMonth() + 1).padStart(2, '0');
+	const day = String(d.getDate()).padStart(2, '0');
+	return `${y}-${m}-${day}`;
+}
+
+/** ISO date string for today, in local time. */
 export function todayISO(): string {
-	return new Date().toISOString().slice(0, 10);
+	return localISO(new Date());
 }
 
 /** Get or create today's session entry in the model */
@@ -169,7 +217,7 @@ export function updateStreak(model: StudentModel): void {
 
 	const yesterday = new Date();
 	yesterday.setDate(yesterday.getDate() - 1);
-	const yesterdayISO = yesterday.toISOString().slice(0, 10);
+	const yesterdayISO = localISO(yesterday);
 
 	if (model.lastActiveDate === yesterdayISO) {
 		model.streakDays++;
@@ -188,15 +236,13 @@ export interface ReviewBuckets {
 
 export function getReviewBuckets(model: StudentModel): ReviewBuckets {
 	const now = Date.now();
-	const DAY = 1000 * 60 * 60 * 24;
 	const dueNow: ConceptKnowledge[] = [];
 	const dueTomorrow: ConceptKnowledge[] = [];
 	const dueWeek: ConceptKnowledge[] = [];
 
 	for (const c of Object.values(model.concepts)) {
 		if (c.lastSeen === 0) continue; // never seen
-		const daysSince = (now - c.lastSeen) / DAY;
-		const daysUntilDue = c.currentInterval - daysSince;
+		const daysUntilDue = effectiveInterval(c) - daysSinceSeen(c, now);
 
 		if (daysUntilDue <= 0) {
 			dueNow.push(c);

@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.3] - 2026-09-24
+
+Fase 1 etter den fulle gjennomgangen: rett matte og rett visning.
+
+### Fixed
+- **Repetisjonen slutta å verka etter om lag ei veke.** Kvar «Fekk det til» gonga
+  intervallet med ease-faktoren, også når konseptet ikkje var forfalle og når det kom att
+  seinare i same økt. Ti rette på eitt konsept i éi økt gav 1 → 1078 dagar, og etter ein
+  månad med dagleg øving var ingenting forfalle lenger. No veks intervallet berre når
+  konseptet faktisk var forfalle. Det har eit tak på 60 dagar, og ein bom set det tilbake
+  til 1 dag (før vart det halvert, så 1078 vart 539). Modellar som alt er lagra med
+  intervall på over 60 dagar, `Infinity` eller `null`, blir henta inn att.
+- **`lg(x²) + lg a = 2` gav berre den positive løysinga.** Løysinga gjekk via
+  `2 lg x`, som berre gjeld for x > 0, og då forsvann `x = −√50`. Det er nettopp den
+  domenefeilen faget skal læra elevane å unngå. No isolerer løysinga x², tek med
+  begge forteikn og forenklar: `x = ±5√2`, `x = ±e√2/2`.
+- **Eksponentiallikninga på nivå 5 hadde alltid svaret x = 1**, vist som
+  `lg 64 / lg 4 − 2`. Høgresida er no ikkje ein potens av grunntalet, så eleven må
+  bruka logaritmar, og svaret er òg gitt som desimaltal (`≈ 0,81`).
+- **Matte i prosa vart vist som rå LaTeX.** Det gjaldt teoritekst, hint,
+  refleksjonsspørsmål og svaralternativ. Etter navigering inne i appen såg eleven
+  `$f(x)=…$` blanda med formlar frå førre side, og hint vart aldri typesette. Den nye
+  komponenten `TexProse` gjer for prosa det `Tex` gjer for formlar. Målt med MathJax
+  servert lokalt, etter navigering frå Delvis integrasjon til Delbrøkoppspalting: før
+  stod det 58 rå `$` og 40 formlar på ei side som skal ha 36. No er det 0 rå `$` og 36
+  formlar, det same som ved full lasting.
+- **Stigen kunne visa same oppgåve på to trinn.** Fleire variantar i banken gir same
+  oppgåve (lg- og ln-versjonen av same regel, til dømes), så det gjennomgåtte dømet
+  kunne koma att som «Sjølv»-oppgåva. No blir dublettar fjerna på sjølve oppgåveteksten.
+  Har eit nivå færre ulike oppgåver enn trinn, blir stigen kortare, men han byrjar
+  framleis med eit gjennomgått døme og sluttar utan hjelp (til dømes Døme · Sjølv).
+  Byter eleven vanskegrad, held stigen på same mengd hjelp, ikkje same plass i rekkja.
+- **Datoar var i UTC, ikkje norsk tid.** Streak, «Du har trena i dag» og vekegrafen bytte
+  dag klokka 01 eller 02 om natta. Natta klokka vart stilt fram, fall to dagar saman i
+  vekegrafen, og Framgang-sida krasja. No blir det brukt lokal dato overalt.
+
 ## [0.9.2] - 2026-09-16
 
 ### Fixed

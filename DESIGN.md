@@ -200,6 +200,16 @@ visa kjerneregelen under overskrifta «Delvis integrasjon».
 `Tex` set `textContent` sjølv før han typesettar, som kastar containeren ut og legg
 råteksten tilbake. Skriv du `{`\\[${...}\\]`}` rett i ein komponent, får du feilen igjen.
 
+**Prosa med `$...$` inni går gjennom `TexProse`** — teoritekst, hint, refleksjonsspørsmål
+og svaralternativ. Same mekanisme, same feil: skriv du `{entry.intro}` rett, blir matten
+berre rendra når MathJax sin oppstartspass tilfeldigvis finn han ved full sidelasting.
+Etter navigering inne i appen står `$f(x)=...$` rått, og eit hint som blir opna på eit kort
+blir aldri typesett. `TexProse` rendrar eit nakent `<span>`, så elementet rundt beheld
+stilen sin (`white-space: pre-line` for linjeskift i teksten).
+
+Begge går gjennom `renderInto` i `utils/mathjax.ts`, som ber MathJax gløyma den gamle
+matten, set teksten og typesettar i kø — MathJax 3 vil ha éin typesetting om gongen.
+
 Komponenten heiter `Tex` og ikkje `Math`, fordi `Math` skyggar for det globale
 `Math`-objektet i komponenten som importerer han.
 

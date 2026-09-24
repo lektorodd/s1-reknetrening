@@ -39,6 +39,49 @@ function logCmd(base: 'lg' | 'ln'): string {
 	return base === 'ln' ? '\\ln' : '\\lg';
 }
 
+function gcd(a: number, b: number): number {
+	a = Math.abs(a);
+	b = Math.abs(b);
+	while (b) [a, b] = [b, a % b];
+	return a || 1;
+}
+
+/** Split n into k²·m with m square-free: 200 → [10, 2]. */
+function splitSquare(n: number): [number, number] {
+	let k = 1;
+	let m = n;
+	for (let f = 2; f * f <= m; f++) {
+		while (m % (f * f) === 0) {
+			m /= f * f;
+			k *= f;
+		}
+	}
+	return [k, m];
+}
+
+/**
+ * √(num/den) in simplest exact form, denominator rationalised:
+ * √(100/2) → 5\sqrt{2}, √(100/3) → \frac{10\sqrt{3}}{3}, √(100/4) → 5.
+ *
+ * `prefix` goes in front of the root, for √(e²/a) = e·√(1/a).
+ */
+function sqrtFraction(num: number, den: number, prefix = ''): string {
+	// √(num/den) = √(num·den) / den = k√m / den
+	const [k, m] = splitSquare(num * den);
+	const g = gcd(k, den);
+	const top = k / g;
+	const bottom = den / g;
+	const root = m === 1 ? '' : `\\sqrt{${m}}`;
+	const coef = top === 1 && (root || prefix) ? '' : `${top}`;
+	const numerator = `${coef}${prefix}${root}` || '1';
+	return bottom === 1 ? numerator : `\\frac{${numerator}}{${bottom}}`;
+}
+
+/** A decimal in Norwegian notation, for LaTeX: 2.81 → 2{,}81. */
+function dec(x: number, digits = 2): string {
+	return x.toFixed(digits).replace('.', '{,}');
+}
+
 // ── Product Rule: lg(a·b) = lg a + lg b ──
 
 function generateLogProductProblem(lvl: number): Draft {
@@ -333,26 +376,32 @@ function generateLogEquationProblem(lvl: number): Draft {
 			];
 		}
 	} else if (lvl === 2) {
-		// lg(x²) + lg(3) = 2  →  power + product + definition  →  5 steps
+		// lg(x²) + lg a = 2  →  product rule + definition  →  two solutions
+		//
+		// Not via the power rule. Writing lg(x²) as 2·lg x silently assumes x > 0,
+		// but lg(x²) is defined for every x ≠ 0 — so that step threw away the
+		// negative root, and the answer showed only x = √(100/a). It is precisely
+		// the domain slip this topic exists to teach students to avoid.
 		const a = rand(2, 5);
-		const n = 2;
-		q = `${log}(x^{${n}}) + ${log}\\,${a} = 2`;
+		q = `${log}(x^{2}) + ${log}\\,${a} = 2`;
 		if (base === 'lg') {
 			const rhs = 100;
+			const g = gcd(rhs, a);
+			const x2 = a / g === 1 ? `${rhs / g}` : `\\frac{${rhs / g}}{${a / g}}`;
 			structuredSteps = [
-				{ label: 'Potenssetningen', latex: `${n}${log}\\,x + ${log}\\,${a} = 2` },
-				{ label: 'Alt. bruk produktsetningen', latex: `${log}(${a}x^{${n}}) = 2` },
-				{ label: 'Definisjon', latex: `${a}x^{${n}} = 10^2 = ${rhs}` },
-				{ label: 'Isoler x²', latex: `x^{${n}} = \\frac{${rhs}}{${a}}` },
-				{ label: 'Løys for x', latex: `x = \\sqrt{\\frac{${rhs}}{${a}}}` }
+				{ label: 'Produktsetninga', latex: `${log}(${a}x^{2}) = 2` },
+				{ label: 'Definisjonen', latex: `${a}x^{2} = 10^{2} = ${rhs}` },
+				{ label: 'Isoler x²', latex: `x^{2} = ${x2}` },
+				{ label: 'Begge forteikn gir same x²', latex: `x = \\pm\\sqrt{${x2}}` },
+				{ label: 'Forenkle', latex: `x = \\pm ${sqrtFraction(rhs, a)}` }
 			];
 		} else {
 			structuredSteps = [
-				{ label: 'Potenssetningen', latex: `${n}${log}\\,x + ${log}\\,${a} = 2` },
-				{ label: 'Alt. bruk produktsetningen', latex: `${log}(${a}x^{${n}}) = 2` },
-				{ label: 'Definisjon', latex: `${a}x^{${n}} = e^2` },
-				{ label: 'Isoler x²', latex: `x^{${n}} = \\frac{e^2}{${a}}` },
-				{ label: 'Løys for x', latex: `x = \\sqrt{\\frac{e^2}{${a}}}` }
+				{ label: 'Produktsetninga', latex: `${log}(${a}x^{2}) = 2` },
+				{ label: 'Definisjonen', latex: `${a}x^{2} = e^{2}` },
+				{ label: 'Isoler x²', latex: `x^{2} = \\frac{e^{2}}{${a}}` },
+				{ label: 'Begge forteikn gir same x²', latex: `x = \\pm\\sqrt{\\frac{e^{2}}{${a}}}` },
+				{ label: 'Forenkle', latex: `x = \\pm ${sqrtFraction(1, a, 'e')}` }
 			];
 		}
 	} else if (lvl === 3) {
@@ -487,18 +536,31 @@ function generateExpEquationProblem(lvl: number): Draft {
 			{ label: 'Løys for x', latex: `x = \\frac{\\ln\\,${c}}{${a}}` }
 		];
 	} else {
+		// c · b^(x+k) = R, where R/c is NOT a power of b.
+		//
+		// It used to be R = c·b^(k+1), so x was 1 in every problem and the answer
+		// was shown as lg 64 / lg 4 − 2: a student who spotted 4^(x+2) = 4³ got
+		// "x = 1" and a key that looked different. A right-hand side that is not a
+		// power of b makes logarithms the only way through, which is the point of
+		// this level.
 		const coeff = rand(2, 4);
 		const b = rand(2, 5);
 		const k = rand(1, 2);
-		const result = coeff * Math.pow(b, k + 1);
+		let divided = rand(5, 60);
+		const isPowerOfB = (n: number) => {
+			const e = Math.log(n) / Math.log(b);
+			return Math.abs(e - Math.round(e)) < 1e-9;
+		};
+		while (isPowerOfB(divided)) divided++;
+		const result = coeff * divided;
+		const x = Math.log(divided) / Math.log(b) - k;
 		q = `${coeff} \\cdot ${b}^{x+${k}} = ${result}`;
-		const divided = result / coeff;
 		structuredSteps = [
 			{ label: 'Isoler potensen', latex: `${b}^{x+${k}} = \\frac{${result}}{${coeff}} = ${divided}` },
 			{ label: 'Ta logaritmen', latex: `${log}(${b}^{x+${k}}) = ${log}\\,${divided}` },
-			{ label: 'Potenssetningen', latex: `(x+${k}) \\cdot ${log}\\,${b} = ${log}\\,${divided}` },
+			{ label: 'Potenssetninga', latex: `(x+${k}) \\cdot ${log}\\,${b} = ${log}\\,${divided}` },
 			{ label: `Isoler (x+${k})`, latex: `x + ${k} = \\frac{${log}\\,${divided}}{${log}\\,${b}}` },
-			{ label: 'Løys for x', latex: `x = \\frac{${log}\\,${divided}}{${log}\\,${b}} - ${k}` }
+			{ label: 'Løys for x', latex: `x = \\frac{${log}\\,${divided}}{${log}\\,${b}} - ${k} \\approx ${dec(x)}` }
 		];
 	}
 
