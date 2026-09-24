@@ -4,6 +4,7 @@
 	import { fadeSteps } from '$lib/engine/guidance-fading';
 	import { rungLabel, rungShort, rungPrompt, levelName } from '$lib/content/strings';
 	import Tex from './Tex.svelte';
+	import TexProse from './TexProse.svelte';
 	import { rngFor } from '$lib/modules/rng';
 
 	interface Props {
@@ -31,9 +32,17 @@
 		Math.min(chosenLevel ?? 1, ladders.length - 1)
 	);
 	const rungs = $derived(ladders[levelIndex].rungs);
-	// Changing difficulty keeps the rung where possible, so you can retake the
-	// same amount of support on a harder problem.
-	const position = $derived(Math.min(chosenRung, rungs.length - 1));
+	// Changing difficulty keeps the amount of support, so you can retake the same
+	// rung on a harder problem. A level with few distinct problems has a shorter
+	// ladder (0-4, say), so the rung is remembered by what it is rather than where
+	// it sat, and the nearest one wins — the one with more help on a tie.
+	const position = $derived.by(() => {
+		let best = 0;
+		for (let i = 1; i < rungs.length; i++) {
+			if (Math.abs(rungs[i].rung - chosenRung) < Math.abs(rungs[best].rung - chosenRung)) best = i;
+		}
+		return best;
+	});
 	const current = $derived(rungs[position]);
 	const faded = $derived(fadeSteps(current.problem.structuredSteps, current.rung));
 	const isStudy = $derived(current.rung === 0);
@@ -63,7 +72,7 @@
 	}
 
 	function go(to: number) {
-		chosenRung = Math.max(0, Math.min(rungs.length - 1, to));
+		chosenRung = rungs[Math.max(0, Math.min(rungs.length - 1, to))].rung;
 		reset();
 	}
 
@@ -149,7 +158,7 @@
 
 	{#if revealed && prompt}
 		<section class="self-explanation">
-			<h4>{prompt.q.question}</h4>
+			<h4><TexProse text={prompt.q.question} /></h4>
 			{#each prompt.order as optionIndex (optionIndex)}
 				<button
 					class="option"
@@ -158,7 +167,7 @@
 					disabled={chosen !== null}
 					onclick={() => (chosen = optionIndex)}
 				>
-					{prompt.q.options[optionIndex]}
+					<TexProse text={prompt.q.options[optionIndex]} />
 				</button>
 			{/each}
 			{#if chosen !== null}

@@ -14,6 +14,8 @@ import {
 	todayISO,
 	getReviewBuckets,
 	getRegisteredConceptIds,
+	localISO,
+	MAX_INTERVAL_DAYS,
 	type StudentModel
 } from '$lib/engine/student-model';
 import {
@@ -24,7 +26,7 @@ import {
 import { selectNextProblems, splitBudget } from '$lib/engine/problem-selector';
 import { fadeSteps } from '$lib/engine/guidance-fading';
 import { buildSession, filterBank, SESSION_LENGTH } from '$lib/engine/session';
-import { buildLadder, LADDER_LEVEL, LADDER_RUNGS } from '$lib/engine/ladder';
+import { buildLadder, LADDER_LEVEL, LADDER_RUNGS, rungsFor } from '$lib/engine/ladder';
 import {
 	COURSES,
 	MODULE_REGISTRY,
@@ -37,6 +39,8 @@ import {
 import type { Problem, StepEntry } from '$lib/modules/types';
 
 // ── Helpers ──
+
+const DAY = 24 * 60 * 60 * 1000;
 
 function makeProblem(overrides: Partial<Problem> & { id: string }): Problem {
 	return {
@@ -188,18 +192,95 @@ describe('Spaced Repetition', () => {
 		expect(model.concepts['chain_poly'].currentInterval).toBe(1);
 	});
 
-	it('second correct answer increases interval by ease factor', () => {
+	it('a correct answer on a due review grows the interval by the ease factor', () => {
+		const concept = model.concepts['chain_poly'];
 		updateAfterAttempt(model, { conceptId: 'chain_poly', correct: true, hintUsed: false });
+		// Come back once it is due.
+		concept.lastSeen = Date.now() - 2 * DAY;
 		updateAfterAttempt(model, { conceptId: 'chain_poly', correct: true, hintUsed: false });
-		expect(model.concepts['chain_poly'].currentInterval).toBeGreaterThan(1);
+		expect(concept.currentInterval).toBeGreaterThan(1);
 	});
 
-	it('incorrect answer halves interval', () => {
+	it('does not grow the interval when the same concept comes round again early', () => {
+		// The concept drawn three times in one session used to triple its
+		// schedule in five minutes: ten correct ratings took it to 1078 days.
 		const concept = model.concepts['chain_poly'];
-		concept.currentInterval = 8;
-		concept.lastSeen = Date.now();
+		for (let i = 0; i < 10; i++) {
+			updateAfterAttempt(model, { conceptId: 'chain_poly', correct: true, hintUsed: false });
+		}
+		expect(concept.currentInterval).toBe(1);
+	});
+
+	it('never schedules a concept further away than the ceiling', () => {
+		const concept = model.concepts['chain_poly'];
+		updateAfterAttempt(model, { conceptId: 'chain_poly', correct: true, hintUsed: false });
+		// A year of perfect, on-time reviews.
+		for (let i = 0; i < 40; i++) {
+			concept.lastSeen = Date.now() - (concept.currentInterval + 1) * DAY;
+			updateAfterAttempt(model, { conceptId: 'chain_poly', correct: true, hintUsed: false });
+		}
+		expect(concept.currentInterval).toBe(MAX_INTERVAL_DAYS);
+		expect(Number.isFinite(concept.currentInterval)).toBe(true);
+	});
+
+	it('a lapse brings the concept back tomorrow', () => {
+		const concept = model.concepts['chain_poly'];
+		concept.currentInterval = 40;
+		concept.lastSeen = Date.now() - 41 * DAY;
 		updateAfterAttempt(model, { conceptId: 'chain_poly', correct: false, hintUsed: false });
-		expect(concept.currentInterval).toBe(4);
+		// Halving used to leave a 1078-day interval at 539.
+		expect(concept.currentInterval).toBe(1);
+	});
+
+	it('repairs a model saved before the ceiling existed', () => {
+		// An interval that overflowed became Infinity, which JSON stores as null.
+		// Both it and a merely huge value must come back into range, so the
+		// concept can be due again instead of being lost for good.
+		const huge = model.concepts['chain_poly'];
+		huge.currentInterval = 1078;
+		huge.lastSeen = Date.now() - (MAX_INTERVAL_DAYS + 1) * DAY;
+		expect(isDue(huge)).toBe(true);
+
+		const overflowed = model.concepts['chain_root'];
+		(overflowed as { currentInterval: unknown }).currentInterval = null;
+		overflowed.lastSeen = Date.now() - 2 * DAY;
+		expect(isDue(overflowed)).toBe(true);
+		updateAfterAttempt(model, { conceptId: 'chain_root', correct: true, hintUsed: false });
+		expect(Number.isFinite(overflowed.currentInterval)).toBe(true);
+		expect(overflowed.currentInterval).toBeLessThanOrEqual(MAX_INTERVAL_DAYS);
+	});
+
+	it('keeps a daily student with something to review after a month', () => {
+		// The audit's simulation: a strong student answering everything right
+		// every day had nothing due from day 5 onwards.
+		const ids = ['chain_poly', 'chain_root', 'product_poly', 'quotient_poly', 'log_product'];
+		let now = Date.now();
+		const realNow = Date.now;
+		try {
+			let dueOnSomeLaterDay = false;
+			for (let day = 0; day < 30; day++) {
+				Date.now = () => now;
+				const due = ids.filter((id) => isDue(model.concepts[id]));
+				if (day >= 10 && due.length > 0) dueOnSomeLaterDay = true;
+				// Practise what is due, plus anything new; three times each, as a
+				// session that draws a concept repeatedly would.
+				for (const id of ids) {
+					const c = model.concepts[id];
+					if (c.lastSeen === 0 || isDue(c)) {
+						for (let k = 0; k < 3; k++) {
+							updateAfterAttempt(model, { conceptId: id, correct: true, hintUsed: false });
+						}
+					}
+				}
+				now += DAY;
+			}
+			expect(dueOnSomeLaterDay).toBe(true);
+			for (const id of ids) {
+				expect(model.concepts[id].currentInterval).toBeLessThanOrEqual(MAX_INTERVAL_DAYS);
+			}
+		} finally {
+			Date.now = realNow;
+		}
 	});
 
 	it('incorrect answer reduces ease factor', () => {
@@ -739,12 +820,15 @@ describe('Step labels', () => {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 describe('Practice ladder', () => {
-	it('gives a distinct problem at every rung', () => {
+	it('never shows the same question on two rungs, at any difficulty', () => {
+		// Distinct ids are not enough: several variants generate the same question,
+		// and the worked example used to come back as the unaided problem.
 		for (const mod of MODULE_REGISTRY) {
 			for (const topic of mod.topics) {
-				const ladder = buildLadder(mod.id, topic.id, getFullBank());
-				const ids = ladder.map((r) => r.problem.id);
-				expect(new Set(ids).size, `${mod.id}/${topic.id}`).toBe(ids.length);
+				for (const level of [1, 2, 3, 4, 5]) {
+					const qs = buildLadder(mod.id, topic.id, getFullBank(), level).map((r) => r.problem.q);
+					expect(new Set(qs).size, `${mod.id}/${topic.id} nivå ${level}`).toBe(qs.length);
+				}
 			}
 		}
 	});
@@ -774,22 +858,43 @@ describe('Practice ladder', () => {
 		const ladder = buildLadder('derivative', 'chain', thin);
 		expect(ladder).toHaveLength(2);
 		expect(new Set(ladder.map((r) => r.problem.id)).size).toBe(2);
+		// The two ends survive: a worked example, then the same pattern unaided.
+		expect(ladder.map((r) => r.rung)).toEqual([0, 4]);
+	});
+
+	it('counts a repeated question once when shortening', () => {
+		const one = getFullBank().find(
+			(p) => p.moduleId === 'derivative' && p.topic === 'chain' && p.level === LADDER_LEVEL
+		)!;
+		const twins = [one, { ...one, id: `${one.id}-kopi` }];
+		expect(buildLadder('derivative', 'chain', twins)).toHaveLength(1);
+	});
+
+	it('spreads a short ladder evenly between the two ends', () => {
+		expect(rungsFor(0)).toEqual([]);
+		expect(rungsFor(1)).toEqual([0]);
+		expect(rungsFor(2)).toEqual([0, 4]);
+		expect(rungsFor(3)).toEqual([0, 2, 4]);
+		expect(rungsFor(4)).toEqual([0, 1, 3, 4]);
+		expect(rungsFor(8)).toEqual(LADDER_RUNGS);
 	});
 
 	it('returns nothing for a topic that does not exist', () => {
 		expect(buildLadder('derivative', 'finst-ikkje', getFullBank())).toEqual([]);
 	});
 
-	it('offers a full ladder at every difficulty the topic has', () => {
-		// The Lærebok now lets the student pick difficulty as well as support,
-		// so every level must carry a whole ladder — not just the default one.
+	it('goes from worked to unaided at every difficulty the topic has', () => {
+		// The Lærebok lets the student pick difficulty as well as support, so
+		// every level must carry a ladder with both ends — not just the default
+		// one. A level with fewer distinct problems has fewer rungs in between.
 		for (const mod of MODULE_REGISTRY) {
 			for (const topic of mod.topics) {
 				for (const level of [1, 2, 3, 4, 5]) {
 					const ladder = buildLadder(mod.id, topic.id, getFullBank(), level);
-					expect(ladder, `${mod.id}/${topic.id} nivå ${level}`).toHaveLength(
-						LADDER_RUNGS.length
-					);
+					const where = `${mod.id}/${topic.id} nivå ${level}`;
+					expect(ladder.length, where).toBeGreaterThanOrEqual(2);
+					expect(ladder[0].rung, where).toBe(0);
+					expect(ladder[ladder.length - 1].rung, where).toBe(4);
 					expect(ladder.every((r) => r.problem.level === level)).toBe(true);
 				}
 			}

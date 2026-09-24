@@ -9,16 +9,17 @@
 	// typeset — which is how the Lærebok came to show the chain rule under the
 	// heading "Delvis integrasjon".
 	//
-	// Setting textContent throws MathJax's container out and puts the raw LaTeX
-	// back, so the typesetting has something to work on. That is exactly the step
-	// Svelte cannot do by itself once MathJax has taken the node.
+	// renderInto sets textContent, which throws MathJax's container out and puts
+	// the raw LaTeX back, so the typesetting has something to work on. That is
+	// exactly the step Svelte cannot do by itself once MathJax has taken the node.
+	// Prose with `$...$` inside it goes through TexProse, the same way.
 	//
 	// Fields hold bare LaTeX, as CLAUDE.md requires; the delimiters go on here.
 	//
 	// Named Tex, not Math: `Math` shadows the global Math object inside the
 	// component that imports it, and Math.min/floor then fail to compile.
 
-	import { typesetElement } from '$lib/utils/mathjax';
+	import { renderInto } from '$lib/utils/mathjax';
 
 	interface Props {
 		/** Bare LaTeX — no delimiters. */
@@ -32,8 +33,7 @@
 
 	$effect(() => {
 		if (!el) return;
-		el.textContent = display ? `\\[${tex}\\]` : `\\(${tex}\\)`;
-		typesetElement(el);
+		renderInto(el, display ? `\\[${tex}\\]` : `\\(${tex}\\)`);
 	});
 </script>
 

@@ -6,6 +6,7 @@
 		getSuccessRate,
 		getDueCount,
 		getReviewBuckets,
+		localISO,
 		todayISO,
 		type StudentModel
 	} from '$lib/engine/student-model';
@@ -45,7 +46,11 @@
 		for (let i = 6; i >= 0; i--) {
 			const d = new Date();
 			d.setDate(d.getDate() - i);
-			const iso = d.toISOString().slice(0, 10);
+			// Local date, matching how sessions are recorded. The UTC date labelled the
+			// bars with the wrong weekday between midnight and 01/02, and on the night
+			// the clocks go forward it gave two days the same key, which made the
+			// keyed {#each} below throw.
+			const iso = localISO(d);
 			const entry = byDate.get(iso);
 			days.push({
 				date: iso,

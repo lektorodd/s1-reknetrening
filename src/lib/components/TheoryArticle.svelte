@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { TheoryEntry } from '$lib/modules/types';
 	import Tex from './Tex.svelte';
+	import TexProse from './TexProse.svelte';
 
 	interface Props {
 		entry: TheoryEntry;
@@ -11,23 +12,23 @@
 
 <article>
 	<h1>{entry.title}</h1>
-	<p class="intro">{entry.intro}</p>
+	<p class="intro"><TexProse text={entry.intro} /></p>
 
 	<section class="formula-block">
 		<h2><span class="badge-mark" aria-hidden="true">Σ</span> Regelen</h2>
 		<div class="formula"><Tex tex={entry.formula} /></div>
-		<p class="rule-text">{entry.ruleText}</p>
-		<p class="example">{entry.example}</p>
+		<p class="rule-text"><TexProse text={entry.ruleText} /></p>
+		<p class="example"><TexProse text={entry.example} /></p>
 	</section>
 
 	<section>
 		<h2>Kjenn att mønsteret</h2>
-		<p class="flow">{entry.patternRecognition}</p>
+		<p class="flow"><TexProse text={entry.patternRecognition} /></p>
 	</section>
 
 	<section>
 		<h2>Tenk høgt</h2>
-		<blockquote class="flow">{entry.thinkAloud}</blockquote>
+		<blockquote class="flow"><TexProse text={entry.thinkAloud} /></blockquote>
 	</section>
 
 	<section>
@@ -35,7 +36,7 @@
 		<ol class="worked">
 			{#each entry.workedSteps as step, i (i)}
 				<li>
-					<p class="explanation">{step.explanation}</p>
+					<p class="explanation"><TexProse text={step.explanation} /></p>
 					<div class="step-math"><Tex tex={step.latex} /></div>
 				</li>
 			{/each}
@@ -45,7 +46,7 @@
 	{#if entry.mnemonic}
 		<aside class="mnemonic">
 			<strong><span class="badge-mark" aria-hidden="true">✓</span> Hugseregel</strong>
-			<p>{entry.mnemonic}</p>
+			<p><TexProse text={entry.mnemonic} /></p>
 		</aside>
 	{/if}
 </article>

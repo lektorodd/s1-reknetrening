@@ -2,6 +2,7 @@
 	import type { SessionCard } from '$lib/engine/session';
 	import { getModule } from '$lib/modules/registry';
 	import Tex from './Tex.svelte';
+	import TexProse from './TexProse.svelte';
 	import { base } from '$app/paths';
 
 	interface Props {
@@ -51,7 +52,7 @@
 	<div class="question"><Tex tex={card.problem.q} /></div>
 
 	{#if hintShown}
-		<p class="hint">💡 {card.problem.hint}</p>
+		<p class="hint">💡 <TexProse text={card.problem.hint} /></p>
 	{/if}
 
 	{#if revealed}
