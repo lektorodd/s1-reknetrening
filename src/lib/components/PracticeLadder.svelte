@@ -4,8 +4,10 @@
 	import { fadeSteps } from '$lib/engine/guidance-fading';
 	import { rungLabel, rungShort, rungPrompt, levelName } from '$lib/content/strings';
 	import Tex from './Tex.svelte';
+	import SignChart from './SignChart.svelte';
 	import TexProse from './TexProse.svelte';
 	import { rngFor } from '$lib/modules/rng';
+	import { instructionFor } from '$lib/modules/registry';
 
 	interface Props {
 		/** One ladder per difficulty the topic offers, easiest first. */
@@ -122,7 +124,10 @@
 
 	<p class="prompt">{rungPrompt(faded.prompt)}</p>
 
-	<div class="question"><Tex tex={current.problem.q} /></div>
+	<div class="task">
+		<p class="instruction"><TexProse text={instructionFor(current.problem)} /></p>
+		<div class="question"><Tex tex={current.problem.q} /></div>
+	</div>
 
 	{#if faded.shown.length > 0}
 		<ol class="steps">
@@ -130,6 +135,7 @@
 				<li>
 					<span class="step-label">{step.label}</span>
 					<div class="step-math"><Tex tex={step.latex} /></div>
+					{#if step.signChart}<SignChart chart={step.signChart} />{/if}
 				</li>
 			{/each}
 		</ol>
@@ -147,6 +153,7 @@
 				<li>
 					<span class="step-label">{step.label}</span>
 					<div class="step-math"><Tex tex={step.latex} /></div>
+					{#if step.signChart}<SignChart chart={step.signChart} />{/if}
 				</li>
 			{/each}
 		</ol>
@@ -298,6 +305,18 @@
 		margin: 0;
 		color: var(--color-text-secondary);
 		font-size: var(--font-size-sm);
+	}
+
+	.task {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-2);
+	}
+
+	.instruction {
+		margin: 0;
+		font-weight: 600;
+		color: var(--color-text-strong);
 	}
 
 	.question {

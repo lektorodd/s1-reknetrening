@@ -180,7 +180,9 @@ export const INTEGRAL_SELF_EXPLANATIONS: Record<string, SelfExplanation[]> = {
 			correct: 0
 		},
 		{
-			question: 'Kva betyr det om ein av konstantane blir 0?',
+			// Only for distinct factors: with a repeated factor a constant can be 0
+			// with nothing to cancel — 1/(x−1)² has A = 0.
+			question: 'Nemnaren har to ulike faktorar, og ein av konstantane blir 0. Kva betyr det?',
 			options: [
 				'At teljar og nemnar har ein felles faktor som kunne vore forkorta bort før spaltinga',
 				'At vi har rekna feil',

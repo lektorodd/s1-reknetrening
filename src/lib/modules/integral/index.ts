@@ -47,7 +47,11 @@ export const integralModule: TopicModule = {
 	color: '#9C4221',
 	name: 'Integrasjon',
 	description: 'Variabelskifte, delvis integrasjon, delbrøk og blanda metodar',
-	topics: Object.entries(TOPIC_NAMES).map(([id, name]) => ({ id, name })),
+	topics: Object.entries(TOPIC_NAMES).map(([id, name]) => ({
+		id,
+		name,
+		instruction: 'Rekn ut integralet.'
+	})),
 	generateBank: generateProblemBank,
 	theory: INTEGRAL_THEORY,
 	selfExplanations: INTEGRAL_SELF_EXPLANATIONS,

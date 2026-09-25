@@ -7,6 +7,91 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-09-24
+
+Fase 4b: nytt S1-stoff.
+
+### Added
+- **Ny modul: Drøfting (S1).** Ho handlar om kva den deriverte blir brukt til, og har tre
+  emne med fem nivå kvart:
+  - **Tangenten:** likninga i eit gitt punkt (andregrad og tredjegrad), punktet med eit
+    gitt stigingstal, og tangentar til $e^{kx}$ og $c\ln x$.
+  - **Topp- og botnpunkt:** frå andregradsfunksjonar til fjerdegrad og terrassepunkt.
+    Løysinga viser ei **teikna forteiknslinje**.
+  - **Optimering:** største og minste verdi på eit intervall, der endepunkta må vera med.
+    Nivå 4–5 er tekstoppgåver: gjerde langs ein vegg, rektangel med gitt omkrins, boks
+    utan lok og størst overskot.
+- **Forteiknslinje** (`SignChart`) som ein ny del av løysingsstega. Ho er heiltrekt der
+  faktoren er positiv, stipla der han er negativ, og har 0 i nullpunkta. Skjermlesarar får
+  ei beskriving i ord.
+- **Potensregelen** er nytt første emne i Derivasjon: eitt ledd, polynom, $\frac{1}{x^n}$
+  og $\sqrt{x}$, gong ut først og forenkl først.
+- **Definisjonen** er nytt første emne i Logaritmar: $\lg 1000$, $\lg 0{,}01$, $10^{\lg 7}$,
+  $\lg x = 3$ og overslag som $2 < \lg 350 < 3$.
+- **Teori og refleksjonsspørsmål** for alle dei nye emna.
+
+### Testing
+- Kvar tangent blir kontrollert: han skal røra grafen med same stigning.
+- Kvart topp- og botnpunkt blir kontrollert: $f' = 0$, rett $y$-verdi og rett type ut frå
+  forteiknsskiftet. Testen sjekkar òg at ingen nullpunkt til $f'$ manglar.
+- Kvart optimum blir samanlikna med tett prøvetaking over heile området.
+- Kvar rad i kvar forteiknslinje blir rekna ut frå LaTeX-en og samanlikna, forteikn for
+  forteikn. Ein feil som vart lagd inn med vilje, vart fanga.
+- Nynorsk: «stiging» og «stigingstal» er lagde til i lista.
+
+## [0.12.0] - 2026-09-24
+
+Fase 4a: kvaliteten på oppgåvene som finst. Nytt pensum (tangentar, forteiknslinjer,
+optimering) kjem i ein eigen versjon.
+
+### Added
+- **Ein instruksjon over kvar oppgåve**, i Tren og i stigen, til dømes «Deriver funksjonen.»,
+  «Skriv som éin logaritme.» eller «Løys likninga.». Før måtte eleven gjetta kva som
+  skulle gjerast med uttrykket.
+- **Numerisk kontroll av alle svar:**
+  - Kvar derivasjonsoppgåve blir derivert numerisk og samanlikna med svaret og med kvar
+    mellomlinje.
+  - Kvar logaritmeoppgåve blir rekna ut og samanlikna med svaret.
+  - Kvart likningssvar blir sett inn att i likninga.
+- **Reglar for innhaldet i heile banken**, handheva av testar:
+  - minst 6 ulike oppgåver av 8 per emne og nivå
+  - ingen steg som berre gjentek førre steg
+  - forkorta svar
+  - aldri `1x` eller `+ -`
+  - nynorsk
+
+### Changed
+- **Kjerneregelen er ordna etter funksjonsfamilie:** potens, rot, eˣ og ln.
+  - Konseptet følgjer den ytre funksjonen, og nivået følgjer den indre.
+  - Kvar familie finst no på nivå 2 eller lågare. Før fanst eˣ berre på nivå 4–5, og
+    `√(4x+1)` stod som «polynom» i Framgang.
+  - Nivå 5 er ein ekte dobbel kjerneregel, der `(e^{ax})^n` var ei oppgåve på nivå 2.
+  - Konseptet «Kjerneregelen · logaritme» er nytt.
+- **Logaritmeoppgåvene har fått variasjon og stigande nivå:**
+  - Tre nivå hadde to oppgåver åtte gonger om att. No er det åtte ulike på kvart nivå.
+  - Eksponentiallikningar nivå 1 og 2 var same type.
+  - Potenssetninga nivå 5 var lettare enn nivå 3.
+  - Svar-steg som berre gjentok førre linje, er fjerna.
+- **Stigen hoppar over trinn som ikkje gir mindre hjelp.** Ei oppgåve med tre steg viste
+  det same på «To siste» og «Starten». No får kvart trinn mindre hjelp enn det førre.
+- **Den svake eleven i simuleringa** får no 4 % av korta på nivå 4–5, ned frå 11 %, og har
+  69 % rette, opp frå 65 %. Den sterke eleven når nivå 4–5 i 92 % av korta, opp frå 82 %.
+
+### Fixed
+- **Uferdige svar:** `\frac{1x}{…}`, `\frac{1x^{2}+…}{…}`, `\frac{4}{4x+4}`,
+  `\lg\left(\frac{8}{2}\right)`, `- -6\int …`, `x + -\frac{1}{2}(…)`, `2x^{2}-1x-1` og
+  `\sqrt{44}`. Desimaltal i logaritmelikningar har no komma.
+- **Tre refleksjonsspørsmål** hadde eit «rett» alternativ som var feil eller kunne
+  diskuterast:
+  - «den indre funksjonen står i parentesen» stemmer ikkje for $e^{3x+1}$
+  - «nemnaren blir kvadrert» stemmer ikkje med dei forkorta svara
+  - «konstant 0 betyr felles faktor» gjeld berre for ulike faktorar
+- **Derivasjonsteorien** brukte `\sin(x)`, sjølv om S1 ikkje har trigonometri.
+- **Logaritmeteorien** nemner no definisjonsmengda, og det gjennomgåtte dømet for
+  likningar kontrollerer ho.
+- **Nynorsk:** «Hugs», «behald», «Deriver», «Kjenn att», «Set inn», «-setninga» og
+  «brøkregelen».
+
 ## [0.11.0] - 2026-09-24
 
 Fase 3 etter den fulle gjennomgangen: elevvegen. Kvar side peikar no vidare til neste

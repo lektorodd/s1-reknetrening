@@ -4,12 +4,41 @@
 import type { SelfExplanation } from '../types';
 
 export const SELF_EXPLANATIONS: Record<string, SelfExplanation[]> = {
+	"power": [
+		{
+			"question": "Kvifor forsvinn konstantleddet når vi deriverer?",
+			"options": [
+				"Fordi ein konstant ikkje endrar seg når $x$ endrar seg — stigingstalet er 0",
+				"Fordi vi alltid strykar det siste leddet",
+				"Fordi konstanten blir gonga med eksponenten 1"
+			],
+			"correct": 0
+		},
+		{
+			"question": "Kvifor skriv vi $\\frac{1}{x^2}$ som $x^{-2}$ før vi deriverer?",
+			"options": [
+				"Fordi potensregelen då gjeld direkte, same som for $x^3$",
+				"Fordi brøkar ikkje kan deriverast",
+				"Fordi svaret må ha negativ eksponent"
+			],
+			"correct": 0
+		},
+		{
+			"question": "Kvifor må vi gonge ut $(x+2)(x-3)$ før vi bruker potensregelen?",
+			"options": [
+				"Fordi potensregelen gjeld ledd for ledd i ein sum, ikkje for eit produkt",
+				"Fordi parentesar ikkje er lov i svaret",
+				"Det treng vi ikkje — vi kan derivere kvar parentes for seg og gonge"
+			],
+			"correct": 0
+		}
+	],
 	"chain": [
 		{
 			"question": "Kvifor brukar vi kjerneregelen her?",
 			"options": [
 				"Fordi vi har ein funksjon inne i ein annan funksjon",
-				"Fordi vi gangar to funksjonar saman",
+				"Fordi vi gongar to funksjonar saman",
 				"Fordi eksponenten er større enn 1"
 			],
 			"correct": 0
@@ -17,7 +46,7 @@ export const SELF_EXPLANATIONS: Record<string, SelfExplanation[]> = {
 		{
 			"question": "Kva er den \"indre funksjonen\" i dette uttrykket?",
 			"options": [
-				"Det som står inni parentesen eller under rotteiknet",
+				"Det den ytre funksjonen verkar på — i parentesen, under rotteiknet eller i eksponenten",
 				"Den ytste operasjonen (potens, rot, ln)",
 				"Koeffisienten framfor uttrykket"
 			],
@@ -37,7 +66,7 @@ export const SELF_EXPLANATIONS: Record<string, SelfExplanation[]> = {
 		{
 			"question": "Kva er u og v i produktregelen (uv)' = u'v + uv'?",
 			"options": [
-				"Dei to faktorane som blir ganga saman",
+				"Dei to faktorane som blir gonga saman",
 				"Teljar og nemnar i ein brøk",
 				"Den indre og ytre funksjonen"
 			],
@@ -55,7 +84,7 @@ export const SELF_EXPLANATIONS: Record<string, SelfExplanation[]> = {
 		{
 			"question": "Kvifor brukar vi produktregelen her?",
 			"options": [
-				"Fordi vi gangar to separate funksjonar av x",
+				"Fordi vi gongar to separate funksjonar av x",
 				"Fordi vi har ein funksjon inne i ein annan",
 				"Fordi det er ein brøk"
 			],
@@ -64,25 +93,25 @@ export const SELF_EXPLANATIONS: Record<string, SelfExplanation[]> = {
 	],
 	"quotient": [
 		{
-			"question": "Kvifor brukar vi kvotientregelen her?",
+			"question": "Kvifor brukar vi brøkregelen her?",
 			"options": [
 				"Fordi vi deler éin funksjon på ein annan",
-				"Fordi vi gangar to funksjonar saman",
+				"Fordi vi gongar to funksjonar saman",
 				"Fordi det er ein samansett funksjon"
 			],
 			"correct": 0
 		},
 		{
-			"question": "Kva skjer med nemnaren i svaret etter bruk av kvotientregelen?",
+			"question": "Kva står i nemnaren når du set inn i brøkregelen?",
 			"options": [
-				"Han blir kvadrert (v²)",
-				"Han forsvinn",
-				"Han blir derivert"
+				"Den opphavlege nemnaren i andre potens, $v^2$ — sjølv om noko kan forkortast etterpå",
+				"Den deriverte av nemnaren, $v'$",
+				"Ingenting — nemnaren forsvinn"
 			],
 			"correct": 0
 		},
 		{
-			"question": "Kva er rekkefølgja i teljaren i kvotientregelen?",
+			"question": "Kva er rekkjefølgja i teljaren i brøkregelen?",
 			"options": [
 				"u'v − uv' (derivert teljar · nemnar minus teljar · derivert nemnar)",
 				"uv' − u'v (omvendt rekkefølgje)",

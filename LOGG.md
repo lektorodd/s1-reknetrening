@@ -2,6 +2,95 @@
 
 ---
 
+## Stage 10b – Drøfting, og ei forteiknslinje som kan reknast på (v0.13.0)
+**Dato:** 2026-09-24
+
+Nytt S1-stoff, som brukaren valde:
+- ein eigen modul for bruk av den deriverte
+- ei teikna forteiknslinje
+- optimering både på intervall og som tekstoppgåver
+
+### Bygd baklengs frå svaret
+
+Kvar funksjon i Drøfting blir laga ut frå nullpunkta til den deriverte. Døme:
+`f' = 6(x − r)(x − s)` gir `f = 2x³ − 3(r+s)x² + 6rsx + c`. Då blir alle verdiane
+eleven reknar ut heile tal, og forteiknslinja blir eksakt.
+
+Forteikna blir ikkje skrivne inn for hand. `signChart()` får faktorane som funksjonar og
+reknar ut forteiknet i kvart intervall. Testen kontrollerer forteiknslinja uavhengig av
+dette: han les LaTeX-en i kvar rad, reknar ut verdien og samanliknar forteikn for forteikn.
+For å vita at testen verkar, gjorde eg forteiknet i første intervall feil med vilje, og
+testen feila.
+
+### To feil testane fann undervegs
+
+- **Ei evig løkke.** Optimering nivå 3 skulle unngå at to kandidatar fekk same verdi,
+  og utvida difor intervallet. Men løkka utvida berre høgre endepunkt, og det er ikkje
+  alltid det som gir den like verdien. Testkøyringa hang.
+- **Ein test som aldri kontrollerte noko.** Testen for tangent nivå 4 leitte etter
+  «stigningstal» med eit regulært uttrykk, men instruksjonen seier «stigingstal». Då vart
+  kontrollen hoppa over utan at nokon merka det. No er ordet likt overalt, og
+  «stigning» står på lista over bokmålsord.
+
+### Å sjå på forteiknslinja
+
+Det første skjermbiletet viste to feil:
+- `-6(x + 3)(x)` skal vera `-6x(x + 3)`.
+- Streken over produktrada var broten og låg på ulik høgd.
+
+No er han éi rad over heile breidda.
+
+---
+
+## Stage 10a – Innhald som tåler å bli rekna på (v0.12.0)
+**Dato:** 2026-09-24
+
+### Testane først
+
+Før eg endra ei einaste oppgåve, skreiv eg ein liten LaTeX-evaluator, `latex-eval.ts`,
+som berre testane bruker. Han les strengane generatorane skriv, som tal.
+
+- **Derivasjon:** kvar `f(x)` blir derivert numerisk og samanlikna med svaret og med
+  kvar mellomlinje.
+- **Logaritmar:** kvar oppgåve blir rekna ut og samanlikna med svaret, og kvart
+  likningssvar blir sett inn att.
+
+Testane gjekk grøne mot den gamle koden: matten var rett. Evaluatoren har difor sine
+eigne testar, mellom anna éin som viser at han skil ein feil derivert frå ein rett.
+
+Reglane for heile registeret feila derimot:
+
+| Regel | Talet på brot |
+|---|---|
+| Under 6 ulike oppgåver per emne/nivå | 17 |
+| Svar-steg som berre gjentek førre steg | 9 emne/nivå |
+| Instruksjon inne i `q` | 3 |
+| `1x`, `+ -` og uforkorta svar | 25, mellom dei 11 i integrasjon, som gjennomgangen ikkje hadde fanga |
+| Bokmålsord | 484 treff |
+
+### Kjerneregelen
+
+Typen følgde nivået (`lvl <= 2 ? 'poly' : …`), så konseptet «rot» var «alt på nivå 3».
+No følgjer typen den ytre funksjonen, og nivået følgjer den indre. Familien blir
+vald ut frå variantnummeret, så kvar familie finst garantert på kvart nivå han høyrer
+til. Koeffisienten følgjer òg variantnummeret, sidan tilfeldige trekk gav to like
+`e^{2x+3}`.
+
+### Stigen
+
+Når dei gjentekne svar-stega forsvann, vart fleire logaritmeoppgåver endå kortare, og
+trinna fall saman endå meir. Løysinga ligg difor i stigen: `distinctRungs` tek berre med
+trinn som gøymer fleire steg enn trinnet før. Ei oppgåve med eitt steg får «Døme · Sjølv»,
+og det er ærleg.
+
+### Resultat i simuleringa
+
+Motoren er ikkje endra. Likevel fekk den svake eleven 4 % av korta på nivå 4–5, ned frå
+11 %. Grunnen er at alle kjerneregelkonsepta no har eit lett nivå, så motoren har noko å
+gi han.
+
+---
+
 ## Stage 9c – Elevvegen (v0.11.0)
 **Dato:** 2026-09-24
 

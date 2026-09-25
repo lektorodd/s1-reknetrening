@@ -4,6 +4,7 @@ import { theoryBank } from './theory';
 import { SELF_EXPLANATIONS } from './self-explanation';
 
 const TOPIC_NAMES: Record<string, string> = {
+	power: 'Potensregelen',
 	chain: 'Kjerneregelen',
 	product: 'Produktregelen',
 	quotient: 'Brøkregelen'
@@ -23,8 +24,12 @@ export const derivativeModule: TopicModule = {
 	icon: '∂',
 	color: '#2B6CB0',
 	name: 'Derivasjon',
-	description: 'Kjerneregelen, produktregelen og brøkregelen',
-	topics: Object.entries(TOPIC_NAMES).map(([id, name]) => ({ id, name })),
+	description: 'Potensregelen, kjerneregelen, produktregelen og brøkregelen',
+	topics: Object.entries(TOPIC_NAMES).map(([id, name]) => ({
+		id,
+		name,
+		instruction: 'Deriver funksjonen.'
+	})),
 	generateBank: generateProblemBank,
 	theory: theoryBank,
 	selfExplanations: SELF_EXPLANATIONS,

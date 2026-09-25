@@ -14,6 +14,31 @@
 export interface StepEntry {
 	label: string;
 	latex: string;
+	/** A sign chart drawn under the line, for steps that read signs off factors. */
+	signChart?: SignChart;
+}
+
+/**
+ * A sign chart as a student draws one on paper: one row per factor and a last
+ * row for the product, a solid line where the row is positive, a dashed line
+ * where it is negative, and 0 where it is zero.
+ *
+ * The points are spaced evenly, not to scale — that is how the chart is drawn
+ * by hand, and what matters is their order.
+ */
+export interface SignChart {
+	/** The x-values where a row changes sign or is zero, left to right. */
+	points: { label: string; value: number }[];
+	rows: SignRow[];
+}
+
+export interface SignRow {
+	/** The factor, or the product, as bare LaTeX. */
+	expr: string;
+	/** The sign on each interval: before the first point, between points, after the last. */
+	signs: ('+' | '-')[];
+	/** Whether the row is 0 at each point. */
+	zeros: boolean[];
 }
 
 /**
@@ -35,6 +60,12 @@ export interface Problem {
 	a: string;
 	structuredSteps: StepEntry[];
 	hint: string;
+	/**
+	 * What to do, when it differs from the topic's usual instruction — a
+	 * logarithm topic that mostly expands, say, asking once to combine instead.
+	 * Prose; may contain inline $...$. The question itself stays pure maths.
+	 */
+	instruction?: string;
 }
 
 /** One step of a curated, hand-written worked example. */
@@ -68,6 +99,13 @@ export interface SelfExplanation {
 export interface TopicMeta {
 	id: string;
 	name: string;
+	/**
+	 * What a student is asked to do with this topic's problems, shown above the
+	 * question: «Deriver funksjonen.», «Løys likninga.». Prose; may contain
+	 * inline $...$. Without it a bare expression left the student to guess
+	 * whether to simplify, expand or combine.
+	 */
+	instruction: string;
 }
 
 /**
