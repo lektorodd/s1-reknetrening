@@ -6,21 +6,6 @@
 		<meta name="description" content="Mattetrening – jamn, tilpassa øving i matematikk for vidaregåande" />
 		<meta name="theme-color" content="#F6F1E6" />
 		<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='80'>∑</text></svg>" />
-		<script>
-			MathJax = {
-				tex: {
-					inlineMath: [['$', '$'], ['\\(', '\\)']],
-					displayMath: [['$$', '$$'], ['\\[', '\\]']]
-				},
-				svg: { fontCache: 'global' },
-				startup: {
-					ready: () => {
-						MathJax.startup.defaultReady();
-					}
-				}
-			};
-		</script>
-		<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">

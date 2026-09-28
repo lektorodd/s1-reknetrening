@@ -1,5 +1,4 @@
 // Spaced Repetition – FSRS-inspired scheduling and Bayesian confidence updates
-// Based on future-report §3.2
 
 import type { ConceptKnowledge, StudentModel } from './student-model';
 import {
@@ -152,17 +151,7 @@ export function updateAfterAttempt(
 	}
 	model.totalAttempts++;
 
-	// ── 4. Hint usage (exponential moving average) ──
-	if (result.hintUsed) {
-		concept.hintsUsedFrequency = concept.hintsUsedFrequency * 0.8 + 0.2;
-	} else {
-		concept.hintsUsedFrequency *= 0.8;
-	}
-
-	// ── 5. Recalculate overall level ──
-	model.overallLevel = recalculateOverallLevel(model);
-
-	// ── 6. Record session history ──
+	// ── 4. Record session history ──
 	const session = getOrCreateTodaySession(model);
 	if (result.correct) session.correct++;
 	else session.incorrect++;
@@ -171,21 +160,6 @@ export function updateAfterAttempt(
 		session.conceptsTouched.push(result.conceptId);
 	}
 	updateStreak(model);
-}
-
-/**
- * Compute overall student level (1.0–5.0) from concept confidences.
- * Weighted toward attempted concepts, clamped to range.
- */
-function recalculateOverallLevel(model: StudentModel): number {
-	const concepts = Object.values(model.concepts);
-	const attempted = concepts.filter(c => c.lastSeen > 0);
-	if (attempted.length === 0) return 1.0;
-
-	const avgConfidence = attempted.reduce((sum, c) => sum + c.confidence, 0) / attempted.length;
-	// Map 0–1 confidence to 1–5 level
-	const level = 1 + avgConfidence * 4;
-	return clamp(Math.round(level * 10) / 10, 1.0, 5.0); // round to 1 decimal
 }
 
 function clamp(v: number, min: number, max: number): number {

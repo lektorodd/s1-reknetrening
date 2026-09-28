@@ -2,6 +2,63 @@
 
 ---
 
+## Stage 11 – Drift: eigen MathJax, rydding og dokumentasjon (v0.14.0)
+**Dato:** 2026-09-28
+
+Siste fase i gjennomgangen. Ingen elev ser skilnad når alt går bra, men mykje av dette er
+det som skjer når noko går gale.
+
+### MathJax frå appen sjølv, og berre når det trengst
+
+MathJax kom frå jsdelivr med versjonen låst berre til `@3`. I sandkassa her gav jsdelivr
+403, og eit skulenett kan gjera det same, med rå LaTeX på kvart kort. No ligg versjon 3.2.2
+i `package.json`, og eit lite skript kopierer skriptet og skrifttypane til `static/mathjax/`
+før `dev` og `build`. Utsjånaden er den same, med same CHTML-utdata.
+
+Skriptet blir lasta første gongen ein `Tex` eller `TexProse` ber om typesetting.
+Oppstartspasset over heile sida er slått av. All matte går alt gjennom `renderInto`, så ingen
+stader treng det.
+
+**Kontrollert i Chromium mot `preview`, med all trafikk til `cdn.jsdelivr.net` stengd:**
+- Framsida og Framgang lastar ikkje MathJax.
+- Klientnavigering frå «Start økta» lastar MathJax éin gong.
+- Tren-kortet, hintet og løysinga har 0 rå `$`/`\[`/`\(`. Det har òg Lærebok-sida om topp- og
+  botnpunkt, som har 57 formlar og forteiknslinja.
+- Seks skrifttypar blir lasta utan 404, og det går ingen førespurnader til jsdelivr.
+- Berre éin komponent er kopiert. MathML-kopien for skjermlesarar (`mjx-assistive-mml`) er med.
+  Utforskaren i høgreklikkmenyen til MathJax er ikkje med, og lastar ikkje om nokon slår han på.
+  Han var òg avhengig av jsdelivr før.
+
+### Banken éin gong
+
+`conceptMap()` bygde sin eigen bank i staden for å bruka `getFullBank()`. Framsida bygde
+difor to bankar berre for å visa rekkja og repetisjonstalet. No blir banken bygd éin gong.
+Målt i vitest med varm JIT:
+
+| | Framsida før | Framsida etter | Éin bank |
+|---|---|---|---|
+| Tid | 14–16 ms | 6–13 ms | 7–14 ms |
+
+Det er under 30 ms, så eg lét vera å dela banken vidare.
+
+### Daud kode og felt ingen les
+
+`overallLevel` og `hintsUsedFrequency` blei rekna ut etter kvart forsøk og lagra, men ingen
+side og ingen del av motoren las dei. `overallLevel` er dessutan feltet som ein gong valde
+nivå 5-integral til ein S1-veteran. Utan feltet kan det ikkje skje att.
+
+`repairModel` sløyfar felta når han les ein gammal modell, og ein ny test les ein modell frå
+før 0.14. Tre testar som berre sjekka felta, er fjerna. Testtalet er no 848.
+
+### Dokumentasjon
+
+- README viste ruta `/velg/` og «360 oppgåver». Han er skriven om for dei fire modulane,
+  utan oppgåvetal som går ut på dato.
+- `AGENTS.md` var ein eldre kopi av `CLAUDE.md`. No er `AGENTS.md` einaste kjelde, og
+  `CLAUDE.md` importerer ho.
+
+---
+
 ## Stage 10b – Drøfting, og ei forteiknslinje som kan reknast på (v0.13.0)
 **Dato:** 2026-09-24
 
