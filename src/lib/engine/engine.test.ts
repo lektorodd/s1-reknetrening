@@ -7,7 +7,6 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import {
 	createStudentModel,
 	getSuccessRate,
-	getConceptCount,
 	getDueCount,
 	getOrCreateTodaySession,
 	updateStreak,
@@ -116,11 +115,6 @@ describe('StudentModel', () => {
 		expect(model.concepts['quotient_poly']).toBeDefined();
 		expect(model.concepts['log_product']).toBeDefined();
 		expect(model.concepts['exp_equation']).toBeDefined();
-	});
-
-	it('starts at overall level 1.0', () => {
-		const model = createStudentModel();
-		expect(model.overallLevel).toBe(1.0);
 	});
 
 	it('conceptIdOf routes a problem through its owning module', () => {
@@ -325,20 +319,6 @@ describe('Spaced Repetition', () => {
 		expect(model.totalCorrect).toBe(1);
 	});
 
-	it('hint usage increases hintsUsedFrequency', () => {
-		updateAfterAttempt(model, { conceptId: 'chain_poly', correct: true, hintUsed: true, level: 1 });
-		expect(model.concepts['chain_poly'].hintsUsedFrequency).toBeGreaterThan(0);
-	});
-
-	it('overall level increases after many correct answers', () => {
-		const concepts = ['chain_poly', 'chain_root', 'product_poly', 'product_root'];
-		for (const cId of concepts) {
-			for (let i = 0; i < 5; i++) {
-				updateAfterAttempt(model, { conceptId: cId, correct: true, hintUsed: false, level: 1 });
-			}
-		}
-		expect(model.overallLevel).toBeGreaterThan(1.0);
-	});
 });
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -488,7 +468,7 @@ describe('Repairing a stored model', () => {
 			totalAttempts: 'mange'
 		});
 		const c = repaired.concepts['log_power'];
-		for (const v of [c.confidence, c.timesCorrect, c.timesIncorrect, c.hintsUsedFrequency, c.easeFactor, c.workLevel, c.climb]) {
+		for (const v of [c.confidence, c.timesCorrect, c.timesIncorrect, c.easeFactor, c.workLevel, c.climb]) {
 			expect(Number.isFinite(v)).toBe(true);
 		}
 		expect(repaired.concepts['log_product'].confidence).toBe(0.5);
@@ -497,6 +477,25 @@ describe('Repairing a stored model', () => {
 		]);
 		expect(repaired.totalAttempts).toBe(0);
 		expect(getSuccessRate(repaired)).toBe(0);
+	});
+
+	it('reads a model saved before 0.14 and drops the fields nothing reads', () => {
+		const repaired = repairModel({
+			overallLevel: 4.4,
+			totalAttempts: 12,
+			totalCorrect: 9,
+			streakDays: 3,
+			lastActiveDate: '2026-09-20',
+			concepts: {
+				log_power: { confidence: 0.8, timesCorrect: 4, hintsUsedFrequency: 0.36, workLevel: 3, climb: 1 }
+			}
+		});
+		expect(repaired).not.toHaveProperty('overallLevel');
+		expect(repaired.concepts['log_power']).not.toHaveProperty('hintsUsedFrequency');
+		expect(repaired.concepts['log_power'].confidence).toBe(0.8);
+		expect(repaired.concepts['log_power'].workLevel).toBe(3);
+		expect(repaired.totalCorrect).toBe(9);
+		expect(repaired.streakDays).toBe(3);
 	});
 
 	it('keeps what was valid', () => {

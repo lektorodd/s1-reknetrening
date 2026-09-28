@@ -85,11 +85,7 @@
 	 * instead of asking for a new one.
 	 */
 	afterNavigate(() => {
-		if (!model) {
-			// Warm the bank before the first card so MathJax has content to typeset.
-			getFullBank();
-			model = loadStudentModel();
-		}
+		if (!model) model = loadStudentModel();
 
 		const asked = filterFromQuery(page.url.searchParams);
 		if (asked) {

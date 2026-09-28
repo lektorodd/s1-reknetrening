@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-09-28
+
+Fase 5: drift. Ingenting nytt for eleven, men appen står stødigare.
+
+### Changed
+- **MathJax kjem frå appen sjølv**, ikkje frå jsdelivr. Versjonen er låst til 3.2.2, og
+  `scripts/copy-mathjax.mjs` kopierer skriptet og skrifttypane til `static/mathjax/` før
+  `dev` og `build`. Eit skulenett som stengjer CDN-en, stengjer ikkje lenger matten.
+- **MathJax blir berre lasta der det finst matte.** `utils/mathjax.ts` lastar skriptet
+  første gongen ein `Tex` eller `TexProse` ber om typesetting. Framsida og Framgang lastar
+  det ikkje, og det blir ikkje køyrt nokon oppstartspass over heile sida.
+- **Framsida byggjer oppgåvebanken éin gong, ikkje to.** Konsepta blir henta frå same
+  bank som resten av appen. `getProblemById` slår opp i ein tabell i staden for å søkja.
+- **README** er skriven om: rutene i dag, dei fire modulane med kurs, og korleis Tren og
+  stigen heng saman.
+- **`AGENTS.md` er einaste kjelde for agentrettleiinga.** `CLAUDE.md` importerer ho berre.
+
+### Removed
+- `overallLevel` på elevmodellen og `hintsUsedFrequency` på konsepta. Dei blei skrivne, men
+  ikkje lesne av noko. Lagra modellar med felta blir framleis lesne, og felta blir sløyfa.
+- `engine/index.ts` (ingen importerte han), `typesetMath`, `getConceptCount` og
+  `@sveltejs/adapter-auto`.
+- `skills-lock.json`.
+
+### Moved
+- `derivasjon-v2.html`, `forteiknslinjer.html` og `future-report.md` ligg no i
+  `docs/archive/`. Motorkommentarane som viste til rapporten, forklarer seg no sjølv.
+
 ## [0.13.0] - 2026-09-24
 
 Fase 4b: nytt S1-stoff.

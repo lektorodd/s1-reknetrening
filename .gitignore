@@ -31,3 +31,6 @@ npm-debug.log*
 
 # TypeScript
 *.tsbuildinfo
+
+# Copied from node_modules by scripts/copy-mathjax.mjs
+static/mathjax/

@@ -46,8 +46,11 @@ export function getFullBank(): Problem[] {
 	return bankCache;
 }
 
+let byIdCache: Map<string, Problem> | null = null;
+
 export function getProblemById(id: string): Problem | undefined {
-	return getFullBank().find((p) => p.id === id);
+	if (!byIdCache) byIdCache = new Map(getFullBank().map((p) => [p.id, p]));
+	return byIdCache.get(id);
 }
 
 // ── Concepts ──
@@ -64,10 +67,8 @@ let conceptCache: Map<string, string> | null = null;
 function conceptMap(): Map<string, string> {
 	if (!conceptCache) {
 		conceptCache = new Map();
-		for (const mod of MODULE_REGISTRY) {
-			for (const p of mod.generateBank()) {
-				conceptCache.set(mod.conceptIdOf(p), mod.id);
-			}
+		for (const p of getFullBank()) {
+			conceptCache.set(conceptIdOf(p), p.moduleId);
 		}
 	}
 	return conceptCache;

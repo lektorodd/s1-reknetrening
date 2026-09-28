@@ -1,16 +1,44 @@
-// MathJax utility for Svelte components
+// MathJax for Svelte components.
+//
+// The app serves its own pinned copy (scripts/copy-mathjax.mjs puts it in
+// static/mathjax/), and loads it the first time something asks for maths, so a
+// page without maths never downloads it.
+
+import { base } from '$app/paths';
+
+let loading: Promise<any> | null = null;
 
 /**
- * Call after DOM updates to re-render all MathJax on page
+ * Load MathJax once and resolve when it is ready to typeset. A page that never
+ * shows maths never calls this. If the script fails to load, the promise
+ * rejects and the maths stays on screen as raw LaTeX.
  */
-export function typesetMath(): void {
-	if (typeof window !== 'undefined' && (window as any).MathJax?.typeset) {
-		try {
-			(window as any).MathJax.typeset();
-		} catch {
-			// Suppress typeset errors during transitions
-		}
-	}
+function loadMathJax(): Promise<any> {
+	if (loading) return loading;
+	loading = new Promise((resolve, reject) => {
+		const w = window as any;
+		w.MathJax = {
+			tex: {
+				inlineMath: [['$', '$'], ['\\(', '\\)']],
+				displayMath: [['$$', '$$'], ['\\[', '\\]']]
+			},
+			startup: {
+				// Every element with maths asks for its own typeset through the
+				// queue below, so the whole-page pass at startup is not needed.
+				typeset: false,
+				ready: () => {
+					w.MathJax.startup.defaultReady();
+					w.MathJax.startup.promise.then(() => resolve(w.MathJax));
+				}
+			}
+		};
+		const script = document.createElement('script');
+		script.src = `${base}/mathjax/tex-mml-chtml.js`;
+		script.async = true;
+		script.onerror = () => reject(new Error('MathJax did not load'));
+		document.head.appendChild(script);
+	});
+	return loading;
 }
 
 /**
@@ -25,11 +53,11 @@ let queue: Promise<unknown> = Promise.resolve();
 export function typesetElement(el: HTMLElement): void {
 	if (typeof window === 'undefined') return;
 	queue = queue
-		.then(() => {
-			// Checked when the turn comes, not when queued: MathJax loads async,
-			// and if it isn't here yet its own startup pass will typeset the page.
-			const mj = (window as any).MathJax;
-			if (el.isConnected && mj?.typesetPromise) return mj.typesetPromise([el]);
+		.then(loadMathJax)
+		.then((mj) => {
+			// Checked when the turn comes, not when queued: the element may have
+			// left the page while MathJax was loading.
+			if (el.isConnected) return mj.typesetPromise([el]);
 		})
 		.catch(() => {});
 }
@@ -49,7 +77,7 @@ export function renderInto(el: HTMLElement, text: string): void {
 	try {
 		mj?.typesetClear?.([el]);
 	} catch {
-		// Nothing to clear yet.
+		// Nothing to clear yet, or MathJax is still loading.
 	}
 	el.textContent = text;
 	typesetElement(el);

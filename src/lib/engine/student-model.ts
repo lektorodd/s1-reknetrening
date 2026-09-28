@@ -1,6 +1,4 @@
-// Student Model – tracks per-concept knowledge state
-// Based on future-report §3.1 with FSRS-inspired parameters
-// Session history added in Phase 5 (§6b)
+// Student model: per-concept knowledge state, daily session history and streak.
 
 import * as storage from '$lib/utils/storage';
 import { getAllConceptIds } from '$lib/modules/registry';
@@ -13,7 +11,6 @@ export interface ConceptKnowledge {
 	lastSeen: number;            // timestamp (ms since epoch)
 	timesCorrect: number;
 	timesIncorrect: number;
-	hintsUsedFrequency: number;  // 0.0–1.0 (exponential moving average)
 	currentInterval: number;     // days until next review
 	easeFactor: number;          // FSRS parameter (how "easy" this concept is)
 	/**
@@ -41,7 +38,6 @@ export interface SessionEntry {
 
 export interface StudentModel {
 	concepts: Record<string, ConceptKnowledge>;
-	overallLevel: number;        // 1.0–5.0 (continuous, derived from performance)
 	totalAttempts: number;
 	totalCorrect: number;
 	sessionHistory: SessionEntry[];  // daily aggregated activity, capped at 90 days
@@ -67,7 +63,6 @@ function createDefaultConcept(conceptId: string): ConceptKnowledge {
 		lastSeen: 0,
 		timesCorrect: 0,
 		timesIncorrect: 0,
-		hintsUsedFrequency: 0,
 		currentInterval: 0,    // never scheduled yet
 		easeFactor: 2.0,       // FSRS default
 		workLevel: 1,
@@ -94,7 +89,6 @@ function repairConcept(id: string, saved: unknown): ConceptKnowledge {
 		lastSeen: finiteOr(s.lastSeen, 0, 0),
 		timesCorrect: finiteOr(s.timesCorrect, 0, 0),
 		timesIncorrect: finiteOr(s.timesIncorrect, 0, 0),
-		hintsUsedFrequency: finiteOr(s.hintsUsedFrequency, 0, 0, 1),
 		// Left as stored: effectiveInterval() already knows how to read a broken one.
 		currentInterval: s.currentInterval as number,
 		easeFactor: finiteOr(s.easeFactor, 2.0, 1.3, 2.5),
@@ -111,7 +105,6 @@ export function createStudentModel(): StudentModel {
 		concepts: Object.fromEntries(
 			allIds.map(id => [id, createDefaultConcept(id)])
 		),
-		overallLevel: 1.0,
 		totalAttempts: 0,
 		totalCorrect: 0,
 		sessionHistory: [],
@@ -170,7 +163,9 @@ export function repairModel(stored: unknown): StudentModel {
 	if (typeof model.lastActiveDate !== 'string') model.lastActiveDate = '';
 	model.totalAttempts = finiteOr(model.totalAttempts, 0, 0);
 	model.totalCorrect = finiteOr(model.totalCorrect, 0, 0, model.totalAttempts);
-	model.overallLevel = finiteOr(model.overallLevel, 1.0, 1, 5);
+	// Written by versions before 0.14, read by nothing: a whole-app level must
+	// never choose problems (see CLAUDE.md), so it is not kept either.
+	delete (model as { overallLevel?: unknown }).overallLevel;
 
 	return model;
 }
@@ -184,12 +179,6 @@ export function saveStudentModel(model: StudentModel): void {
 export function getSuccessRate(model: StudentModel): number {
 	if (model.totalAttempts === 0) return 0;
 	return Math.round((model.totalCorrect / model.totalAttempts) * 100);
-}
-
-export function getConceptCount(model: StudentModel, minConfidence: number): number {
-	return Object.values(model.concepts)
-		.filter(c => c.confidence >= minConfidence && c.timesCorrect > 0)
-		.length;
 }
 
 // ── Scheduling helpers ──

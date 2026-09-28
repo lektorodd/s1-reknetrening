@@ -1,4 +1,4 @@
-// Backward fading, levels 0-4 — based on future-report §6.1.
+// Backward fading, levels 0-4: the steps of a worked solution are hidden from the end first.
 //
 // Used only by the Lærebok's practice ladder. A session never fades: how much
 // of a solution is shown is instruction, and the student chooses it there
